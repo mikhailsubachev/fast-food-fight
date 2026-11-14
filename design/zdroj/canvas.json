@@ -1,1 +1,127 @@
-{"v": 3, "createdOnFiles": {"v": 1, "at": "2026-11-14T15:11:40Z"}, "title": "Fast Food Fight – Pan Mrkev", "launch": {"view": "canvas"}, "pages": [], "boards": {"Main.dc.html": {"x": 0, "y": 0, "w": 1680, "h": 1280, "title": "Pan Mrkev – list postavy"}}, "order": ["Main.dc.html"], "notes": {}, "designSystems": []}
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Main.dc.html": {
+      "h": 1280,
+      "title": "Pan Mrkev – list postavy",
+      "w": 1680,
+      "x": 0,
+      "y": 0
+    },
+    "Porek.dc.html": {
+      "h": 1280,
+      "title": "Pórek – list postavy",
+      "w": 1680,
+      "x": 1760,
+      "y": 0
+    },
+    "Cibule.dc.html": {
+      "h": 1700,
+      "title": "Pan Cibule – list postavy",
+      "w": 1680,
+      "x": 3520,
+      "y": 0
+    },
+    "Brokolice.dc.html": {
+      "h": 1700,
+      "title": "Pan Brokolice – list postavy",
+      "w": 1680,
+      "x": 5280,
+      "y": 0
+    },
+    "Hamburger.dc.html": {
+      "h": 1280,
+      "title": "Hamburger – list postavy",
+      "w": 1680,
+      "x": 0,
+      "y": 2100
+    },
+    "Hranolky.dc.html": {
+      "h": 1280,
+      "title": "Hranolky – list postavy",
+      "w": 1680,
+      "x": 1760,
+      "y": 2100
+    },
+    "Lizatko.dc.html": {
+      "h": 1700,
+      "title": "Lízátko – list postavy",
+      "w": 1680,
+      "x": 3520,
+      "y": 2100
+    },
+    "Kecup.dc.html": {
+      "h": 1700,
+      "title": "Pan Kečup – list postavy",
+      "w": 1680,
+      "x": 5280,
+      "y": 2100
+    },
+    "MistoNaZeleninu.dc.html": {
+      "h": 760,
+      "page": "page-0ulohc",
+      "title": "Místo na zeleninu podle úrovní",
+      "w": 1920,
+      "x": 880,
+      "y": 1200
+    },
+    "Uroven1.dc.html": {
+      "h": 1080,
+      "page": "page-0ulohc",
+      "title": "Úroveň 1 – Snídaňová cesta",
+      "w": 1920,
+      "x": 880,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-14T14:34:16Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "obranci": {
+      "x": 0,
+      "y": -260,
+      "text": "Obránci",
+      "kind": "title1",
+      "maxW": 6960,
+      "page": "page-1"
+    },
+    "utocnici": {
+      "x": 0,
+      "y": 1840,
+      "text": "Útočníci",
+      "kind": "title1",
+      "maxW": 6960,
+      "page": "page-1"
+    }
+  },
+  "order": [
+    "Uroven1.dc.html",
+    "MistoNaZeleninu.dc.html",
+    "Main.dc.html",
+    "Porek.dc.html",
+    "Cibule.dc.html",
+    "Brokolice.dc.html",
+    "Hamburger.dc.html",
+    "Hranolky.dc.html",
+    "Lizatko.dc.html",
+    "Kecup.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Postavy"
+    },
+    {
+      "id": "page-0ulohc",
+      "name": "První úroveň"
+    }
+  ],
+  "title": "Fast Food Fight – Pan Mrkev"
+}

@@ -1,9 +1,13 @@
 import * as THREE from 'three';
 import type { Game, GameEvent } from '../core/game';
 import type { LevelData } from '../data/level1';
-import { DEFENDERS, MOUTH_LIVES, type DefenderType } from '../data/units';
+import { ATTACKER_BODY_RADIUS, DEFENDERS, MOUTH_LIVES, type DefenderType } from '../data/units';
 import { defenderLevel } from '../entities/obranci/defender';
 import { buildBoard, type Board } from './board';
+import { Path } from '../core/path';
+import { hexSlots } from '../core/placement';
+import { Critters } from './decor';
+import { SlotsView } from './slots';
 import { makeAttacker, makeDefender, makeMouth, makeProjectile, preloadFrames, type Puppet } from './meshes';
 import type { Stage } from './stage';
 
@@ -48,7 +52,8 @@ export class View {
   private readonly ring: THREE.Group;
   private readonly ringFill: THREE.MeshBasicMaterial;
   private readonly ringEdge: THREE.MeshBasicMaterial;
-  private readonly spot: THREE.Group;
+  private readonly slots: SlotsView;
+  private readonly critters = new Critters();
   private readonly tmpA = new THREE.Vector3();
   private readonly tmpB = new THREE.Vector3();
 
@@ -78,17 +83,9 @@ export class View {
     this.ring.visible = false;
     stage.scene.add(this.ring);
 
-    // Místo, kam se chystá sázet: bílý kruh se zeleným okrajem.
-    this.spot = new THREE.Group();
-    const spotFill = new THREE.Mesh(
-      new THREE.CircleGeometry(0.42, 32),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false }),
-    );
-    const spotEdge = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.46, 32), new THREE.MeshBasicMaterial({ color: 0x3fa34d }));
-    this.spot.add(spotFill, spotEdge);
-    this.spot.rotation.x = -Math.PI / 2;
-    this.spot.visible = false;
-    stage.scene.add(this.spot);
+    // Šestihranná políčka na sázení a poletující motýli a včelka z návrhu.
+    this.slots = new SlotsView(hexSlots(level, new Path(level.path)));
+    stage.scene.add(this.slots.root, this.critters.root);
   }
 
   /** Dosah zeleniny: mrkev oranžově, pórek modře (barvy z návrhu). */
@@ -105,13 +102,13 @@ export class View {
     this.ring.visible = false;
   }
 
+  /** Vybrané políčko, kam se chystá sázet: bílé se zeleným okrajem. */
   showSpot(x: number, z: number): void {
-    this.spot.position.set(x, 0.05, z);
-    this.spot.visible = true;
+    this.slots.select({ x, z });
   }
 
   hideSpot(): void {
-    this.spot.visible = false;
+    this.slots.select(null);
   }
 
   reset(): void {
@@ -189,6 +186,8 @@ export class View {
     this.fadeOverlaps(dt);
     this.updateMouth(game, dt, time);
     this.updateEffects(dt);
+    this.slots.update(game.defenders);
+    this.critters.update(time);
   }
 
   private syncDefenders(game: Game, dt: number, time: number): void {
@@ -279,7 +278,7 @@ export class View {
     return game.attackers.some((a) => {
       if (a.fleeing) return false;
       const p = game.path.at(a.d);
-      return Math.hypot(p.x - x, p.z - z) <= range;
+      return Math.hypot(p.x - x, p.z - z) <= range + ATTACKER_BODY_RADIUS;
     });
   }
 

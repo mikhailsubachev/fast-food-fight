@@ -89,23 +89,6 @@ function blobShadow(p: Puppet, r: number): void {
   p.root.add(m);
 }
 
-const moundEdge = new THREE.MeshBasicMaterial({ color: 0x2b2118 });
-const moundSoil = new THREE.MeshBasicMaterial({ color: 0x6b4a2e });
-
-/** Hromádka hlíny pod zasazenou zeleninou (jako v návrhu úrovně). */
-function mound(p: Puppet, r: number): void {
-  for (const [mat, s, y] of [
-    [moundEdge, 1.1, 0.03],
-    [moundSoil, 1, 0.035],
-  ] as const) {
-    const m = new THREE.Mesh(shadowGeo, mat);
-    m.rotation.x = -Math.PI / 2;
-    m.position.y = y;
-    m.scale.set(r * s, r * 0.75 * s, 1);
-    p.root.add(m);
-  }
-}
-
 /**
  * Výška obrázku (celého rámečku 450 px) ve světě, podle návrhu úrovně:
  * měřítko postavy v návrhu × 450 px / 120 px na políčko. Postava sama je asi o pětinu menší.
@@ -114,8 +97,8 @@ const DEFENDER_HEIGHT: Record<DefenderType, number> = { mrkev: 1.8, porek: 1.94 
 const ATTACKER_HEIGHT: Record<'hamburger' | 'hranolky', number> = { hamburger: 1.73, hranolky: 1.58 };
 
 export function makeDefender(type: DefenderType): Puppet {
+  // Pod zeleninou je hnědé políčko (šestihran), takže hromádka hlíny není potřeba.
   const p = puppet(`${type}-mrk`, DEFENDER_HEIGHT[type]);
-  mound(p, 0.36);
   return p;
 }
 

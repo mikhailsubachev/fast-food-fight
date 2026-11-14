@@ -59,16 +59,22 @@ export interface AttackerStats {
 }
 
 export const ATTACKERS: Record<AttackerType, AttackerStats> = {
-  hamburger: { hits: 4, speed: 1, reward: 15, scale: 1 },
+  hamburger: { hits: 5, speed: 1, reward: 15, scale: 1 },
   hranolky: {
-    hits: 5,
+    hits: 6,
     speed: 1.3,
     reward: 20,
     scale: 1,
     throws: { interval: 5, range: 1.6, freeze: 2, projectileSpeed: 6, firstDelay: 2 },
   },
-  velkyHamburger: { hits: 7, speed: 0.8, reward: 40, scale: 1.5 },
+  velkyHamburger: { hits: 8, speed: 0.8, reward: 40, scale: 1.5 },
 };
+
+/**
+ * Fast food má tělo: zelenina ho zasáhne, jakmile se kruh jejího dosahu dotkne okraje
+ * jeho těla, ne až jeho středu (tak to vidí i dítě na obrazovce).
+ */
+export const ATTACKER_BODY_RADIUS = 0.35;
 
 /** Utíkající fast food běží rychleji, než chodil. */
 export const FLEE_SPEED_FACTOR = 1.6;

@@ -1,4 +1,5 @@
 import { catmullRom, clipStartAtX } from '../core/path';
+import type { HexGrid } from '../core/placement';
 import type { Vec2 } from '../core/types';
 import type { AttackerType, DefenderType } from './units';
 
@@ -31,6 +32,8 @@ export interface LevelData {
   obstacles: Obstacle[];
   /** Záhon: obdélník, na který se dá sázet. */
   board: Rect;
+  /** Šestihranná políčka na sázení (z nich se vyřadí ta na cestě, u překážek a u pusy). */
+  hexGrid: HexGrid;
   /** Výřez, který kamera vždy celý ukáže (o kousek menší než záhon kvůli většímu přiblížení). */
   view: Rect;
   mouth: Vec2;
@@ -88,7 +91,7 @@ export const LEVEL1: LevelData = {
   id: 1,
   name: 'Snídaňová cesta',
   path: clipStartAtX(catmullRom(PATH_CONTROL), BOARD.minX),
-  // Sází se téměř kamkoliv na záhon; nejde na cestu, na tyto překážky a těsně k jiné zelenině.
+  // Sází se do šestihranů; na cestě, u těchto překážek a u pusy políčka nejsou.
   obstacles: [
     { kind: 'parez', x: 0.9, z: 8.3, r: 0.55 },
     { kind: 'kamen', x: 14.7, z: 2.6, r: 0.6 },
@@ -96,6 +99,8 @@ export const LEVEL1: LevelData = {
     { kind: 'krtina', x: 12.7, z: 2.4, r: 0.5 },
   ],
   board: BOARD,
+  // Mřížka šestihranů z návrhu úrovně (159 px mezi sloupci, 183,6 px mezi políčky ve sloupci).
+  hexGrid: { x0: 0.617, z0: 1.815, dx: 1.325, dz: 1.7 },
   view: { minX: 0, maxX: 16, minZ: 1, maxZ: 10 },
   mouth: { x: 14.3, z: 8.0 },
   startWater: 120,

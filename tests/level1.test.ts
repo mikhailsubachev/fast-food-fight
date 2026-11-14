@@ -1,34 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import { Game } from '../src/core/game';
 import { Path } from '../src/core/path';
-import { MIN_PATH_DISTANCE } from '../src/core/placement';
+import { HEX_HALF_HEIGHT, HEX_HALF_WIDTH, SLOT_PATH_CLEARANCE } from '../src/core/placement';
 import type { Vec2 } from '../src/core/types';
 import { LEVEL1 } from '../src/data/level1';
-import { ATTACKERS, DEFENDERS, type DefenderType } from '../src/data/units';
+import { ATTACKER_BODY_RADIUS, ATTACKERS, DEFENDERS, type DefenderType } from '../src/data/units';
 
 const path = new Path(LEVEL1.path);
 const carrotRange = DEFENDERS.mrkev.levels[0].range;
 const leekRange = DEFENDERS.porek.levels[0].range;
 const throwRange = ATTACKERS.hranolky.throws!.range;
 
-/** Body záhonu po čtvrt políčku, kam se dá na prázdném záhonu zasadit. */
-const free: Vec2[] = [];
-{
-  const empty = new Game(LEVEL1);
-  const b = LEVEL1.board;
-  for (let x = b.minX; x <= b.maxX; x += 0.25)
-    for (let z = b.minZ; z <= b.maxZ; z += 0.25) if (empty.checkPlace({ x, z }) === 'ok') free.push({ x, z });
-}
-/** Místa dobrá pro mrkev: cesta v dosahu. */
-const carrotSpots = free.filter((p) => path.distanceTo(p) <= 1.25);
-/** Mrkve z návrhu úrovně (plátno „Úroveň 1 – Snídaňová cesta“). */
-const designCarrots: Vec2[] = [
-  { x: 3.9, z: 3.9 },
-  { x: 5.1, z: 5.0 },
-  { x: 3.9, z: 6.7 },
-  { x: 9.2, z: 5.1 },
-  { x: 7.5, z: 5.3 },
-  { x: 12.2, z: 5.7 },
+/** Šestihranná políčka, kam se dá na prázdném záhonu zasadit. */
+const free: Vec2[] = new Game(LEVEL1).slots;
+/** Políčka dobrá pro mrkev: cesta v dosahu. */
+const carrotSpots = free.filter((p) => path.distanceTo(p) <= carrotRange + ATTACKER_BODY_RADIUS);
+/** Zasazená políčka z návrhu úrovně (plátno „Úroveň 1 – Snídaňová cesta“). */
+const designSlots: Vec2[] = [
+  { x: 0.617, z: 5.215 },
+  { x: 1.942, z: 7.765 },
+  { x: 4.592, z: 4.365 },
+  { x: 4.592, z: 6.065 },
+  { x: 7.242, z: 4.365 },
+  { x: 8.567, z: 5.215 },
+  { x: 8.567, z: 6.915 },
+  { x: 13.867, z: 3.515 },
 ];
 /** Místa dobrá pro pórek: mimo hod hranolek, ale cesta v dosahu. */
 const leekSpots = free.filter((p) => path.distanceTo(p) > throwRange + 0.1 && path.distanceTo(p) <= leekRange - 0.3);
@@ -43,6 +39,8 @@ function pathInRange(p: Vec2, range: number): number {
 }
 /** Nejlepší místa na pórek: ta, odkud dosáhne na nejvíc cesty. */
 const bestLeekSpots = [...leekSpots].sort((a, b) => pathInRange(b, leekRange) - pathInRange(a, leekRange));
+/** Nejlepší políčka na mrkev (rozumný hráč je najde po pár hrách). */
+const designCarrots = [...carrotSpots].sort((a, b) => pathInRange(b, carrotRange) - pathInRange(a, carrotRange)).slice(0, 6);
 
 function run(game: Game, seconds: number, bot?: (g: Game) => void, until?: (g: Game) => boolean): number {
   const dt = 1 / 30;
@@ -68,20 +66,26 @@ describe('záhon 1. úrovně', () => {
     expect(Math.hypot(end.x - LEVEL1.mouth.x, end.z - LEVEL1.mouth.z)).toBeLessThan(1);
   });
 
-  it('sází se skoro kamkoliv: volná je velká část záhonu', () => {
-    const b = LEVEL1.board;
-    const all = Math.floor((b.maxX - b.minX) / 0.25 + 1) * Math.floor((b.maxZ - b.minZ) / 0.25 + 1);
-    expect(free.length / all).toBeGreaterThan(0.15);
+  it('sází se do šestihranů: volná jsou skoro všechna políčka mimo cestu', () => {
+    expect(free.length).toBeGreaterThanOrEqual(20);
   });
 
-  it('mrkve z návrhu úrovně jdou zasadit', () => {
+  it('políčka z návrhu úrovně jdou osázet', () => {
     const g = new Game({ ...LEVEL1, startWater: 1000 });
-    for (const p of designCarrots) expect(g.plant(p, 'mrkev')).toBe(true);
+    for (const p of designSlots) expect(g.plant(p, 'mrkev')).toBe(true);
   });
 
-  it('je dost místa pro mrkev u cesty i pro pórek mimo dosah hranolek', () => {
-    expect(carrotSpots.length).toBeGreaterThan(60);
-    expect(leekSpots.length).toBeGreaterThan(15);
+  it('zelenina se zasadí doprostřed políčka, i když ťuknutí trochu mine', () => {
+    const g = new Game(LEVEL1);
+    const s = free[0];
+    expect(g.plant({ x: s.x + 0.3, z: s.z - 0.2 }, 'mrkev')).toBe(true);
+    expect(g.defenders[0].x).toBeCloseTo(s.x, 5);
+    expect(g.defenders[0].z).toBeCloseTo(s.z, 5);
+  });
+
+  it('je dost políček pro mrkev u cesty i pro pórek mimo dosah hranolek', () => {
+    expect(carrotSpots.length).toBeGreaterThanOrEqual(10);
+    expect(leekSpots.length).toBeGreaterThanOrEqual(6);
   });
 
   it('na cestu, překážky a těsně k jiné zelenině sázet nejde', () => {
@@ -89,15 +93,26 @@ describe('záhon 1. úrovně', () => {
     expect(g.checkPlace(LEVEL1.path[40])).toBe('path');
     for (const o of LEVEL1.obstacles) expect(g.checkPlace(o)).toBe('obstacle');
     expect(g.checkPlace(LEVEL1.mouth)).not.toBe('ok');
-    const spot = carrotSpots.find((p) => g.checkPlace({ x: p.x + 0.5, z: p.z }) === 'ok')!;
+    const spot = carrotSpots[0];
     expect(g.plant(spot, 'mrkev')).toBe(true);
-    expect(g.checkPlace({ x: spot.x + 0.5, z: spot.z })).toBe('crowded');
+    expect(g.checkPlace({ x: spot.x + 0.3, z: spot.z })).toBe('crowded');
     expect(g.checkPlace({ x: LEVEL1.board.maxX + 1, z: 4 })).toBe('outside');
   });
 
   it('překážky ani pusa neleží na cestě', () => {
     for (const o of LEVEL1.obstacles) expect(path.distanceTo(o)).toBeGreaterThan(o.r);
-    for (const p of free) expect(path.distanceTo(p)).toBeGreaterThanOrEqual(MIN_PATH_DISTANCE);
+    for (const p of free) expect(path.distanceTo(p)).toBeGreaterThanOrEqual(SLOT_PATH_CLEARANCE);
+  });
+
+  it('políčka se nepřekrývají a leží celá na záhonu', () => {
+    const b = LEVEL1.board;
+    for (const p of free) {
+      expect(p.x - HEX_HALF_WIDTH).toBeGreaterThanOrEqual(b.minX);
+      expect(p.x + HEX_HALF_WIDTH).toBeLessThanOrEqual(b.maxX);
+      expect(p.z - HEX_HALF_HEIGHT).toBeGreaterThanOrEqual(b.minZ);
+      expect(p.z + HEX_HALF_HEIGHT).toBeLessThanOrEqual(b.maxZ);
+      for (const q of free) if (p !== q) expect(Math.hypot(p.x - q.x, p.z - q.z)).toBeGreaterThan(2 * HEX_HALF_HEIGHT);
+    }
   });
 
   it('hamburger dojde ze startu do pusy za 18 až 30 s', () => {
@@ -107,7 +122,7 @@ describe('záhon 1. úrovně', () => {
   });
 
   it('mrkev z místa u cesty na cestu dosáhne', () => {
-    for (const p of carrotSpots) expect(path.distanceTo(p)).toBeLessThanOrEqual(carrotRange);
+    for (const p of carrotSpots) expect(path.distanceTo(p)).toBeLessThanOrEqual(carrotRange + ATTACKER_BODY_RADIUS);
   });
 });
 

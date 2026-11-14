@@ -1,5 +1,6 @@
 import type { LevelData, Spawn } from '../data/level1';
 import {
+  ATTACKER_BODY_RADIUS,
   ATTACKERS,
   DEFENDERS,
   FLEE_SPEED_FACTOR,
@@ -10,7 +11,7 @@ import {
 import { createAttacker, type Attacker } from '../entities/utocnici/attacker';
 import { createDefender, defenderLevel, isGrown, type Defender } from '../entities/obranci/defender';
 import { Path } from './path';
-import { checkPlace, type PlaceCheck } from './placement';
+import { checkPlace, hexSlots, slotAt, type PlaceCheck } from './placement';
 import type { Vec2 } from './types';
 
 export type Phase = 'countdown' | 'wave' | 'won' | 'lost';
@@ -49,6 +50,8 @@ export type PlantCheck = PlaceCheck | 'locked' | 'water';
 /** Herní logika bez grafiky: dá se spustit i v automatickém testu. */
 export class Game {
   readonly path: Path;
+  /** Šestihranná políčka, kam se dá sázet. */
+  readonly slots: Vec2[];
   water = 0;
   bites = 0;
   /** Index vlny, která právě běží nebo přijde po odpočtu. */
@@ -68,6 +71,7 @@ export class Game {
 
   constructor(readonly level: LevelData) {
     this.path = new Path(level.path);
+    this.slots = hexSlots(level, this.path);
     this.reset();
   }
 
@@ -116,7 +120,12 @@ export class Game {
 
   /** Dá se na tohle místo vůbec sázet (bez ohledu na vodu)? */
   checkPlace(p: Vec2): PlaceCheck {
-    return checkPlace(this.level, this.path, this.defenders, p);
+    return checkPlace(this.level, this.path, this.slots, this.defenders, p);
+  }
+
+  /** Políčko pod prstem (střed šestihranu), nebo null. */
+  slotAt(p: Vec2): Vec2 | null {
+    return slotAt(this.slots, p);
   }
 
   checkPlant(p: Vec2, type: DefenderType): PlantCheck {
@@ -130,7 +139,8 @@ export class Game {
   plant(p: Vec2, type: DefenderType): boolean {
     if (this.finished || this.checkPlant(p, type) !== 'ok') return false;
     this.water -= DEFENDERS[type].cost;
-    const d = createDefender(this.nextId++, type, p);
+    // Zelenina se zasadí doprostřed políčka.
+    const d = createDefender(this.nextId++, type, this.slotAt(p)!);
     this.defenders.push(d);
     this.events.push({ type: 'planted', defenderId: d.id });
     return true;
@@ -267,7 +277,7 @@ export class Game {
     for (const a of this.attackers) {
       if (a.fleeing) continue;
       const p = this.path.at(a.d);
-      if (Math.hypot(p.x - x, p.z - z) > range) continue;
+      if (Math.hypot(p.x - x, p.z - z) > range + ATTACKER_BODY_RADIUS) continue;
       if (!best || a.d > best.d) best = a;
     }
     return best;

@@ -5,34 +5,10 @@ W,H=1920,1080; HUD=104
 # ---- level data (src/data/level1.ts)
 path=[(-1,2.5),(8,2.5),(8,5),(2.5,5),(2.5,7.5),(9.5,7.5)]
 slots=[(1,1.25),(6,1.25),(3.5,3.75),(5.5,3.75),(9.25,3.75),(1.25,6.25),(5,6.25),(7,6.25),(10.5,0.5),(10.8,4),(-0.3,5.5),(12.2,6)]
-board=dict(minX=-1,maxX=12.7,minZ=-0.1,maxZ=8.6); mouth=(10.4,7.5)
-# ---- camera like stage.ts: tilt 55°, fov 35, fit board
-tilt=math.radians(55); fov=math.radians(35)
-tx=(board['minX']+board['maxX'])/2; tz=(board['minZ']+board['maxZ'])/2
-def make_proj(d,ox=0,oy=0,f=None):
-    cy_,cz_=math.sin(tilt)*d, math.cos(tilt)*d
-    # camera basis: forward = target - cam
-    fwd=(0,-cy_,-cz_); n=math.hypot(*fwd); fwd=tuple(c/n for c in fwd)
-    right=(1,0,0); up=(0,fwd[2]*-1*-1, 0)  # compute up = right x fwd
-    up=(right[1]*fwd[2]-right[2]*fwd[1], right[2]*fwd[0]-right[0]*fwd[2], right[0]*fwd[1]-right[1]*fwd[0])
-    pass
-    foc=(H/2)/math.tan(fov/2) if f is None else f
-    def P(x,y,z):
-        v=(x-tx, y-cy_, z-tz-cz_)
-        cx=sum(a*b for a,b in zip(v,right)); cyv=sum(a*b for a,b in zip(v,up)); cz=sum(a*b for a,b in zip(v,fwd))
-        return (W/2+foc*cx/cz+ox, H/2-foc*cyv/cz+oy)
-    return P
-corners=[(x,y,z) for x in (board['minX'],board['maxX']) for z in (board['minZ'],board['maxZ']) for y in (0,1.4)]
-lo,hi=2,400
-availW=W*0.94; availH=(H-HUD)*0.94
-for _ in range(50):
-    mid=(lo+hi)/2; P=make_proj(mid); pts=[P(*c) for c in corners]
-    xs=[p[0] for p in pts]; ys=[p[1] for p in pts]
-    if max(xs)-min(xs)<=availW and max(ys)-min(ys)<=availH: hi=mid
-    else: lo=mid
-P=make_proj(hi); pts=[P(*c) for c in corners]
-xs=[p[0] for p in pts]; ys=[p[1] for p in pts]
-P=make_proj(hi, W/2-(min(xs)+max(xs))/2, HUD+(H-HUD)/2-(min(ys)+max(ys))/2+6)
+board=dict(minX=0,maxX=16,minZ=0,maxZ=10); mouth=(14.3,8.1)
+# ---- flat, almost top-down view (like classic tower defense): no perspective
+SX,SZ,SY=120,108,120
+def P(x,y,z): return (x*SX, z*SZ-y*SY)
 def pg(pts3): return " ".join(f"{P(*p)[0]:.1f},{P(*p)[1]:.1f}" for p in pts3)
 def ground_poly(pts2,y=0): return pg([(x,y,z) for x,z in pts2])
 
@@ -44,18 +20,42 @@ top=[(b['minX'],b['minZ']),(b['maxX'],b['minZ']),(b['maxX'],b['maxZ']),(b['minX'
 front=[(b['minX'],0,b['maxZ']),(b['maxX'],0,b['maxZ']),(b['maxX'],-t,b['maxZ']),(b['minX'],-t,b['maxZ'])]
 import random; r=random.Random(2)
 import curve as _cv
-OBST=[('stump',7.6,0.9,0.6),('rock',12.0,5.0,0.7),('puddle',3.6,6.3,0.85),('mole',10.4,2.2,0.6)]
+OBST=[('stump',0.9,8.4,0.6),('rock',14.7,3.0,0.7),('puddle',8.3,4.2,0.85),('mole',12.7,2.7,0.6)]
 def onpath(x,z,m=0.75): return _cv.dist(x,z)<m or any(math.hypot(x-ox,z-oz)<orr for _,ox,oz,orr in OBST)
+# ---- visible hex grid for planting (flat-top hexes, one plant per cell; a plant never overlaps its neighbours)
+HR=106; HH=HR*math.sqrt(3); HX0=74; HY0=196; HK=0.64
+MOUTHBOX=(1600,560,1920,1080)
+CELLS=[]
+for row in range(6):
+    for col in range(13):
+        px=HX0+col*HR*1.5; py=HY0+row*HH+(HH/2 if col%2 else 0)
+        if not (50<px<W-50) or py>1010: continue
+        wx,wz=px/SX,py/SZ
+        if _cv.dist(wx,wz)<1.0: continue
+        if MOUTHBOX[0]<px and py>MOUTHBOX[1]: continue
+        CELLS.append((wx,wz))
+TAKEN=set()
+def snap(x,z):
+    c=min((c for c in CELLS if c not in TAKEN),key=lambda c:((c[0]-x)*SX)**2+((c[1]-z)*SZ)**2); TAKEN.add(c); return c
+def hexpts(wx,wz,k=None):
+    k=HK if k is None else k
+    cx,cy=wx*SX,wz*SZ
+    return " ".join(f"{cx+k*HR*math.cos(math.radians(60*i)):.1f},{cy+k*HR*math.sin(math.radians(60*i)):.1f}" for i in range(6))
+_ob=[]
+for kk,ox,oz,orr in OBST:
+    c=snap(ox,oz); _ob.append((kk,c[0],c[1],orr))
+OBST=_ob
+OBCELLS=set(TAKEN)
 def unit(x,z):
     a=P(x,0,z); b_=P(x,0.1,z); return a,(a[1]-b_[1])/6.0   # px per "decor unit"
 # lighter / darker grass patches (irregular blobs)
 for _ in range(46):
-    cx,cz=r.uniform(-4,16),r.uniform(-3,11); rad=r.uniform(0.5,1.3)
+    cx,cz=r.uniform(-0.5,16.5),r.uniform(0,10.2); rad=r.uniform(0.5,1.3)
     pts=[(cx+rad*(1+0.25*math.sin(k*1.7+cx))*math.cos(k/14*2*math.pi), cz+rad*0.8*(1+0.25*math.cos(k*1.3+cz))*math.sin(k/14*2*math.pi)) for k in range(14)]
     out.append(f'<polygon points="{ground_poly(pts)}" fill="{r.choice(["#9CC768","#7FAE4E","#94C262"])}" opacity=".7"/>')
 # grass blades
 for _ in range(420):
-    x=r.uniform(-4,16); z=r.uniform(-3,11)
+    x=r.uniform(-0.2,16.2); z=r.uniform(0.2,10.1)
     p=P(x,0,z); out.append(f'<path d="M{p[0]:.0f},{p[1]:.0f} l-3,-9 M{p[0]:.0f},{p[1]:.0f} l1,-11 M{p[0]:.0f},{p[1]:.0f} l4,-8" stroke="{r.choice(["#5E8F38","#6E9C45","#4E7F2E"])}" stroke-width="2.4" stroke-linecap="round"/>')
 decor=[]
 def daisy(x,z,col="#FFFFFF"):
@@ -82,8 +82,8 @@ def snail(x,z):
     return (f'<path d="M{p[0]-12*s_:.1f},{p[1]:.1f} L{p[0]+10*s_:.1f},{p[1]:.1f} q4,-2 4,-7 l2,-5 M{p[0]+13*s_:.1f},{p[1]-7*s_:.1f} l4,-5" stroke="{INK}" stroke-width="1.6" fill="#E9D3A8"/>'
             f'<circle cx="{p[0]-2*s_:.1f}" cy="{p[1]-7*s_:.1f}" r="{7*s_:.1f}" fill="#C98A4A" stroke="{INK}" stroke-width="1.8"/><path d="M{p[0]-2*s_:.1f},{p[1]-7*s_:.1f} m-3,0 a3,3 0 1,1 3,3" stroke="{INK}" stroke-width="1.4" fill="none"/>')
 items=[]
-for _ in range(90):
-    x=r.uniform(-3,15.5); z=r.uniform(-2,10)
+for _ in range(55):
+    x=r.uniform(0.2,15.8); z=r.uniform(1.2,9.8)
     if onpath(x,z): continue
     k=r.random()
     if k<0.38: items.append((z,daisy(x,z)))
@@ -91,11 +91,14 @@ for _ in range(90):
     elif k<0.75: items.append((z,clover(x,z)))
     elif k<0.9: items.append((z,stone(x,z)))
     else: items.append((z,mushroom(x,z)))
-for x,z,f in [(11.8,2.2,ladybug),(0.2,3.9,snail),(12.0,8.0,mushroom),(-0.5,0.4,mushroom),(6.2,8.2,ladybug)]:
+for x,z,f in [(13.6,6.4,ladybug),(0.6,9.5,snail),(15.3,9.3,mushroom),(5.2,1.7,mushroom),(7.4,9.4,ladybug)]:
     items.append((z,f(x,z)))
 items.sort(key=lambda t:t[0])
 out.extend(i for _,i in items)
 
+for c in CELLS:
+    if c in OBCELLS: continue
+    out.append(f'<polygon points="{hexpts(*c)}" fill="#D9F2A6" fill-opacity=".38" stroke="#4E7F2E" stroke-width="3" stroke-linejoin="round"/>')
 # ---- path: irregular dirt track across the field
 Lc,Rc=curve.edges()
 out.append(f'<polygon points="{ground_poly(Lc+Rc[::-1])}" fill="#C9965A" stroke="{INK}" stroke-width="4.5" stroke-linejoin="round"/>')
@@ -118,17 +121,19 @@ for side in (Lc,Rc):
     for i in range(1,len(side),3):
         q=P(side[i][0],0,side[i][1])
         out.append(f'<path d="M{q[0]:.0f},{q[1]:.0f} l-5,-12 M{q[0]:.0f},{q[1]:.0f} l1,-14 M{q[0]:.0f},{q[1]:.0f} l7,-11" stroke="#4E8A2E" stroke-width="3" stroke-linecap="round"/>')
-c0=curve.nearest(-1.4,2.45)
+c0=curve.nearest(0.3,3.0)
 out.append(f'<polygon points="{ground_poly([(c0[0]-0.25,c0[1]-0.32),(c0[0]+0.45,c0[1]),(c0[0]-0.25,c0[1]+0.32)])}" fill="#E0574F" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>')
 
 # ---- free planting: plants anywhere on the bed (no fixed slots)
-plants=[("mrkev",3.3,3.6),("mrkev_slash",5.4,3.65),("mrkev_frozen",9.65,3.9),("mrkev",1.1,6.7),("mrkev",5.0,6.15),("mrkev_grow",7.2,6.2),("porek_aim",10.8,4.0),("porek",-0.3,5.5),("porek",4.6,0.9)]
+plants=[("mrkev",3.9,3.9),("mrkev_slash",5.1,5.0),("mrkev",3.9,6.7),("mrkev_frozen",9.2,5.1),("mrkev_grow",7.5,5.3),("porek_aim",8.3,7.4),("porek",1.2,5.9),("porek",13.6,4.6)]
+plants=[(k,)+snap(x,z) for k,x,z in plants]
+PL={k:(x,z) for k,x,z in plants}
 def mound(x,z,rad=0.36):
     pts=[(x+rad*math.cos(a/18*2*math.pi), z+rad*0.75*math.sin(a/18*2*math.pi)) for a in range(18)]
     return f'<polygon points="{ground_poly(pts)}" fill="#6B4A2E" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
-for k,x,z in plants: out.append(mound(x,z))
+for k,x,z in plants: out.append(f'<polygon points="{hexpts(x,z)}" fill="#7A5433" stroke="{INK}" stroke-width="3.5" stroke-linejoin="round"/>'+f'<polygon points="{hexpts(x,z,HK*0.74)}" fill="#8B633D"/>')
 # range ring of the selected leek (slot 9)
-lx_,lz_=10.8,4.0
+lx_,lz_=PL['porek_aim']
 ring=[(lx_+3.5*math.cos(a/40*2*math.pi), lz_+3.5*math.sin(a/40*2*math.pi)) for a in range(40)]
 out.append(f'<polygon points="{ground_poly(ring)}" fill="#2D8CD6" fill-opacity=".10" stroke="#2D8CD6" stroke-width="4" stroke-dasharray="14 10"/>')
 
@@ -136,7 +141,7 @@ out.append(f'<polygon points="{ground_poly(ring)}" fill="#2D8CD6" fill-opacity="
 def blob(x,z,rad=0.32):
     pts=[(x+rad*math.cos(a/16*2*math.pi), z+rad*0.8*math.sin(a/16*2*math.pi)) for a in range(16)]
     return f'<polygon points="{ground_poly(pts)}" fill="#2A1A0C" opacity=".22"/>'
-FIG=1.8
+FIG=1.15
 def place(inner,x,z,hw=1.25,flip=False,feet=(150,388),lift=0):
     hw=hw*FIG
     g0=P(x,lift,z); g1=P(x,lift+hw,z); s=(g0[1]-g1[1])/360
@@ -145,13 +150,15 @@ def place(inner,x,z,hw=1.25,flip=False,feet=(150,388),lift=0):
 figs=[]
 def add(z,svg): figs.append((z,svg))
 C=gen
+PF=0.913*106/92
+def pplace(inner,x,z,hw=1.25,flip=False): return place(inner,x,z,hw*PF,flip)
 for kind,x,z in plants:
     if kind=="mrkev":
-        add(z, place(C.carrot("smile"),x,z))
+        add(z, pplace(C.carrot("smile"),x,z))
     elif kind=="mrkev_slash":
-        add(z, place(C.carrot("fight","slash"),x,z,flip=True))
+        add(z, pplace(C.carrot("fight","slash"),x,z))
     elif kind=="mrkev_frozen":
-        add(z, place(C.carrot("frozen",tint="ice",extra_front=C.ice_bits),x,z))
+        add(z, pplace(C.carrot("frozen",tint="ice",extra_front=C.ice_bits),x,z))
     elif kind=="mrkev_grow":
         g0=P(x,0,z); g1=P(x,1.25*FIG,z); sc=(g0[1]-g1[1])/360
         inner=('<defs><clipPath id="lgclip"><rect x="0" y="-80" width="300" height="318"/></clipPath></defs><g clip-path="url(#lgclip)"><g transform="translate(5,150)">'+C.body()+C.TOP+C.leaves()+C.face("closed")+'</g></g>'
@@ -160,14 +167,14 @@ for kind,x,z in plants:
         add(z, f'<g transform="translate({g0[0]:.1f},{g0[1]:.1f}) scale({sc:.4f}) translate(-150,-250)">{inner}{bar}</g>')
     elif kind.startswith("porek"):
         aim=kind=="porek_aim"
-        add(z, place(gp.leek("aim" if aim else "smile","draw" if aim else "rest"),x,z,1.35,flip=aim))
+        add(z, pplace(gp.leek("aim" if aim else "smile","draw" if aim else "rest"),x,z,1.26,flip=False))
 # placement preview: ghost carrot, its reach and the radial menu
-GX,GZ=6.9,3.75
+GX,GZ=snap(12.2,5.7)
 ring2=[(GX+1.5*math.cos(a/32*2*math.pi), GZ+1.5*math.sin(a/32*2*math.pi)) for a in range(32)]
 out.append(f'<polygon points="{ground_poly(ring2)}" fill="#F08A24" fill-opacity=".12" stroke="#F08A24" stroke-width="4" stroke-dasharray="12 9"/>')
 foot=[(GX+0.42*math.cos(a/24*2*math.pi), GZ+0.42*0.75*math.sin(a/24*2*math.pi)) for a in range(24)]
-out.append(f'<polygon points="{ground_poly(foot)}" fill="#FFFFFF" fill-opacity=".55" stroke="#3FA34D" stroke-width="5"/>')
-add(GZ, f'<g opacity=".5">{place(C.carrot("smile"),GX,GZ)}</g>')
+out.append(f'<polygon points="{hexpts(GX,GZ)}" fill="#FFFFFF" fill-opacity=".6" stroke="#2F9E44" stroke-width="6" stroke-linejoin="round"/>')
+add(GZ, f'<g opacity=".5">{pplace(C.carrot("smile"),GX,GZ)}</g>')
 # obstacles: no planting here
 def ell(x,z,rx,rz,y=0,n=28,a0=0,a1=2*math.pi):
     return [P(x+rx*math.cos(a0+(a1-a0)*k/(n-1)),y,z+rz*math.sin(a0+(a1-a0)*k/(n-1))) for k in range(n)]
@@ -211,11 +218,14 @@ for k,ox,oz,_ in OBST:
     if k=='puddle': out.append(puddle(ox,oz))
     else: add(oz, OBJ[k](ox,oz))
 # attackers on path
-add(2.5, blob(6.4,2.4,0.36)+place(gf.burger("angry","up","step",extra=gf.motion),6.4,2.4,1.2))
-add(3.78, blob(8.51,3.78,0.34)+place(gf.fries("throw","windup"),8.51,3.78,1.2))
-add(4.88, blob(4.61,4.88,0.36)+place(gf.burger("hit","down"),4.61,4.88,1.1))
-add(2.36, blob(1.45,2.36,0.34)+place(gf.burger("scared","flail","run",extra=gf.sweat(220,150)),1.45,2.36,1.2,flip=True))
-add(6.84, blob(2.39,6.84,0.36)+place(gf.burger("angry","up","stand"),2.39,6.84,1.2))
+def walker(svg,x,z,hw=1.2,flip=False,rad=0.36):
+    p=curve.nearest(x,z); add(p[1], blob(p[0],p[1],rad)+place(svg,p[0],p[1],hw,flip=flip)); return p
+A1=walker(gf.burger("scared","flail","run",extra=gf.sweat(220,150)),1.0,2.95,flip=True)
+A2=walker(gf.burger("angry","up","step",extra=gf.motion),2.8,5.9)
+A3=walker(gf.burger("hit","down"),6.2,5.3,1.1)
+A4=walker(gf.fries("throw","windup"),10.5,5.7)
+A5=walker(gf.burger("angry","up","stand"),8.6,2.55)
+A6=walker(gf.burger("angry","up","step",extra=gf.motion),12.1,8.05)
 # mouth
 def mouth_svg():
     # original mouth, slightly turned towards the end of the path (to the left)
@@ -231,7 +241,7 @@ def mouth_svg():
     depth=f'<path d="M44,230 Q164,100 284,230 Q164,400 44,230 Z" fill="#A82C34" stroke="{INK}" stroke-width="7" stroke-linejoin="round"/>'
     return (f'<ellipse cx="150" cy="392" rx="120" ry="20" fill="#2A1A0C" opacity=".2"/>'
             f'<g transform="translate(150,250) rotate(-6) scale(0.86,1) translate(-150,-250)">{depth}{face}</g>')
-add(7.5, place(mouth_svg(),mouth[0]+0.3,mouth[1],2.6))
+add(mouth[1], place(mouth_svg(),mouth[0]+0.3,mouth[1],2.0))
 
 figs.sort(key=lambda t:t[0])
 fid="lvw"
@@ -245,9 +255,9 @@ def butterfly(cx,cy,c1,c2,rot=0):
 def bee(cx,cy):
     return (f'<g transform="translate({cx:.0f},{cy:.0f})"><ellipse cx="-4" cy="-10" rx="7" ry="9" fill="#FFFFFF" fill-opacity=".85" stroke="{INK}" stroke-width="2"/><ellipse cx="6" cy="-10" rx="7" ry="9" fill="#FFFFFF" fill-opacity=".85" stroke="{INK}" stroke-width="2"/>'
             f'<ellipse cx="0" cy="0" rx="13" ry="9" fill="#FFC93C" stroke="{INK}" stroke-width="2.5"/><path d="M-4,-8 L-4,8 M4,-8 L4,8" stroke="{INK}" stroke-width="3"/><circle cx="9" cy="-2" r="1.8" fill="{INK}"/></g>')
-for (wx,wy,wz,c1,c2,rot) in [(0.6,1.8,1.5,"#9FD3F5","#6CB6E8",-12),(11.6,1.9,6.9,"#F6B0D0","#E77FB0",14)]:
+for (wx,wy,wz,c1,c2,rot) in [(1.9,1.0,8.9,"#9FD3F5","#6CB6E8",-12),(15.2,1.0,6.3,"#F6B0D0","#E77FB0",14)]:
     q=P(wx,wy,wz); out.append(f'<path d="M{q[0]-70:.0f},{q[1]+30:.0f} q30,-40 60,-8" stroke="{INK}" stroke-width="2" fill="none" stroke-dasharray="2 7" opacity=".6"/>'+butterfly(q[0],q[1],c1,c2,rot))
-q=P(9.0,1.6,1.0); out.append(f'<path d="M{q[0]-60:.0f},{q[1]+10:.0f} q20,-30 40,0 q20,30 40,0" stroke="{INK}" stroke-width="2" fill="none" stroke-dasharray="2 7" opacity=".6"/>'+bee(q[0]+28,q[1]))
+q=P(4.6,0.6,2.3); out.append(f'<path d="M{q[0]-60:.0f},{q[1]+10:.0f} q20,-30 40,0 q20,30 40,0" stroke="{INK}" stroke-width="2" fill="none" stroke-dasharray="2 7" opacity=".6"/>'+bee(q[0]+28,q[1]))
 # radial menu above the ghost
 mp=P(GX,1.6*FIG,GZ)
 def mbtn(cx,cy,icon,price,sel=False):
@@ -259,26 +269,26 @@ ic2=f'<g transform="translate({lx2:.0f},{ly2+30:.0f}) scale(.16) translate(-152,
 out.append(f'<path d="M{mp[0]:.0f},{mp[1]+28:.0f} L{mp[0]:.0f},{mp[1]-6:.0f}" stroke="{INK}" stroke-width="4" stroke-linecap="round"/>')
 out.append(mbtn(lx1,ly1,ic1,"40",True)+mbtn(lx2,ly2,ic2,"60"))
 # a "can't plant here" cross on the path
-xp=P(3.6,0,5.0)
+_x=curve.nearest(6.1,3.9); xp=P(_x[0],0,_x[1])
 out.append(f'<g transform="translate({xp[0]:.0f},{xp[1]:.0f})"><circle r="20" fill="#FFFFFF" stroke="#D9342B" stroke-width="5"/><path d="M-9,-9 L9,9 M9,-9 L-9,9" stroke="#D9342B" stroke-width="5" stroke-linecap="round"/></g>')
 # ---- projectiles (screen space from projected points)
-lp=P(10.8,1.4,4); tp=P(8.76,1.3,3.78)
-mid=((lp[0]+tp[0])/2,min(lp[1],tp[1])-120)
-out.append(f'<path d="M{lp[0]-30:.0f},{lp[1]:.0f} Q{mid[0]:.0f},{mid[1]:.0f} {tp[0]:.0f},{tp[1]:.0f}" stroke="{INK}" stroke-width="3.5" fill="none" stroke-dasharray="3 11" stroke-linecap="round"/>')
-ap=( (lp[0]-30+2*mid[0]+tp[0])/4, (lp[1]+2*mid[1]+tp[1])/4 )
-out.append(f'<g transform="translate({ap[0]:.0f},{ap[1]:.0f}) rotate(180) scale(1.1)">{gp.arrow_local()}</g>')
-fp=P(8.51,1.9,3.78); cp=P(9.65,1.0,3.9)
+lp=P(lx_+0.45,1.05,lz_); tp=P(A4[0]-0.25,0.8,A4[1])
+mid=((lp[0]+tp[0])/2,min(lp[1],tp[1])-110)
+out.append(f'<path d="M{lp[0]:.0f},{lp[1]:.0f} Q{mid[0]:.0f},{mid[1]:.0f} {tp[0]:.0f},{tp[1]:.0f}" stroke="{INK}" stroke-width="3.5" fill="none" stroke-dasharray="3 11" stroke-linecap="round"/>')
+ap=( (lp[0]+2*mid[0]+tp[0])/4, (lp[1]+2*mid[1]+tp[1])/4 )
+out.append(f'<g transform="translate({ap[0]-30:.0f},{ap[1]:.0f}) rotate(-22) scale(1.1)">{gp.arrow_local()}</g>')
+fp=P(A4[0]-0.2,1.45,A4[1]); cp=P(PL['mrkev_frozen'][0],0.9,PL['mrkev_frozen'][1])
 m2=((fp[0]+cp[0])/2,min(fp[1],cp[1])-90)
 out.append(f'<path d="M{fp[0]:.0f},{fp[1]:.0f} Q{m2[0]:.0f},{m2[1]:.0f} {cp[0]:.0f},{cp[1]:.0f}" stroke="#C0352C" stroke-width="3.5" fill="none" stroke-dasharray="3 11" stroke-linecap="round"/>')
-cp2=P(9.65,1.3,3.9); out.append(f'<path d="M{cp2[0]-34:.0f},{cp2[1]-22:.0f} l-12,-10 M{cp2[0]+34:.0f},{cp2[1]-22:.0f} l12,-10 M{cp2[0]:.0f},{cp2[1]-40:.0f} l0,-16" stroke="{INK}" stroke-width="4" stroke-linecap="round"/>')
+cp2=P(PL['mrkev_frozen'][0],1.25,PL['mrkev_frozen'][1]); out.append(f'<path d="M{cp2[0]-34:.0f},{cp2[1]-22:.0f} l-12,-10 M{cp2[0]+34:.0f},{cp2[1]-22:.0f} l12,-10 M{cp2[0]:.0f},{cp2[1]-40:.0f} l0,-16" stroke="{INK}" stroke-width="4" stroke-linecap="round"/>')
 out.append(gf.txt(cp2[0]-40,cp2[1]-60,"PLESK!","#FFD54A",30,-6))
 # carrot slash text
-sp=P(5.4,2.3,3.65); out.append(gf.txt(sp[0]+20,sp[1]-10,"ŠVIH!","#F08A24",30,-10))
-hp=P(4.61,2.1,4.88); out.append(gf.txt(hp[0]-20,hp[1]-6,"AU!","#D9342B",34,-8))
+sp=P(PL['mrkev_slash'][0],1.75,PL['mrkev_slash'][1]); out.append(gf.txt(sp[0]+20,sp[1]-10,"ŠVIH!","#F08A24",30,-10))
+hp=P(A3[0]+0.3,1.6,A3[1]); out.append(gf.txt(hp[0]-20,hp[1]-6,"AU!","#D9342B",34,-8))
 # water drop flying to HUD from runner
-Z=1.3; ZCX,ZCY=1060,800
+Z=1.0; ZCX,ZCY=1060,800
 zout=out; out=[]
-_r=P(1.45,2.0,2.36); rp=(ZCX+Z*(_r[0]-ZCX), ZCY+Z*(_r[1]-ZCY))
+_r=P(A1[0],1.5,A1[1]); rp=(ZCX+Z*(_r[0]-ZCX), ZCY+Z*(_r[1]-ZCY))
 out.append(f'<path d="M{rp[0]:.0f},{rp[1]:.0f} Q{rp[0]-40:.0f},{HUD+40} 150,62" stroke="#3D9BE0" stroke-width="4" fill="none" stroke-dasharray="3 11" stroke-linecap="round"/>')
 dp=( (rp[0]+2*(rp[0]-40)+150)/4, (rp[1]+2*(HUD+40)+62)/4 )
 out.append(gf.water_drop(dp[0],dp[1],1.0)+gf.sparkle(dp[0]+28,dp[1]-24,9)+gf.sparkle(dp[0]-26,dp[1]+8,7))

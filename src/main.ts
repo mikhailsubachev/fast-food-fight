@@ -124,7 +124,7 @@ stage.renderer.domElement.addEventListener('pointerdown', (ev) => {
     return;
   }
   const place = game.checkPlace(p);
-  if (place === 'ok') menus.openSpot(p);
+  if (place === 'ok') menus.openSpot(game.slotAt(p)!);
   else if (place !== 'outside') menus.showCross(p);
 });
 
