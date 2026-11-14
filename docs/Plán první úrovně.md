@@ -56,10 +56,11 @@ Co to znamená prakticky:
 
 Technické zásady:
 
-- Orientace na šířku (landscape). Ovládání myší i dotykem stejně: vše se dělá jedním kliknutím / ťuknutím, nic se netáhne a nic nezávisí na najetí myší (hover), protože na dotyku neexistuje.
+- Orientace na výšku (portrait), hraje se jednou rukou. Na telefonu na šířku hra poprosí o otočení. Ovládání myší i dotykem stejně: vše se dělá jedním kliknutím / ťuknutím, nic se netáhne a nic nezávisí na najetí myší (hover), protože na dotyku neexistuje.
 - Cíl 60 fps na střední třídě Androidu (např. 3 roky starý telefon), minimálně 30 fps.
 - Prostředí a případné 3D modely postav jsou low-poly (do ~3 000 trojúhelníků na model). Papírové loutky z kreseb mají místo toho limit na obrázek: nejvýš 1024 × 1024 px na postavu, aby se hra na telefonu rychle načetla. Toon shader + obrysy, žádné dynamické stíny kromě jednoduchého „blob“ stínu pod postavou.
-- Kamera: pevný šikmý pohled shora a z boku (asi 50°: postavy jsou vidět zboku, ale méně se navzájem zakrývají), bez otáčení, bez zoomu a bez posouvání. Celá cesta a místa na sázení se vejdou na obrazovku. Cesta vede třikrát přes celou šířku záhonu (asi 35 políček), okraje kolem ní jsou úzké; pro pórek mimo dosah hranolek zbývají jen kouty záhonu.
+- Kamera: pevný šikmý pohled shora a z boku (asi 50°), bez otáčení, bez zoomu a bez posouvání. Širší úhel záběru dává výraznou perspektivu: postavy vzadu (nahoře) jsou menší a jak jdou po cestě k puse, rostou. Záhon je úzký a dlouhý (6 × 20 políček) a vyplní celou výšku displeje. Cesta vede z levého horního rohu mírným obloukem přes celou výšku k puse v pravém dolním rohu (asi 20 políček) a skoro se nevlní, aby se postavy co nejméně překrývaly. Fast food, který zakrývá zeleninu, zprůhlední; zelenina je vidět vždy.
+- Celá obrazovka: na telefonu a tabletu se hra při prvním ťuknutí přepne na celou obrazovku (Android navíc zamkne otočení na výšku), v horní liště je tlačítko pro zapnutí a vypnutí. iPhone to u webových stránek neumí; tam tlačítko poradí „Sdílet → Přidat na plochu“ a hra z plochy běží přes celou obrazovku.
 - Různé poměry stran (telefon 20:9, tablet 4:3, monitor 16:9): mapa se vždy celá vejde, na širších obrazovkách se po stranách jen doplní dekorace pozadí.
 
 ## 3. Základní herní smyčka
@@ -118,7 +119,7 @@ Startovní voda: **120** (stačí na 3 mrkve nebo 2 mrkve a pórek po odemčení
 | ---------- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
 | 1          | 3 hamburgery, rozestup 4 s                                             | sázet mrkev, voda se sbírá sama                          |
 | 2          | 6 hamburgerů, rozestup 3 s                                             | odemkne se pórek: střílí z dálky                         |
-| 3          | 8 hamburgerů + 6 hranolek, rozestup 1,3 s, fast food o 20 % rychlejší | hranolky zmrazí obránce, pórek dál od cesty je v bezpečí |
+| 3          | 8 hamburgerů + 6 hranolek, rozestup 1,3 s, fast food o 30 % rychlejší | hranolky zmrazí obránce, pórek dál od cesty je v bezpečí |
 | 4 (finále) | 4 husté nápory: 9 hamburgerů + 20 hranolek + 18 „velkých“ hamburgerů (7 zásahů), o 60 % rychlejší | vylepšení, kombinace mrkve a pórku |
 
 Mezi vlnami pauza, pár sekund na oddechnutí. Další vlna se spouští automaticky. Celá úroveň je do 5 min.

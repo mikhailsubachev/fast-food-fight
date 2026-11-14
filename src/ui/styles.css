@@ -90,6 +90,21 @@ button:active {
   pointer-events: auto;
 }
 
+.hud-right {
+  display: flex;
+  gap: 10px;
+}
+
+.fullscreen svg {
+  display: block;
+  margin: auto;
+  transition: transform 0.2s;
+}
+
+.fullscreen.on svg {
+  transform: scale(0.8);
+}
+
 .hud-mid {
   display: flex;
   gap: 12px;
@@ -386,8 +401,8 @@ button:active {
   padding: 24px;
 }
 
-/* Hra je na šířku; na telefonu na výšku poprosí o otočení. */
-@media (orientation: portrait) and (pointer: coarse) {
+/* Hra je na výšku; na telefonu na šířku poprosí o otočení. */
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 540px) {
   .rotate {
     display: flex;
   }
@@ -504,5 +519,42 @@ button:active {
   }
   100% {
     opacity: 0;
+  }
+}
+
+/* Úzký displej (telefon na výšku): horní lišta ve dvou řádcích,
+   nahoře voda a tlačítka, pod nimi zoubky a vlna (nebo odpočet). */
+@media (max-width: 560px) {
+  :root {
+    --tap: 48px;
+  }
+  .hud {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding-top: max(10px, env(safe-area-inset-top));
+  }
+  .hud-mid {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: center;
+    gap: 8px;
+  }
+  .pill {
+    height: 44px;
+    font-size: 20px;
+    padding: 0 12px;
+  }
+  .water {
+    min-width: 96px;
+  }
+  .countdown {
+    font-size: 17px;
+    padding-left: 12px;
+  }
+  .now {
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 17px;
   }
 }

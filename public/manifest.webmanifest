@@ -1,0 +1,12 @@
+{
+  "name": "Fast Food Fight",
+  "short_name": "Fast Food Fight",
+  "lang": "cs",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#8bb85a",
+  "theme_color": "#8bb85a",
+  "icons": [{ "src": "assets/postavy/pusa.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

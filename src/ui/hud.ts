@@ -2,6 +2,19 @@ import type { Game } from '../core/game';
 import { T } from '../data/texts.cs';
 import { MOUTH_LIVES } from '../data/units';
 import { button, el, replayAnimation } from './dom';
+import {
+  enterFullscreen,
+  exitFullscreen,
+  fullscreenSupported,
+  isFullscreen,
+  isIPhone,
+  onFullscreenChange,
+  runsAsApp,
+} from './fullscreen';
+
+/** Čtyři rohy: přepnutí na celou obrazovku (při zapnutí se rohy otočí dovnitř přes CSS). */
+const FULLSCREEN_ICON =
+  '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
 
 /** Horní lišta (voda, zoubky, vlna, pauza), odpočet do vlny, nápisy a létající kapky vody. */
 export class Hud {
@@ -43,7 +56,21 @@ export class Hud {
 
     const pause = button('round pause', '⏸', handlers.onPause);
     pause.setAttribute('aria-label', T.pause);
-    bar.append(this.waterPill, mid, pause);
+    const right = el('div', 'hud-right');
+    // Tlačítko celé obrazovky: kde to prohlížeč umí, nebo na iPhonu s radou „Přidat na plochu“.
+    if (!runsAsApp && (fullscreenSupported || isIPhone)) {
+      const fs = button('round fullscreen', '', () => {
+        if (!fullscreenSupported) this.showBanner(T.fullscreenIPhone, 4000);
+        else if (isFullscreen()) void exitFullscreen();
+        else void enterFullscreen();
+      });
+      fs.innerHTML = FULLSCREEN_ICON;
+      fs.setAttribute('aria-label', T.fullscreen);
+      onFullscreenChange(() => fs.classList.toggle('on', isFullscreen()));
+      right.append(fs);
+    }
+    right.append(pause);
+    bar.append(this.waterPill, mid, right);
 
     this.banner = el('div', 'banner');
     parent.append(bar, this.banner);

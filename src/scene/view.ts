@@ -246,8 +246,8 @@ export class View {
   }
 
   /**
-   * Postava, která stojí před jinou (blíž ke kameře) a zakrývá ji, zprůhlední,
-   * aby bylo vidět, co je zasazeno a kdo jde po cestě. Platí mezi zeleninou a fast foodem.
+   * Fast food, který stojí před zeleninou (blíž ke kameře) a zakrývá ji, zprůhlední.
+   * Zelenina zůstává vždy plně vidět, aby hráč věděl, co a kde má zasazeno.
    */
   private fadeOverlaps(dt: number): void {
     const hidden = new Set<Anim>();
@@ -259,21 +259,18 @@ export class View {
         if (Math.abs(ap.x - dp.x) > 0.45 + 0.35 * size) continue;
         const dz = ap.z - dp.z;
         // Přední postava zakryje zem za sebou zhruba do vzdálenosti své výšky.
-        if (dz > 0.05 && dz < 1.3 * size) hidden.add(a);
-        else if (dz < -0.05 && dz > -1.3) hidden.add(d);
+        if (dz > 0.05 && dz < 1.6 * size) hidden.add(a);
       }
     }
     const step = Math.min(1, dt * 10);
-    for (const group of [this.defenders, this.attackers]) {
-      for (const anim of group.values()) {
-        const mat = anim.puppet.sprite.material;
-        const target = hidden.has(anim) ? 0.5 : 1;
-        mat.opacity += (target - mat.opacity) * step;
-        const see = mat.opacity < 0.98;
-        if (mat.transparent !== see) {
-          mat.transparent = see;
-          mat.needsUpdate = true;
-        }
+    for (const anim of this.attackers.values()) {
+      const mat = anim.puppet.sprite.material;
+      const target = hidden.has(anim) ? 0.35 : 1;
+      mat.opacity += (target - mat.opacity) * step;
+      const see = mat.opacity < 0.98;
+      if (mat.transparent !== see) {
+        mat.transparent = see;
+        mat.needsUpdate = true;
       }
     }
   }

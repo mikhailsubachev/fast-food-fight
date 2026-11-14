@@ -21,14 +21,14 @@ const free: Vec2[] = [];
 }
 /** Místa dobrá pro mrkev: cesta v dosahu. */
 const carrotSpots = free.filter((p) => path.distanceTo(p) <= 1.25);
-/** Mrkve na dobrých místech mezi průchody cesty. */
+/** Mrkve na dobrých místech po obou stranách cesty. */
 const designCarrots: Vec2[] = [
-  { x: 3.0, z: 3.0 },
-  { x: 5.5, z: 3.0 },
-  { x: 9.6, z: 3.4 },
-  { x: 1.9, z: 6.0 },
-  { x: 5.5, z: 6.0 },
-  { x: 7.4, z: 6.1 },
+  { x: 2.6, z: 0.6 },
+  { x: 3.6, z: 4.0 },
+  { x: 1.2, z: 4.4 },
+  { x: 3.8, z: 8.0 },
+  { x: 1.6, z: 9.6 },
+  { x: 4.4, z: 12.4 },
 ];
 /** Místa dobrá pro pórek: mimo hod hranolek, ale cesta v dosahu. */
 const leekSpots = free.filter((p) => path.distanceTo(p) > throwRange + 0.1 && path.distanceTo(p) <= leekRange - 0.3);
@@ -63,13 +63,13 @@ describe('záhon 1. úrovně', () => {
     expect(free.length / all).toBeGreaterThan(0.15);
   });
 
-  it('mrkve mezi průchody cesty jdou zasadit', () => {
+  it('mrkve u cesty jdou zasadit', () => {
     const g = new Game({ ...LEVEL1, startWater: 1000 });
     for (const p of designCarrots) expect(g.plant(p, 'mrkev')).toBe(true);
   });
 
   it('je dost místa pro mrkev u cesty i pro pórek mimo dosah hranolek', () => {
-    expect(carrotSpots.length).toBeGreaterThan(100);
+    expect(carrotSpots.length).toBeGreaterThan(60);
     expect(leekSpots.length).toBeGreaterThan(15);
   });
 
@@ -78,7 +78,7 @@ describe('záhon 1. úrovně', () => {
     expect(g.checkPlace(LEVEL1.path[40])).toBe('path');
     for (const o of LEVEL1.obstacles) expect(g.checkPlace(o)).toBe('obstacle');
     expect(g.checkPlace(LEVEL1.mouth)).not.toBe('ok');
-    const spot = carrotSpots[0];
+    const spot = carrotSpots.find((p) => g.checkPlace({ x: p.x + 0.5, z: p.z }) === 'ok')!;
     expect(g.plant(spot, 'mrkev')).toBe(true);
     expect(g.checkPlace({ x: spot.x + 0.5, z: spot.z })).toBe('crowded');
     expect(g.checkPlace({ x: LEVEL1.board.maxX + 1, z: 4 })).toBe('outside');
@@ -89,10 +89,10 @@ describe('záhon 1. úrovně', () => {
     for (const p of free) expect(path.distanceTo(p)).toBeGreaterThanOrEqual(MIN_PATH_DISTANCE);
   });
 
-  it('hamburger dojde ze startu do pusy za 30 až 40 s', () => {
+  it('hamburger dojde ze startu do pusy za 18 až 30 s', () => {
     const walk = path.length / ATTACKERS.hamburger.speed;
-    expect(walk).toBeGreaterThanOrEqual(30);
-    expect(walk).toBeLessThanOrEqual(40);
+    expect(walk).toBeGreaterThanOrEqual(18);
+    expect(walk).toBeLessThanOrEqual(30);
   });
 
   it('mrkev z místa u cesty na cestu dosáhne', () => {

@@ -2,10 +2,21 @@ import * as THREE from 'three';
 import type { LevelData } from '../data/level1';
 import type { Vec2 } from '../core/types';
 
-/** Pevný šikmý pohled shora a z boku, bez otáčení, zoomu a posouvání. */
+/**
+ * Pevný šikmý pohled shora a z boku, bez otáčení, zoomu a posouvání.
+ * Širší úhel záběru (FOV) a kamera blíž k záhonu dávají silnější perspektivu:
+ * postavy vzadu (na začátku cesty) jsou menší a cestou k puse rostou.
+ */
 const CAMERA_TILT = THREE.MathUtils.degToRad(50);
-/** Místo nahoře pro horní lištu (v CSS pixelech). */
-export const HUD_HEIGHT = 72;
+const CAMERA_FOV = 60;
+/** Místo nahoře pro horní lištu (v CSS pixelech), než se dá změřit skutečná lišta. */
+const HUD_HEIGHT = 72;
+
+/** Výška horní lišty; na úzkém displeji má dva řádky. */
+function hudHeight(): number {
+  const hud = document.querySelector<HTMLElement>('.hud');
+  return hud ? hud.getBoundingClientRect().bottom : HUD_HEIGHT;
+}
 const MARGIN = 0.03;
 /** Výška postav, aby se do obrazovky vešly i hlavy postav u horního okraje. */
 const FIGURE_HEIGHT = 1.8;
@@ -13,7 +24,7 @@ const FIGURE_HEIGHT = 1.8;
 export class Stage {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
-  readonly camera = new THREE.PerspectiveCamera(35, 1, 0.1, 500);
+  readonly camera = new THREE.PerspectiveCamera(CAMERA_FOV, 1, 0.1, 500);
   width = 1;
   height = 1;
 
@@ -57,7 +68,7 @@ export class Stage {
     this.camera.clearViewOffset();
     this.camera.updateProjectionMatrix();
 
-    const top = Math.min(0.4, (2 * HUD_HEIGHT) / h);
+    const top = Math.min(0.5, (2 * hudHeight()) / h);
     const availW = 2 - 2 * MARGIN;
     const availH = 2 - 2 * MARGIN - top;
     let lo = 2;

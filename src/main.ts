@@ -7,6 +7,7 @@ import { Stage } from './scene/stage';
 import { View } from './scene/view';
 import { Hud } from './ui/hud';
 import { Menus } from './ui/menus';
+import { enterFullscreen, fullscreenSupported, isTouchDevice, runsAsApp } from './ui/fullscreen';
 import { Screens } from './ui/screens';
 
 const app = document.getElementById('app')!;
@@ -24,6 +25,8 @@ const hud = new Hud(app, {
   onNow: () => game.startNow(),
 });
 const menus = new Menus(app, game, stage, view);
+// Horní lišta už existuje: kamera změří její výšku a mapu umístí pod ni.
+stage.resize();
 const screens = new Screens(app);
 
 function pause(): void {
@@ -127,19 +130,25 @@ stage.renderer.domElement.addEventListener('pointerdown', (ev) => {
 
 window.addEventListener('resize', () => menus.close());
 
+// Na telefonu a tabletu se hra při prvním ťuknutí sama přepne na celou obrazovku
+// (prohlížeč to dovolí jen po ťuknutí). Potom už jen tlačítkem v horní liště.
+if (isTouchDevice && fullscreenSupported && !runsAsApp) {
+  window.addEventListener('pointerdown', () => void enterFullscreen(), { once: true, capture: true });
+}
+
 // Hra se sama pozastaví, když se telefon přepne do jiné aplikace nebo zamkne.
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) pause();
 });
 
-// Na telefonu na výšku je vidět jen prosba o otočení; hra mezitím stojí.
-const portraitPhone = window.matchMedia('(orientation: portrait) and (pointer: coarse)');
+// Hra je na výšku. Na telefonu na šířku je vidět jen prosba o otočení; hra mezitím stojí.
+const landscapePhone = window.matchMedia('(orientation: landscape) and (pointer: coarse) and (max-height: 540px)');
 
 let last = performance.now();
 function frame(now: number): void {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  if (!paused && !portraitPhone.matches) {
+  if (!paused && !landscapePhone.matches) {
     game.update(dt);
     handle(game.drainEvents());
     view.update(game, dt, now / 1000);
