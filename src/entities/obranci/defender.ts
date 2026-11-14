@@ -4,7 +4,6 @@ import type { Vec2 } from '../../core/types';
 export interface Defender {
   id: number;
   type: DefenderType;
-  slot: number;
   x: number;
   z: number;
   level: 1 | 2;
@@ -15,11 +14,10 @@ export interface Defender {
   frozenLeft: number;
 }
 
-export function createDefender(id: number, type: DefenderType, slot: number, pos: Vec2): Defender {
+export function createDefender(id: number, type: DefenderType, pos: Vec2): Defender {
   return {
     id,
     type,
-    slot,
     x: pos.x,
     z: pos.z,
     level: 1,

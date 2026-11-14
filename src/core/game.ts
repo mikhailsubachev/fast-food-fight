@@ -10,6 +10,8 @@ import {
 import { createAttacker, type Attacker } from '../entities/utocnici/attacker';
 import { createDefender, defenderLevel, isGrown, type Defender } from '../entities/obranci/defender';
 import { Path } from './path';
+import { checkPlace, type PlaceCheck } from './placement';
+import type { Vec2 } from './types';
 
 export type Phase = 'countdown' | 'wave' | 'won' | 'lost';
 
@@ -42,7 +44,7 @@ export type GameEvent =
   | { type: 'won'; stars: number }
   | { type: 'lost' };
 
-export type PlantCheck = 'ok' | 'locked' | 'water' | 'occupied';
+export type PlantCheck = PlaceCheck | 'locked' | 'water';
 
 /** Herní logika bez grafiky: dá se spustit i v automatickém testu. */
 export class Game {
@@ -98,21 +100,37 @@ export class Game {
     return e;
   }
 
-  defenderAt(slot: number): Defender | undefined {
-    return this.defenders.find((d) => d.slot === slot);
+  /** Zelenina, na kterou hráč ťukl (v okruhu `radius` od bodu). */
+  defenderNear(p: Vec2, radius = 0.7): Defender | undefined {
+    let best: Defender | undefined;
+    let bestDist = radius;
+    for (const d of this.defenders) {
+      const dist = Math.hypot(d.x - p.x, d.z - p.z);
+      if (dist < bestDist) {
+        best = d;
+        bestDist = dist;
+      }
+    }
+    return best;
   }
 
-  checkPlant(slot: number, type: DefenderType): PlantCheck {
-    if (this.defenderAt(slot)) return 'occupied';
+  /** Dá se na tohle místo vůbec sázet (bez ohledu na vodu)? */
+  checkPlace(p: Vec2): PlaceCheck {
+    return checkPlace(this.level, this.path, this.defenders, p);
+  }
+
+  checkPlant(p: Vec2, type: DefenderType): PlantCheck {
+    const place = this.checkPlace(p);
+    if (place !== 'ok') return place;
     if (!this.unlocked.has(type)) return 'locked';
     if (this.water < DEFENDERS[type].cost) return 'water';
     return 'ok';
   }
 
-  plant(slot: number, type: DefenderType): boolean {
-    if (this.finished || this.checkPlant(slot, type) !== 'ok') return false;
+  plant(p: Vec2, type: DefenderType): boolean {
+    if (this.finished || this.checkPlant(p, type) !== 'ok') return false;
     this.water -= DEFENDERS[type].cost;
-    const d = createDefender(this.nextId++, type, slot, this.level.slots[slot]);
+    const d = createDefender(this.nextId++, type, p);
     this.defenders.push(d);
     this.events.push({ type: 'planted', defenderId: d.id });
     return true;

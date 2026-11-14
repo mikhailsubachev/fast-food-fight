@@ -1,0 +1,12 @@
+# Návrhy grafiky
+
+Artboardy z plátna „Fast Food Fight – Pan Mrkev“ (Claude Design), stav k 14. 11. 2026.
+
+- `artboardy/` – samostatné HTML stránky, otevřou se rovnou v prohlížeči. Předlohy kreseb se načítají z `../../kresby/`.
+  - `1-mrkev.html`, `2-porek.html`, `3-hamburger.html`, `4-hranolky.html` – listy postav (předloha, postava ve hře, díly loutky, stavy a animace)
+  - `5-uroven-1.html` – herní obrazovka 1. úrovně (1920 × 1080)
+  - `6-misto-na-zeleninu.html` – jak ubývá místa na sázení v dalších úrovních
+- `zdroj/` – původní soubory artboardů (`.dc.html`) a rozložení plátna (`canvas.json`) pro případné nahrání zpět do plátna
+- `generator/` – Python skripty, které artboardy vygenerovaly (kresba postav v SVG, projekce kamery 55°, tvar cesty)
+
+Živá verze s možností komentářů je na plátně: https://claude.ai/artifact/2V4tP86yjmRVgdsLQppiyy

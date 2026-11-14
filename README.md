@@ -23,6 +23,7 @@ Stav: **šedý prototyp 1. úrovně** (postavy jsou zatím jednoduché tvary, tu
 
 ```
 docs/                  plány a požadavky
+design/                návrhy grafiky z plátna (listy postav, obrazovka 1. úrovně)
 kresby/                originální fotky dětských kreseb (vstup pro grafiku)
 src/
   core/                herní smyčka, stav hry, voda, životy pusy, ukládání postupu

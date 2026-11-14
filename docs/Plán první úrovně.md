@@ -1,6 +1,6 @@
 # Fast Food Fight: plán první úrovně
 
-Stav: **finální plán v5** (14. 11. 2026, všechny odpovědi od Mika zapracované; v5 doplňuje automatické spouštění vln a odpovědi na otevřené otázky po kontrole plánu). Čísla jsou výchozí odhad pro první playtest a doladí se podle hraní s dětmi. Body označené „(návrh)“ jsou moje doporučení, která na otázkách nezávisí a dají se kdykoli změnit.
+Stav: **finální plán v6** (14. 11. 2026, všechny odpovědi od Mika zapracované; v5 doplnila automatické spouštění vln, v6 mění sázení: v 1. úrovni se sází téměř kamkoliv, v dalších úrovních místa ubývá). Čísla jsou výchozí odhad pro první playtest a doladí se podle hraní s dětmi. Body označené „(návrh)“ jsou moje doporučení, která na otázkách nezávisí a dají se kdykoli změnit.
 
 **Rozhodnuto:**
 
@@ -19,6 +19,7 @@ Stav: **finální plán v5** (14. 11. 2026, všechny odpovědi od Mika zapracova
 - Texty jsou zatím jen psané, česky, bez namluvení.
 - Hra je zatím zdarma, bez reklam a bez nákupů.
 - Mezi vlnami je krátká pauza a další vlna se spustí sama. Celá 1. úroveň trvá do 5 minut.
+- V 1. úrovni jde zeleninu zasadit téměř kamkoliv na záhon (ne na cestu a na pár malých překážek). V dalších úrovních bude místa na zeleninu míň a míň.
 
 Zdroj: [Úvodní požadavky.md](Úvodní%20požadavky.md)
 
@@ -64,7 +65,7 @@ Technické zásady:
 ## 3. Základní herní smyčka
 
 1. Úroveň začne s rozpočtem vody.
-2. Hráč ťukne na volné políčko u cesty → vybere zeleninu → zelenina se „zasadí“ a několik vteřin roste.
+2. Hráč ťukne na volné místo na záhoně → vybere zeleninu → zelenina se „zasadí“ a několik vteřin roste.
 3. Po vyrostení zelenina sama útočí na fast food v dosahu. Zásah se počítá až ve chvíli, kdy zbraň doletí nebo dosekne. Když se cíl mezitím otočí k útěku, letící pórek dopadne na zem, udělá „puf“ a zmizí. Nikdy se nezapočítá víc zásahů, než je potřeba k útěku.
 4. Fast food jde po cestě k puse. Po určitém počtu zásahů upustí kapku vody, otočí se a utíká zpět po cestě. Utíkající už nikomu neškodí, nedá se zasáhnout a po opuštění mapy zmizí úplně (nevrací se). Vlna mezitím pokračuje dál.
 5. Voda se sbírá sama: kapka vyskočí z utíkajícího fast foodu, chvilku se zatřpytí a obloukem odletí do počítadla vody nahoře (počítadlo poskočí a „žbluňkne“). Hráč za ni sází nebo vylepšuje.
@@ -81,8 +82,14 @@ Naučit hráče sázet, vylepšovat a poznat obě zeleniny a oba fast foody. Pro
 - **Obránci:** **Mrkev** (blízko, levná) a **Pórek** (lučišník, daleko, dražší). Pórek se odemkne během úrovně, až si hráč osahá mrkev.
 - **Útočníci:** **Hamburger** a **Hranolky**. Hranolky přijdou až ve 3. vlně, protože umí na chvilku zmrazit obránce a hráč na to musí být připravený.
 - **Mapa:** celá na jedné obrazovce, žádné posouvání. Jedna cesta tvaru „S“ od okraje obrazovky k puse, chůze hamburgeru po celé cestě ~20 s.
-- **Políčka na sázení:** 12 políček podél cesty, k dohrání stačí asi 6. Hodně místa, jak říkají požadavky. Část políček je blízko cesty (dobrá pro mrkev), část dál (dobrá pro pórek, mimo dosah hranolek).
+- **Sázení:** téměř kamkoliv na záhon. Nejde sázet na cestu, na 4 malé překážky (pařez, kámen, kaluž, krtina) a těsně k jiné zelenině (mezi rostlinami aspoň ~1 políčko, návrh). „Políčko“ zůstává jen jako jednotka vzdálenosti (dosah, rychlost). Mrkev se vyplatí sázet těsně u cesty, pórek dál, mimo dosah hranolek. K dohrání stačí asi 6 rostlin.
 - **Pusa (cíl):** jen velká komiksová pusa na konci cesty, bez obličeje kolem (případně jen náznak tváří). Má vlastní výrazy: klid, strach (fast food je blízko), kousnutí, zelená (3 stupně), vyzvracení, úsměv. Dítě kreslí 5 z nich (klid, strach, kousnutí, zelená, úsměv); stupně zelenosti a vyzvracení udělá Claude Code v kódu ze „zelené“ kresby.
+
+### Místo na zeleninu v dalších úrovních (návrh)
+
+- **1. úroveň:** celý záhon kromě cesty a 4 malých překážek (pařez, kámen, kaluž, krtina), hráč se učí, kam se co hodí.
+- **2. úroveň:** na stole a záhonu leží překážky (hrnek, solnička, ubrousek, kaluž od mléka), kam sázet nejde. Volného místa ubude zhruba na polovinu.
+- **3. úroveň a dál:** zbydou jen menší záhonky podél cesty a nakonec jen pár pevných míst, takže každé zasazení je důležité rozhodnutí.
 
 ### Výchozí čísla (k playtestu)
 
@@ -126,7 +133,7 @@ Mezi vlnami pauza, pár sekund na oddechnutí. Další vlna se spouští automat
 Krátké věty (do 8 slov), velké písmo a obrázky, protože sedmileté dítě ještě čte pomalu. Texty jsou jen psané a česky. Všechny texty budou v jednom souboru, aby se později daly snadno přeložit nebo namluvit. Text zmizí až po kliknutí, aby si ho dítě stihlo přečíst. Dokud je text vidět, odpočet do další vlny stojí.
 
 1. Cesta se rozsvítí od startu k puse (kamera se nehýbe). Text: „Fast food chce do pusy. Zastav ho!“
-2. Bliká první políčko → „Klikni sem a zasaď mrkev.“
+2. Bliká místo u cesty → „Klikni sem a zasaď mrkev.“
 3. Mrkev roste (ukazatel růstu). → „Mrkev chvilku roste, pak začne bránit.“
 4. Přijde vlna 1. Po prvním odraženém hamburgeru: „Hamburger utíká! A nechal ti vodu.“ (kapka sama odletí do počítadla)
 5. Před vlnou 2: velká animace „Nová zelenina: Pórek!“ → „Pórek střílí z dálky. Zasaď ho dál od cesty.“
@@ -147,7 +154,7 @@ Vlna končí, když na mapě nezbývá žádný fast food (všechny buď utekly,
 - Funguje stejně myší i dotykem: jedno kliknutí / ťuknutí na všechno.
 - Horní lišta: voda 💧, životy pusy (3 zoubky), číslo vlny (1/4), pauza.
 - Pauza zastaví celou hru a ukáže 3 velká tlačítka: Pokračovat, Začít znovu, Zvuk zap/vyp. Hra se pozastaví i sama, když se telefon přepne do jiné aplikace nebo se zamkne.
-- Klik na volné políčko → malé kruhové menu se zeleninou a cenou (na co není voda, je zašedlé).
+- Klik na volné místo na záhoně → malé kruhové menu se zeleninou a cenou (na co není voda, je zašedlé). Kde sázet nejde (cesta, překážka, moc blízko jiné zeleniny), ukáže se krátký červený křížek.
 - Klik na zasazenou zeleninu → zobrazí dosah + tlačítko Vylepšit s cenou. Po vylepšení na úroveň 2 tlačítko zmizí (v 1. úrovni hry víc nejde). Prodej ani přesazení v 1. úrovni nejsou.
 - Při výběru zeleniny se na mapě ukáže její dosah ještě před zasazením, aby dítě vidělo, kam dosáhne.
 - Tlačítko „Rychle ×2“ v 1. úrovni nebude (návrh). Pauzy mezi vlnami jsou krátké a dají se přeskočit tlačítkem „Hned!“, takže hráč nemusí čekat. Dá se přidat později.
@@ -195,7 +202,7 @@ Zvuk: veselá smyčka hudby, zvuky zasazení, seknutí, výstřelu pórku, hodu 
 
 ## 7. Co postavit a v jakém pořadí
 
-1. **Šedý prototyp** (krabičky místo postav; mezitím dítě kreslí postavy, Three.js v prohlížeči): mapa na jedné obrazovce, políčka, mrkev, pórek, hamburger, hranolky se zmrazením, automatický sběr vody, 3 životy pusy, výhra/prohra. Vyzkoušet na telefonu i s myší v prohlížeči.
+1. **Šedý prototyp** (krabičky místo postav; mezitím dítě kreslí postavy, Three.js v prohlížeči): mapa na jedné obrazovce, sázení kamkoliv na záhon, mrkev, pórek, hamburger, hranolky se zmrazením, automatický sběr vody, 3 životy pusy, výhra/prohra. Vyzkoušet na telefonu i s myší v prohlížeči.
 2. **Tutoriál a vlny**: skripty tutoriálu, 4 vlny, vylepšení.
 3. **Grafika a animace**: nafocené kresby převést na postavy do hry, animace, prostředí, UI.
 4. **Zvuk a doladění**: hudba, efekty, vyvážení čísel podle playtestu s dětmi.

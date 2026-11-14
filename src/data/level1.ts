@@ -1,3 +1,4 @@
+import { catmullRom, clipStartAtX } from '../core/path';
 import type { Vec2 } from '../core/types';
 import type { AttackerType, DefenderType } from './units';
 
@@ -7,13 +8,21 @@ export interface Spawn {
   delay: number;
 }
 
+export type ObstacleKind = 'parez' | 'kamen' | 'kaluz' | 'krtina';
+
+export interface Obstacle extends Vec2 {
+  kind: ObstacleKind;
+  /** Poloměr překážky; zelenina se k ní nedá zasadit. */
+  r: number;
+}
+
 export interface LevelData {
   id: number;
   name: string;
-  /** Cesta od okraje mapy k puse. */
+  /** Středová čára cesty od okraje záhonu k puse. */
   path: Vec2[];
-  slots: Vec2[];
-  /** Obdélník, který musí být vždy celý vidět. */
+  obstacles: Obstacle[];
+  /** Záhon: obdélník, na který se sází a který musí být vždy celý vidět. */
   board: { minX: number; maxX: number; minZ: number; maxZ: number };
   mouth: Vec2;
   startWater: number;
@@ -30,36 +39,41 @@ function seq(types: AttackerType[], gap: number): Spawn[] {
 const H: AttackerType = 'hamburger';
 const F: AttackerType = 'hranolky';
 
+const BOARD = { minX: -1, maxX: 12.7, minZ: -0.1, maxZ: 8.6 };
+
+/** Řídicí body zvlněné cesty „S“ z návrhu (design/generator/curve.py). */
+const PATH_CONTROL: Vec2[] = [
+  { x: -4.5, z: 2.6 },
+  { x: -1.8, z: 2.45 },
+  { x: 0.6, z: 2.25 },
+  { x: 3.0, z: 2.6 },
+  { x: 5.6, z: 2.35 },
+  { x: 7.6, z: 2.7 },
+  { x: 8.5, z: 3.7 },
+  { x: 7.9, z: 4.8 },
+  { x: 6.2, z: 5.15 },
+  { x: 4.2, z: 4.85 },
+  { x: 2.6, z: 5.25 },
+  { x: 2.1, z: 6.3 },
+  { x: 3.0, z: 7.3 },
+  { x: 5.0, z: 7.65 },
+  { x: 7.4, z: 7.35 },
+  { x: 9.9, z: 7.5 },
+];
+
 export const LEVEL1: LevelData = {
   id: 1,
   name: 'Snídaňová cesta',
-  // Cesta tvaru „S“: tři vodorovné úseky spojené dvěma krátkými.
-  path: [
-    { x: -1, z: 2.5 },
-    { x: 8, z: 2.5 },
-    { x: 8, z: 5 },
-    { x: 2.5, z: 5 },
-    { x: 2.5, z: 7.5 },
-    { x: 9.5, z: 7.5 },
+  path: clipStartAtX(catmullRom(PATH_CONTROL), BOARD.minX),
+  // Sází se téměř kamkoliv na záhon; nejde na cestu, na tyto překážky a těsně k jiné zelenině.
+  // Polohy podle návrhu úrovně (design/artboardy/5-uroven-1.html).
+  obstacles: [
+    { kind: 'parez', x: 7.6, z: 0.9, r: 0.6 },
+    { kind: 'kamen', x: 12.0, z: 5.0, r: 0.7 },
+    { kind: 'kaluz', x: 3.6, z: 6.3, r: 0.85 },
+    { kind: 'krtina', x: 10.4, z: 2.2, r: 0.6 },
   ],
-  slots: [
-    // Blízko cesty (dobrá pro mrkev): 1,25 políčka od cesty, často mezi dvěma úseky.
-    { x: 1, z: 1.25 },
-    { x: 6, z: 1.25 },
-    { x: 3.5, z: 3.75 },
-    { x: 5.5, z: 3.75 },
-    { x: 9.25, z: 3.75 },
-    { x: 1.25, z: 6.25 },
-    { x: 5, z: 6.25 },
-    { x: 7, z: 6.25 },
-    // Dál od cesty (dobrá pro pórek): mimo hod hranolek, pórek odtud dostřelí.
-    // Leží po stranách, protože obrazovka na šířku má víc místa do šířky než do hloubky.
-    { x: 10.5, z: 0.5 },
-    { x: 10.8, z: 4 },
-    { x: -0.3, z: 5.5 },
-    { x: 12.2, z: 6 },
-  ],
-  board: { minX: -1, maxX: 12.7, minZ: -0.1, maxZ: 8.6 },
+  board: BOARD,
   mouth: { x: 10.4, z: 7.5 },
   startWater: 120,
   startDefenders: ['mrkev'],

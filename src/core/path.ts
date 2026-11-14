@@ -1,5 +1,34 @@
 import type { Vec2 } from './types';
 
+/** Hladká křivka přes řídicí body (Catmull-Rom), stejná jako v návrhu `design/generator/curve.py`. */
+export function catmullRom(ctrl: readonly Vec2[], samplesPerSegment = 14): Vec2[] {
+  const p = [ctrl[0], ...ctrl, ctrl[ctrl.length - 1]];
+  const out: Vec2[] = [];
+  for (let i = 1; i < p.length - 2; i++) {
+    const [p0, p1, p2, p3] = [p[i - 1], p[i], p[i + 1], p[i + 2]];
+    for (let k = 0; k < samplesPerSegment; k++) {
+      const t = k / samplesPerSegment;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      const f = (a: number, b: number, c: number, d: number) =>
+        0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+      out.push({ x: f(p0.x, p1.x, p2.x, p3.x), z: f(p0.z, p1.z, p2.z, p3.z) });
+    }
+  }
+  out.push(ctrl[ctrl.length - 1]);
+  return out;
+}
+
+/** Odřízne začátek křivky tak, aby začínala přesně na okraji záhonu (x = minX). */
+export function clipStartAtX(points: readonly Vec2[], minX: number): Vec2[] {
+  const i = points.findIndex((p) => p.x >= minX);
+  if (i <= 0) return [...points];
+  const a = points[i - 1];
+  const b = points[i];
+  const t = (minX - a.x) / (b.x - a.x);
+  return [{ x: minX, z: a.z + (b.z - a.z) * t }, ...points.slice(i)];
+}
+
 export interface PathPoint extends Vec2 {
   dirX: number;
   dirZ: number;

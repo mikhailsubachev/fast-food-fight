@@ -61,9 +61,27 @@ function eyes(p: Puppet, y: number, z: number, spread = 0.12): void {
   }
 }
 
+const moundGeo = new THREE.CircleGeometry(1, 24);
+const moundEdge = new THREE.MeshBasicMaterial({ color: 0x2b2118 });
+const moundSoil = new THREE.MeshBasicMaterial({ color: 0x6b4a2e });
+
+/** Hromádka hlíny pod zasazenou zeleninou (jako v návrhu úrovně). */
+function mound(p: Puppet, r: number): void {
+  for (const [mat, s, y] of [
+    [moundEdge, 1.1, 0.03],
+    [moundSoil, 1, 0.035],
+  ] as const) {
+    const m = new THREE.Mesh(moundGeo, mat);
+    m.rotation.x = -Math.PI / 2;
+    m.position.y = y;
+    m.scale.set(r * s, r * 0.8 * s, 1);
+    p.root.add(m);
+  }
+}
+
 export function makeDefender(type: DefenderType): Puppet {
   const p = newPuppet();
-  blobShadow(p, 0.38);
+  mound(p, 0.4);
   if (type === 'mrkev') {
     part(p, new THREE.ConeGeometry(0.3, 0.95, 12), 0xf28c28, [0, 0.48, 0], [Math.PI, 0, 0]);
     part(p, new THREE.ConeGeometry(0.1, 0.4, 6), 0x3fa34d, [-0.08, 1.12, 0], [0, 0, 0.3]);

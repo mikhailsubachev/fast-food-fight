@@ -23,7 +23,7 @@ const hud = new Hud(app, {
   onPause: () => pause(),
   onNow: () => game.startNow(),
 });
-const menus = new Menus(app, game, view);
+const menus = new Menus(app, game, stage, view);
 const screens = new Screens(app);
 
 function pause(): void {
@@ -107,20 +107,22 @@ function handle(events: GameEvent[]): void {
 // Jedno ťuknutí / kliknutí na všechno; nic se netáhne a nic nezávisí na najetí myší.
 stage.renderer.domElement.addEventListener('pointerdown', (ev) => {
   if (paused || game.finished) return;
-  const g = stage.groundAt(ev.clientX, ev.clientY);
-  if (!g) return;
-  let best = -1;
-  // Velkorysý zásah kolem políčka (vyhrává nejbližší), aby se dalo trefit i dětským prstem.
-  let bestDist = 1.0;
-  level.slots.forEach((s, i) => {
-    const d = Math.hypot(s.x - g.x, s.z - g.z);
-    if (d < bestDist) {
-      best = i;
-      bestDist = d;
-    }
-  });
-  if (best >= 0) menus.open(best);
-  else menus.close();
+  const p = stage.groundAt(ev.clientX, ev.clientY);
+  if (!p) return;
+  // Ťuknutí na zeleninu (velkorysý okruh kvůli dětským prstům) → vylepšení.
+  const d = game.defenderNear(p, 0.7);
+  if (d) {
+    menus.openDefender(d.id);
+    return;
+  }
+  // Druhé ťuknutí mimo otevřené menu ho jen zavře.
+  if (menus.isOpen) {
+    menus.close();
+    return;
+  }
+  const place = game.checkPlace(p);
+  if (place === 'ok') menus.openSpot(p);
+  else if (place !== 'outside') menus.showCross(p);
 });
 
 window.addEventListener('resize', () => menus.close());

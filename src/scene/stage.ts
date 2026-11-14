@@ -29,7 +29,7 @@ export class Stage {
     this.renderer.domElement.className = 'stage';
     container.appendChild(this.renderer.domElement);
 
-    this.scene.background = new THREE.Color(0xf3e2c0);
+    this.scene.background = new THREE.Color(0x8bb85a);
     this.scene.add(new THREE.HemisphereLight(0xffffff, 0xb59b7a, 1.4));
     const sun = new THREE.DirectionalLight(0xffffff, 1.8);
     sun.position.set(-4, 10, 6);

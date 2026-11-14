@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import type { Game, GameEvent } from '../core/game';
 import type { LevelData } from '../data/level1';
-import { DEFENDERS, MOUTH_LIVES } from '../data/units';
-import { buildBoard, setSlotHighlight, type Board } from './board';
+import { DEFENDERS, MOUTH_LIVES, type DefenderType } from '../data/units';
+import { buildBoard, type Board } from './board';
 import { makeAttacker, makeDefender, makeMouth, makeProjectile, type MouthView, type Puppet } from './meshes';
 import type { Stage } from './stage';
 
@@ -37,9 +37,12 @@ export class View {
   private mouthPulse = 1;
   private mouthMood: 'play' | 'won' | 'lost' = 'play';
   private readonly ring: THREE.Group;
+  private readonly ringFill: THREE.MeshBasicMaterial;
+  private readonly ringEdge: THREE.MeshBasicMaterial;
+  private readonly spot: THREE.Group;
 
   constructor(
-    private readonly stage: Stage,
+    stage: Stage,
     private readonly level: LevelData,
   ) {
     this.board = buildBoard(level);
@@ -50,23 +53,38 @@ export class View {
     stage.scene.add(this.mouth.root);
 
     this.ring = new THREE.Group();
-    const fill = new THREE.Mesh(
-      new THREE.CircleGeometry(1, 48),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false }),
-    );
-    const edge = new THREE.Mesh(
-      new THREE.RingGeometry(0.96, 1, 64),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false }),
-    );
-    this.ring.add(fill, edge);
+    this.ringFill = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.12, depthWrite: false });
+    this.ringEdge = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.95, depthWrite: false });
+    this.ring.add(new THREE.Mesh(new THREE.CircleGeometry(1, 48), this.ringFill));
+    // Přerušovaný okraj jako v návrhu.
+    const dashes = 28;
+    for (let i = 0; i < dashes; i++) {
+      const arc = (Math.PI * 2) / dashes;
+      this.ring.add(new THREE.Mesh(new THREE.RingGeometry(0.965, 1, 4, 1, i * arc, arc * 0.58), this.ringEdge));
+    }
     this.ring.rotation.x = -Math.PI / 2;
-    this.ring.position.y = 0.07;
     this.ring.visible = false;
     stage.scene.add(this.ring);
+
+    // Místo, kam se chystá sázet: bílý kruh se zeleným okrajem.
+    this.spot = new THREE.Group();
+    const spotFill = new THREE.Mesh(
+      new THREE.CircleGeometry(0.42, 32),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false }),
+    );
+    const spotEdge = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.46, 32), new THREE.MeshBasicMaterial({ color: 0x3fa34d }));
+    this.spot.add(spotFill, spotEdge);
+    this.spot.rotation.x = -Math.PI / 2;
+    this.spot.visible = false;
+    stage.scene.add(this.spot);
   }
 
-  showRange(x: number, z: number, r: number): void {
-    this.ring.position.set(x, 0.07, z);
+  /** Dosah zeleniny: mrkev oranžově, pórek modře (barvy z návrhu). */
+  showRange(x: number, z: number, r: number, type: DefenderType): void {
+    const color = type === 'mrkev' ? 0xf08a24 : 0x2d8cd6;
+    this.ringFill.color.setHex(color);
+    this.ringEdge.color.setHex(color);
+    this.ring.position.set(x, 0.06, z);
     this.ring.scale.setScalar(r);
     this.ring.visible = true;
   }
@@ -75,8 +93,13 @@ export class View {
     this.ring.visible = false;
   }
 
-  highlightSlot(index: number | null): void {
-    setSlotHighlight(this.board, index);
+  showSpot(x: number, z: number): void {
+    this.spot.position.set(x, 0.05, z);
+    this.spot.visible = true;
+  }
+
+  hideSpot(): void {
+    this.spot.visible = false;
   }
 
   reset(): void {
@@ -88,7 +111,7 @@ export class View {
     this.mouthMood = 'play';
     this.mouthPulse = 1;
     this.hideRange();
-    this.highlightSlot(null);
+    this.hideSpot();
   }
 
   handleEvents(events: GameEvent[]): void {
@@ -324,11 +347,5 @@ export class View {
         map.delete(id);
       }
     }
-  }
-
-  /** Pozice políčka na obrazovce (pro menu nad ním). */
-  slotOnScreen(index: number): { x: number; y: number } {
-    const s = this.level.slots[index];
-    return this.stage.toScreen(s.x, 0, s.z);
   }
 }
