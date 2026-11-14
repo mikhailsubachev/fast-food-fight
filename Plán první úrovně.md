@@ -1,6 +1,6 @@
 # Fast Food Fight: plán první úrovně
 
-Stav: **finální plán v4** (14. 11. 2026, všechny odpovědi od Mika zapracované). Čísla jsou výchozí odhad pro první playtest a doladí se podle hraní s dětmi. Body označené „(návrh)“ jsou moje doporučení, která na otázkách nezávisí a dají se kdykoli změnit.
+Stav: **finální plán v5** (14. 11. 2026, všechny odpovědi od Mika zapracované; v5 doplňuje automatické spouštění vln a odpovědi na otevřené otázky po kontrole plánu). Čísla jsou výchozí odhad pro první playtest a doladí se podle hraní s dětmi. Body označené „(návrh)“ jsou moje doporučení, která na otázkách nezávisí a dají se kdykoli změnit.
 
 **Rozhodnuto:**
 
@@ -18,6 +18,7 @@ Stav: **finální plán v4** (14. 11. 2026, všechny odpovědi od Mika zapracova
 - V 1. úrovni se zelenina neprodává ani nepřesazuje. Přesazování přijde v dalších úrovních.
 - Texty jsou zatím jen psané, česky, bez namluvení.
 - Hra je zatím zdarma, bez reklam a bez nákupů.
+- Mezi vlnami je krátká pauza a další vlna se spustí sama. Celá 1. úroveň trvá do 5 minut.
 
 Zdroj: [Úvodní požadavky.md](Úvodní%20požadavky.md)
 
@@ -56,7 +57,7 @@ Technické zásady:
 
 - Orientace na šířku (landscape). Ovládání myší i dotykem stejně: vše se dělá jedním kliknutím / ťuknutím, nic se netáhne a nic nezávisí na najetí myší (hover), protože na dotyku neexistuje.
 - Cíl 60 fps na střední třídě Androidu (např. 3 roky starý telefon), minimálně 30 fps.
-- Low-poly modely (do ~3 000 trojúhelníků na postavu), toon shader + obrysy, žádné dynamické stíny kromě jednoduchého „blob“ stínu pod postavou.
+- Prostředí a případné 3D modely postav jsou low-poly (do ~3 000 trojúhelníků na model). Papírové loutky z kreseb mají místo toho limit na obrázek: nejvýš 1024 × 1024 px na postavu, aby se hra na telefonu rychle načetla. Toon shader + obrysy, žádné dynamické stíny kromě jednoduchého „blob“ stínu pod postavou.
 - Kamera: pevný šikmý pohled shora a z boku (asi 50–60°), bez otáčení, bez zoomu a bez posouvání. Celá mapa se vejde na obrazovku.
 - Různé poměry stran (telefon 20:9, tablet 4:3, monitor 16:9): mapa se vždy celá vejde, na širších obrazovkách se po stranách jen doplní dekorace pozadí.
 
@@ -64,7 +65,7 @@ Technické zásady:
 
 1. Úroveň začne s rozpočtem vody.
 2. Hráč ťukne na volné políčko u cesty → vybere zeleninu → zelenina se „zasadí“ a několik vteřin roste.
-3. Po vyrostení zelenina sama útočí na fast food v dosahu.
+3. Po vyrostení zelenina sama útočí na fast food v dosahu. Zásah se počítá až ve chvíli, kdy zbraň doletí nebo dosekne. Když se cíl mezitím otočí k útěku, letící pórek dopadne na zem, udělá „puf“ a zmizí. Nikdy se nezapočítá víc zásahů, než je potřeba k útěku.
 4. Fast food jde po cestě k puse. Po určitém počtu zásahů upustí kapku vody, otočí se a utíká zpět po cestě. Utíkající už nikomu neškodí, nedá se zasáhnout a po opuštění mapy zmizí úplně (nevrací se). Vlna mezitím pokračuje dál.
 5. Voda se sbírá sama: kapka vyskočí z utíkajícího fast foodu, chvilku se zatřpytí a obloukem odletí do počítadla vody nahoře (počítadlo poskočí a „žbluňkne“). Hráč za ni sází nebo vylepšuje.
 6. Když fast food dojde do pusy, kousne (pusa ztratí jeden ze 3 životů) a zmizí. Výhra: všechny vlny odraženy a pusa má aspoň jeden život. Prohra: čtvrté kousnutí → pusa se vyzvrací → opakovat úroveň.
@@ -81,7 +82,7 @@ Naučit hráče sázet, vylepšovat a poznat obě zeleniny a oba fast foody. Pro
 - **Útočníci:** **Hamburger** a **Hranolky**. Hranolky přijdou až ve 3. vlně, protože umí na chvilku zmrazit obránce a hráč na to musí být připravený.
 - **Mapa:** celá na jedné obrazovce, žádné posouvání. Jedna cesta tvaru „S“ od okraje obrazovky k puse, chůze hamburgeru po celé cestě ~20 s.
 - **Políčka na sázení:** 12 políček podél cesty, k dohrání stačí asi 6. Hodně místa, jak říkají požadavky. Část políček je blízko cesty (dobrá pro mrkev), část dál (dobrá pro pórek, mimo dosah hranolek).
-- **Pusa (cíl):** jen velká komiksová pusa na konci cesty, bez obličeje kolem (případně jen náznak tváří). Má vlastní výrazy: klid, strach, kousnutí, zezelenání, úsměv.
+- **Pusa (cíl):** jen velká komiksová pusa na konci cesty, bez obličeje kolem (případně jen náznak tváří). Má vlastní výrazy: klid, strach (fast food je blízko), kousnutí, zelená (3 stupně), vyzvracení, úsměv. Dítě kreslí 5 z nich (klid, strach, kousnutí, zelená, úsměv); stupně zelenosti a vyzvracení udělá Claude Code v kódu ze „zelené“ kresby.
 
 ### Výchozí čísla (k playtestu)
 
@@ -97,8 +98,10 @@ Naučit hráče sázet, vylepšovat a poznat obě zeleniny a oba fast foody. Pro
 | ---------------- | --------------------- | ------------------------------------------------------------------------------------- |
 | Zásahů do útěku  | 4                     | 5                                                                                     |
 | Rychlost chůze   | pomalá (~1 políčko/s) | o něco rychlejší (~1,3 políčka/s)                                                     |
-| Schopnost        | žádná, jen ťapká      | jednou za 5 s hodí hranolku na nejbližšího obránce do ~2,5 políčka, ten na 2 s ztuhne |
+| Schopnost        | žádná, jen ťapká      | jednou za 5 s hodí hranolku na nejbližšího vyrostlého obránce do ~2,5 políčka, ten na 2 s ztuhne (rostoucí zelenina je ještě schovaná v zemi a hranolky ji netrefí) |
 | Voda za odražení | 15                    | 20                                                                                    |
+
+**Velký hamburger** (jen na konci vlny 4): o polovinu větší, vydrží 7 zásahů, chodí pomaleji (~0,8 políčka/s), aby ho hráč stihl odrazit, za odražení dá 40 vody. Když dojde do pusy, kousne jen jednou jako ostatní.
 
 Startovní voda: **120** (stačí na 3 mrkve nebo 2 mrkve a pórek po odemčení).
 
@@ -111,11 +114,16 @@ Startovní voda: **120** (stačí na 3 mrkve nebo 2 mrkve a pórek po odemčení
 | 3          | 4 hamburgery + 2 hranolky                                              | hranolky zmrazí obránce, pórek dál od cesty je v bezpečí |
 | 4 (finále) | 8 hamburgerů + 4 hranolky, na konci jeden „velký“ hamburger (7 zásahů) | vylepšení, kombinace mrkve a pórku                       |
 
-Mezi vlnami pauza, dokud hráč neklikne na „Další vlna“ (bez časového tlaku). Celá úroveň trvá zhruba 4 až 6 minut.
+Mezi vlnami pauza, pár sekund na oddechnutí. Další vlna se spouští automaticky. Celá úroveň je do 5 min.
+
+- Pauza mezi vlnami trvá **8 s**, aby dítě stihlo zasadit nebo vylepšit zeleninu.
+- Odpočet je vidět velkými čísly (poslední 3 s jako 3-2-1). Tlačítko „Hned!“ odpočet přeskočí.
+- Když je na obrazovce text tutoriálu, odpočet stojí a rozběhne se až po jeho zavření kliknutím.
+- Odhad délky: vlny samotné asi 3 minuty, k tomu 3 pauzy a tutoriál, celkem do 5 minut.
 
 ### Tutoriál (krok za krokem)
 
-Krátké věty (do 8 slov), velké písmo a obrázky, protože sedmileté dítě ještě čte pomalu. Texty jsou jen psané a česky. Všechny texty budou v jednom souboru, aby se později daly snadno přeložit nebo namluvit. Text zmizí až po kliknutí, aby si ho dítě stihlo přečíst.
+Krátké věty (do 8 slov), velké písmo a obrázky, protože sedmileté dítě ještě čte pomalu. Texty jsou jen psané a česky. Všechny texty budou v jednom souboru, aby se později daly snadno přeložit nebo namluvit. Text zmizí až po kliknutí, aby si ho dítě stihlo přečíst. Dokud je text vidět, odpočet do další vlny stojí.
 
 1. Cesta se rozsvítí od startu k puse (kamera se nehýbe). Text: „Fast food chce do pusy. Zastav ho!“
 2. Bliká první políčko → „Klikni sem a zasaď mrkev.“
@@ -124,7 +132,7 @@ Krátké věty (do 8 slov), velké písmo a obrázky, protože sedmileté dítě
 5. Před vlnou 2: velká animace „Nová zelenina: Pórek!“ → „Pórek střílí z dálky. Zasaď ho dál od cesty.“
 6. Před vlnou 3: představení hranolek → „Pozor! Hranolky házejí hranolky a zelenina na chvilku ztuhne. Pórek je daleko, tam nedohodí.“
 7. Před vlnou 4: „Klikni na zeleninu a vylepši ji.“
-8. Konec: oslava zeleniny, hodnocení hvězdičkami podle zbylých životů pusy (3 = ⭐⭐⭐, návrh), odemknutí úrovně 2.
+8. Konec: oslava zeleniny, hodnocení hvězdičkami podle zbylých životů pusy (3 = ⭐⭐⭐, návrh), odemknutí úrovně 2: animace odemčeného zámku a obrazovka „Úroveň 2 – brzy!“ (úroveň 2 zatím neexistuje). Odemčení se uloží v zařízení.
 
 ### Prohra
 
@@ -138,10 +146,11 @@ Vlna končí, když na mapě nezbývá žádný fast food (všechny buď utekly,
 
 - Funguje stejně myší i dotykem: jedno kliknutí / ťuknutí na všechno.
 - Horní lišta: voda 💧, životy pusy (3 zoubky), číslo vlny (1/4), pauza.
+- Pauza zastaví celou hru a ukáže 3 velká tlačítka: Pokračovat, Začít znovu, Zvuk zap/vyp. Hra se pozastaví i sama, když se telefon přepne do jiné aplikace nebo se zamkne.
 - Klik na volné políčko → malé kruhové menu se zeleninou a cenou (na co není voda, je zašedlé).
 - Klik na zasazenou zeleninu → zobrazí dosah + tlačítko Vylepšit s cenou. Po vylepšení na úroveň 2 tlačítko zmizí (v 1. úrovni hry víc nejde). Prodej ani přesazení v 1. úrovni nejsou.
 - Při výběru zeleniny se na mapě ukáže její dosah ještě před zasazením, aby dítě vidělo, kam dosáhne.
-- Tlačítko „Rychle ×2“ v 1. úrovni nebude (návrh). Mezi vlnami je pauza, takže hráč nemusí čekat. Dá se přidat později.
+- Tlačítko „Rychle ×2“ v 1. úrovni nebude (návrh). Pauzy mezi vlnami jsou krátké a dají se přeskočit tlačítkem „Hned!“, takže hráč nemusí čekat. Dá se přidat později.
 - Všechny klikací cíle minimálně 48 dp (pohodlné pro dětské prsty).
 - Žádný zoom, žádné posouvání mapy.
 
@@ -163,10 +172,10 @@ Svět (záhon, cesta, pusa, pozadí) je 3D s pevnou kamerou shora a z boku, komi
 - Každá postava na samostatný bílý papír, zepředu, přes velkou část papíru.
 - Silné černé obrysy (fix), vybarvit pastelkami nebo fixy, nic přes okraj postavy.
 - Ideálně zvlášť nakreslit to, co se hýbe: ruce, nohy, zbraň (mrkvomeč, luk pórku, hranolka na hod).
-- Výrazy navíc na samostatný papír: vyděšený hamburger a hranolky (útěk), zmrzlý obránce, pusa ve 4 výrazech (klid, kousnutí, zelená, úsměv).
+- Výrazy navíc na samostatný papír: vyděšený hamburger a hranolky (útěk), zmrzlý obránce, pusa v 5 výrazech (klid, strach, kousnutí, zelená, úsměv). Vyzvracení dítě kreslit nemusí, udělá ho Claude Code.
 - Vyfotit za denního světla, kolmo shora, bez stínu, a obrázky dát do složky projektu (např. `Fast Food Fight/kresby/`).
 
-Potřebné kresby pro 1. úroveň: mrkev, pórek, hamburger, hranolky, pusa (4 výrazy), kapka vody. Vylepšené verze (úroveň 2) můžou být kresba s doplňkem (helma, větší meč), nebo je Claude Code udělá z původní kresby barevným odleskem a hvězdičkou.
+Potřebné kresby pro 1. úroveň: mrkev, pórek, hamburger, hranolky, pusa (5 výrazů), kapka vody. Velký hamburger je zvětšený hamburger, samostatnou kresbu nepotřebuje. Vylepšené verze (úroveň 2) můžou být kresba s doplňkem (helma, větší meč), nebo je Claude Code udělá z původní kresby barevným odleskem a hvězdičkou.
 
 ### Seznam animací
 
@@ -176,7 +185,10 @@ Potřebné kresby pro 1. úroveň: mrkev, pórek, hamburger, hranolky, pusa (4 v
 - **Hranolky:** chůze (krabička poskakuje), hod hranolkou (let + „plesk“ na obránci), zásah, útěk, upuštění kapky.
 - **Utíkající fast food:** na okraji mapy „pufne“ v obláčku a zmizí, aby bylo jasné, že se nevrátí.
 - **Voda:** kapka vyskočí, zatřpytí se, obloukem odletí do počítadla nahoře, počítadlo poskočí.
-- **Pusa:** klid, nervózní pohled při blízkém fast foodu, kousnutí (zašklebení, 3 stupně zelenosti), vyzvracení (prohra, komiksově), úsměv (výhra).
+- **Pusa:** klid, nervózní pohled při blízkém fast foodu, kousnutí (zašklebení, 3 stupně zelenosti přebarvením „zelené“ kresby), vyzvracení (prohra, komiksový zelený proud s hvězdičkami, nic nechutného), úsměv (výhra).
+- **Pórek, který mine:** dopadne na zem, „puf“ a zmizí.
+- **Odpočet mezi vlnami:** velká čísla 3-2-1, tlačítko „Hned!“.
+- **Výhra:** odemčený zámek úrovně 2.
 - **Prostředí (návrh):** zeleninový záhon na kuchyňském stole, cesta z prostírání vede k puse, částice kapek a hvězdiček při zásahu.
 
 Zvuk: veselá smyčka hudby, zvuky zasazení, seknutí, výstřelu pórku, hodu hranolkou, „au“ fast foodu, letící kapky vody, výhry a prohry. (Zvuky se dají vzít z volných knihoven s licencí CC0.)
@@ -194,7 +206,7 @@ Zvuk: veselá smyčka hudby, zvuky zasazení, seknutí, výstřelu pórku, hodu 
 - Hraje se plynule na telefonu s Androidem, v mobilním prohlížeči (iOS Safari, Android Chrome) i na počítači s myší.
 - Celá mapa je vidět bez posouvání na telefonu, tabletu i monitoru.
 - Sedmileté dítě projde tutoriál bez vysvětlování od dospělého.
-- Úroveň trvá 4 až 6 minut.
+- Úroveň trvá do 5 minut.
 - Výhra i prohra mají vlastní animaci a obrazovku.
 - Po výhře se odemkne úroveň 2 a stav se uloží v zařízení.
 
