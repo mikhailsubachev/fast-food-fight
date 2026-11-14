@@ -141,14 +141,14 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) pause();
 });
 
-// Hra je na výšku. Na telefonu na šířku je vidět jen prosba o otočení; hra mezitím stojí.
-const landscapePhone = window.matchMedia('(orientation: landscape) and (pointer: coarse) and (max-height: 540px)');
+// Hra je na šířku. Na telefonu na výšku je vidět jen prosba o otočení; hra mezitím stojí.
+const portraitPhone = window.matchMedia('(orientation: portrait) and (pointer: coarse)');
 
 let last = performance.now();
 function frame(now: number): void {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  if (!paused && !landscapePhone.matches) {
+  if (!paused && !portraitPhone.matches) {
     game.update(dt);
     handle(game.drainEvents());
     view.update(game, dt, now / 1000);

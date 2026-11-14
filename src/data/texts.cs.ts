@@ -28,7 +28,7 @@ export const T = {
   loseTitle: 'Bléééé! Puse je špatně.',
   loseHint: 'Zasaď víc zeleniny u cesty.',
   tryAgain: 'Zkusit znovu',
-  rotate: 'Otoč telefon na výšku',
+  rotate: 'Otoč telefon na šířku',
   fullscreen: 'Celá obrazovka',
   fullscreenIPhone: 'Celá obrazovka: Sdílet ⬆ → Přidat na plochu',
 };

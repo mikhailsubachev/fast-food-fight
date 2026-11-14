@@ -259,7 +259,7 @@ export class View {
         if (Math.abs(ap.x - dp.x) > 0.45 + 0.35 * size) continue;
         const dz = ap.z - dp.z;
         // Přední postava zakryje zem za sebou zhruba do vzdálenosti své výšky.
-        if (dz > 0.05 && dz < 1.6 * size) hidden.add(a);
+        if (dz > 0.05 && dz < 1.8 * size) hidden.add(a);
       }
     }
     const step = Math.min(1, dt * 10);

@@ -21,17 +21,28 @@ const free: Vec2[] = [];
 }
 /** Místa dobrá pro mrkev: cesta v dosahu. */
 const carrotSpots = free.filter((p) => path.distanceTo(p) <= 1.25);
-/** Mrkve na dobrých místech po obou stranách cesty. */
+/** Mrkve z návrhu úrovně (plátno „Úroveň 1 – Snídaňová cesta“). */
 const designCarrots: Vec2[] = [
-  { x: 2.6, z: 0.6 },
-  { x: 3.6, z: 4.0 },
-  { x: 1.2, z: 4.4 },
-  { x: 3.8, z: 8.0 },
-  { x: 1.6, z: 9.6 },
-  { x: 4.4, z: 12.4 },
+  { x: 3.9, z: 3.9 },
+  { x: 5.1, z: 5.0 },
+  { x: 3.9, z: 6.7 },
+  { x: 9.2, z: 5.1 },
+  { x: 7.5, z: 5.3 },
+  { x: 12.2, z: 5.7 },
 ];
 /** Místa dobrá pro pórek: mimo hod hranolek, ale cesta v dosahu. */
 const leekSpots = free.filter((p) => path.distanceTo(p) > throwRange + 0.1 && path.distanceTo(p) <= leekRange - 0.3);
+/** Kolik cesty má pórek z daného místa v dosahu (body cesty po čtvrt políčku). */
+function pathInRange(p: Vec2, range: number): number {
+  let n = 0;
+  for (let d = 0; d < path.length; d += 0.25) {
+    const q = path.at(d);
+    if (Math.hypot(q.x - p.x, q.z - p.z) <= range) n++;
+  }
+  return n;
+}
+/** Nejlepší místa na pórek: ta, odkud dosáhne na nejvíc cesty. */
+const bestLeekSpots = [...leekSpots].sort((a, b) => pathInRange(b, leekRange) - pathInRange(a, leekRange));
 
 function run(game: Game, seconds: number, bot?: (g: Game) => void, until?: (g: Game) => boolean): number {
   const dt = 1 / 30;
@@ -63,7 +74,7 @@ describe('záhon 1. úrovně', () => {
     expect(free.length / all).toBeGreaterThan(0.15);
   });
 
-  it('mrkve u cesty jdou zasadit', () => {
+  it('mrkve z návrhu úrovně jdou zasadit', () => {
     const g = new Game({ ...LEVEL1, startWater: 1000 });
     for (const p of designCarrots) expect(g.plant(p, 'mrkev')).toBe(true);
   });
@@ -185,7 +196,7 @@ describe('hratelnost', () => {
   function sensiblePlayer(maxCarrots: number) {
     return (g: Game) => {
       if (g.unlocked.has('porek') && g.defenders.filter((d) => d.type === 'porek').length < 4) {
-        if (g.water >= DEFENDERS.porek.cost) plantFirst(g, leekSpots, 'porek');
+        if (g.water >= DEFENDERS.porek.cost) plantFirst(g, bestLeekSpots, 'porek');
         return;
       }
       const carrots = g.defenders.filter((d) => d.type === 'mrkev').length;
@@ -213,7 +224,7 @@ describe('hratelnost', () => {
       const carrots = game.defenders.filter((d) => d.type === 'mrkev').length;
       const leeks = game.defenders.filter((d) => d.type === 'porek').length;
       if (carrots < 3) plantFirst(game, designCarrots, 'mrkev');
-      else if (game.unlocked.has('porek') && leeks < 4) plantFirst(game, leekSpots, 'porek');
+      else if (game.unlocked.has('porek') && leeks < 4) plantFirst(game, bestLeekSpots, 'porek');
     };
     run(g, 600, weak);
     expect(g.phase).toBe('lost');

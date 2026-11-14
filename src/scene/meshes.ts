@@ -101,31 +101,34 @@ function mound(p: Puppet, r: number): void {
     const m = new THREE.Mesh(shadowGeo, mat);
     m.rotation.x = -Math.PI / 2;
     m.position.y = y;
-    m.scale.set(r * s, r * 0.7 * s, 1);
+    m.scale.set(r * s, r * 0.75 * s, 1);
     p.root.add(m);
   }
 }
 
-/** Výška obrázku (celého rámečku 450 px) ve světě. Postava sama je asi o třetinu menší. */
-const DEFENDER_HEIGHT = 2.6;
-const ATTACKER_HEIGHT = 2.6;
+/**
+ * Výška obrázku (celého rámečku 450 px) ve světě, podle návrhu úrovně:
+ * měřítko postavy v návrhu × 450 px / 120 px na políčko. Postava sama je asi o pětinu menší.
+ */
+const DEFENDER_HEIGHT: Record<DefenderType, number> = { mrkev: 1.8, porek: 1.94 };
+const ATTACKER_HEIGHT: Record<'hamburger' | 'hranolky', number> = { hamburger: 1.73, hranolky: 1.58 };
 
 export function makeDefender(type: DefenderType): Puppet {
-  const p = puppet(`${type}-mrk`, DEFENDER_HEIGHT);
-  mound(p, 0.42);
+  const p = puppet(`${type}-mrk`, DEFENDER_HEIGHT[type]);
+  mound(p, 0.36);
   return p;
 }
 
 export function makeAttacker(type: AttackerType): Puppet {
   const base = type === 'hranolky' ? 'hranolky' : 'hamburger';
-  const p = puppet(`${base}-krok1`, ATTACKER_HEIGHT);
-  blobShadow(p, 0.5);
+  const p = puppet(`${base}-krok1`, ATTACKER_HEIGHT[base]);
+  blobShadow(p, 0.36);
   if (type === 'velkyHamburger') p.root.scale.setScalar(1.5);
   return p;
 }
 
 export function makeMouth(): Puppet {
-  return puppet('pusa', 3.6);
+  return puppet('pusa', 2.9);
 }
 
 /** Střela: pórkošíp (letí hrotem napřed) nebo hranolka (točí se). */
@@ -136,7 +139,7 @@ export function makeProjectile(kind: 'porek' | 'hranolka'): THREE.Sprite {
     depthWrite: true,
   });
   const s = new THREE.Sprite(mat);
-  if (kind === 'porek') s.scale.set(0.7, 0.3, 1);
-  else s.scale.set(0.16, 0.66, 1);
+  if (kind === 'porek') s.scale.set(0.5, 0.21, 1);
+  else s.scale.set(0.11, 0.46, 1);
   return s;
 }

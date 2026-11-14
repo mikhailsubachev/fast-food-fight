@@ -3,33 +3,31 @@ import type { LevelData } from '../data/level1';
 import type { Vec2 } from '../core/types';
 
 /**
- * Pevný šikmý pohled shora a z boku, bez otáčení, zoomu a posouvání.
- * Širší úhel záběru (FOV) a kamera blíž k záhonu dávají silnější perspektivu:
- * postavy vzadu (na začátku cesty) jsou menší a cestou k puse rostou.
+ * Pevný šikmý pohled shora a z boku, bez otáčení, zoomu a posouvání. Podle návrhu úrovně
+ * (plátno „Úroveň 1 – Snídaňová cesta“) je pohled pravoúhlý, bez perspektivy: postavy mají
+ * všude na záhonu stejnou velikost a kruh dosahu je elipsa s poměrem stran 0,9, tedy
+ * sklon kamery asi 64° od vodorovné roviny.
  */
-const CAMERA_TILT = THREE.MathUtils.degToRad(50);
-const CAMERA_FOV = 60;
+const CAMERA_TILT = Math.asin(0.9);
+const CAMERA_DISTANCE = 60;
 /** Místo nahoře pro horní lištu (v CSS pixelech), než se dá změřit skutečná lišta. */
 const HUD_HEIGHT = 72;
 
-/** Výška horní lišty; na úzkém displeji má dva řádky. */
+/** Spodní okraj horní lišty v pixelech. */
 function hudHeight(): number {
   const hud = document.querySelector<HTMLElement>('.hud');
   return hud ? hud.getBoundingClientRect().bottom : HUD_HEIGHT;
 }
-const MARGIN = 0.03;
-/** Výška postav, aby se do obrazovky vešly i hlavy postav u horního okraje. */
-const FIGURE_HEIGHT = 1.8;
 
 export class Stage {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
-  readonly camera = new THREE.PerspectiveCamera(CAMERA_FOV, 1, 0.1, 500);
+  readonly camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
   width = 1;
   height = 1;
 
-  private readonly target: THREE.Vector3;
-  private readonly corners: THREE.Vector3[] = [];
+  /** Rohy výřezu, který musí být vždy celý vidět, v souřadnicích kamery. */
+  private readonly viewBox: { minX: number; maxX: number; minY: number; maxY: number };
   private readonly raycaster = new THREE.Raycaster();
   private readonly ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private readonly tmp = new THREE.Vector3();
@@ -47,66 +45,54 @@ export class Stage {
     this.scene.add(sun);
 
     const v = level.view;
-    this.target = new THREE.Vector3((v.minX + v.maxX) / 2, 0, (v.minZ + v.maxZ) / 2);
-    // Vzadu musí být vidět i hlavy postav, vepředu stačí zem.
+    const target = new THREE.Vector3((v.minX + v.maxX) / 2, 0, (v.minZ + v.maxZ) / 2);
+    this.camera.position.set(
+      target.x,
+      Math.sin(CAMERA_TILT) * CAMERA_DISTANCE,
+      target.z + Math.cos(CAMERA_TILT) * CAMERA_DISTANCE,
+    );
+    this.camera.lookAt(target);
+    this.camera.updateMatrixWorld();
+
+    // Pravoúhlý pohled: poloha bodu na obrazovce nezávisí na vzdálenosti kamery,
+    // takže rohy výřezu stačí jednou převést do souřadnic kamery.
+    const box = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
     for (const x of [v.minX, v.maxX]) {
-      this.corners.push(new THREE.Vector3(x, FIGURE_HEIGHT, v.minZ), new THREE.Vector3(x, 0, v.maxZ));
+      for (const z of [v.minZ, v.maxZ]) {
+        const p = new THREE.Vector3(x, 0, z).applyMatrix4(this.camera.matrixWorldInverse);
+        box.minX = Math.min(box.minX, p.x);
+        box.maxX = Math.max(box.maxX, p.x);
+        box.minY = Math.min(box.minY, p.y);
+        box.maxY = Math.max(box.maxY, p.y);
+      }
     }
+    this.viewBox = box;
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
   }
 
-  /** Najde vzdálenost kamery, při které se celá mapa vejde pod horní lištu, a mapu vycentruje. */
+  /** Celý výřez se vejde pod horní lištu, co největší a vycentrovaný. */
   resize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.width = w;
     this.height = h;
     this.renderer.setSize(w, h);
-    this.camera.aspect = w / h;
-    this.camera.clearViewOffset();
+
+    const hud = Math.min(hudHeight(), h * 0.3);
+    const b = this.viewBox;
+    const scale = Math.min(w / (b.maxX - b.minX), (h - hud) / (b.maxY - b.minY));
+    const cx = (b.minX + b.maxX) / 2;
+    // Střed výřezu patří doprostřed místa pod lištou, tedy o polovinu lišty níž než střed obrazovky.
+    const cy = (b.minY + b.maxY) / 2 + hud / 2 / scale;
+    const halfW = w / 2 / scale;
+    const halfH = h / 2 / scale;
+    this.camera.left = cx - halfW;
+    this.camera.right = cx + halfW;
+    this.camera.top = cy + halfH;
+    this.camera.bottom = cy - halfH;
     this.camera.updateProjectionMatrix();
-
-    const top = Math.min(0.5, (2 * hudHeight()) / h);
-    const availW = 2 - 2 * MARGIN;
-    const availH = 2 - 2 * MARGIN - top;
-    let lo = 2;
-    let hi = 400;
-    for (let i = 0; i < 40; i++) {
-      const mid = (lo + hi) / 2;
-      this.placeCamera(mid);
-      const box = this.ndcBox();
-      if (box.maxX - box.minX <= availW && box.maxY - box.minY <= availH) hi = mid;
-      else lo = mid;
-    }
-    this.placeCamera(hi);
-    const box = this.ndcBox();
-    const dx = -(box.minX + box.maxX) / 2;
-    const dy = -top / 2 - (box.minY + box.maxY) / 2;
-    this.camera.setViewOffset(w, h, (-dx * w) / 2, (dy * h) / 2, w, h);
-  }
-
-  private placeCamera(dist: number): void {
-    this.camera.position.set(
-      this.target.x,
-      this.target.y + Math.sin(CAMERA_TILT) * dist,
-      this.target.z + Math.cos(CAMERA_TILT) * dist,
-    );
-    this.camera.lookAt(this.target);
-    this.camera.updateMatrixWorld();
-  }
-
-  private ndcBox() {
-    const box = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
-    for (const c of this.corners) {
-      const p = this.tmp.copy(c).project(this.camera);
-      box.minX = Math.min(box.minX, p.x);
-      box.maxX = Math.max(box.maxX, p.x);
-      box.minY = Math.min(box.minY, p.y);
-      box.maxY = Math.max(box.maxY, p.y);
-    }
-    return box;
   }
 
   /** Bod ve světě → pixely na obrazovce. */

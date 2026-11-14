@@ -51,22 +51,37 @@ const H: AttackerType = 'hamburger';
 const F: AttackerType = 'hranolky';
 const B: AttackerType = 'velkyHamburger';
 
-const BOARD: Rect = { minX: 0, maxX: 6, minZ: 0, maxZ: 20 };
+/**
+ * Záhon podle návrhu úrovně: na obrazovce 16 × 9 políček (1920 × 1080 px, 120 px na políčko),
+ * nahoře pás pro horní lištu.
+ */
+const BOARD: Rect = { minX: 0, maxX: 16, minZ: 1, maxZ: 10 };
 
 /**
- * Řídicí body cesty pro telefon na výšku: z levého horního rohu záhonu mírným obloukem
- * přes celou výšku obrazovky k puse v pravém dolním rohu. Cesta se skoro nevlní,
- * takže se úseky cesty na obrazovce nepřekrývají.
+ * Řídicí body cesty z návrhu úrovně (plátno „Úroveň 1 – Snídaňová cesta“): vstupuje zleva,
+ * klikatí se dolů, nahoru kolem kaluže, znovu dolů a nahoru a končí vpravo dole u pusy.
  */
 const PATH_CONTROL: Vec2[] = [
-  { x: -2, z: 0.5 },
-  { x: 0, z: 0.5 },
-  { x: 1.5, z: 1.1 },
-  { x: 2.3, z: 3.8 },
-  { x: 2.5, z: 8.2 },
-  { x: 3.2, z: 12.7 },
-  { x: 4.0, z: 16.7 },
-  { x: 4.5, z: 18.9 },
+  { x: -3.0, z: 3.1 },
+  { x: -1.25, z: 3.05 },
+  { x: 1.0, z: 2.95 },
+  { x: 2.5, z: 3.35 },
+  { x: 2.9, z: 4.8 },
+  { x: 2.75, z: 6.5 },
+  { x: 3.15, z: 7.85 },
+  { x: 4.5, z: 8.4 },
+  { x: 5.85, z: 7.85 },
+  { x: 6.25, z: 6.3 },
+  { x: 6.1, z: 4.45 },
+  { x: 6.6, z: 3.05 },
+  { x: 7.9, z: 2.5 },
+  { x: 9.3, z: 2.7 },
+  { x: 10.3, z: 3.7 },
+  { x: 10.5, z: 5.4 },
+  { x: 10.4, z: 6.75 },
+  { x: 11.0, z: 7.8 },
+  { x: 12.3, z: 8.05 },
+  { x: 13.35, z: 7.95 },
 ];
 
 export const LEVEL1: LevelData = {
@@ -75,18 +90,18 @@ export const LEVEL1: LevelData = {
   path: clipStartAtX(catmullRom(PATH_CONTROL), BOARD.minX),
   // Sází se téměř kamkoliv na záhon; nejde na cestu, na tyto překážky a těsně k jiné zelenině.
   obstacles: [
-    { kind: 'parez', x: 4.8, z: 2.0, r: 0.6 },
-    { kind: 'kamen', x: 0.8, z: 7.1, r: 0.6 },
-    { kind: 'kaluz', x: 5.0, z: 10.7, r: 0.85 },
-    { kind: 'krtina', x: 1.2, z: 15.1, r: 0.5 },
+    { kind: 'parez', x: 0.9, z: 8.3, r: 0.55 },
+    { kind: 'kamen', x: 14.7, z: 2.6, r: 0.6 },
+    { kind: 'kaluz', x: 8.3, z: 4.2, r: 0.85 },
+    { kind: 'krtina', x: 12.7, z: 2.4, r: 0.5 },
   ],
   board: BOARD,
-  view: { minX: 0, maxX: 6, minZ: 0.1, maxZ: 19.8 },
-  mouth: { x: 4.6, z: 19.4 },
+  view: { minX: 0, maxX: 16, minZ: 1, maxZ: 10 },
+  mouth: { x: 14.3, z: 8.0 },
   startWater: 120,
   startDefenders: ['mrkev'],
   unlocks: [{ wave: 1, type: 'porek' }],
-  waveSpeed: [1, 1, 1.3, 1.6],
+  waveSpeed: [1, 1, 1.3, 1.5],
   waves: [
     seq([H, H, H], 4),
     seq([H, H, H, H, H, H], 3),
@@ -97,7 +112,7 @@ export const LEVEL1: LevelData = {
       ...seq([H, F, H, F, H, F, H, F, B, F, B], 0.6),
       ...seq([F, F, H, B, F, H, F, B, F, H, B, F], 0.6).map((s, i) => (i === 0 ? { ...s, delay: 3.5 } : s)),
       ...seq([B, F, B, F, H, F, B, F, H, F, B, B], 0.55).map((s, i) => (i === 0 ? { ...s, delay: 3.5 } : s)),
-      ...seq([B, B, F, B, F, B, F, B, B, F, B, B], 0.55).map((s, i) => (i === 0 ? { ...s, delay: 2.5 } : s)),
+      ...seq([B, B, F, B, F, B, F, B, B], 0.6).map((s, i) => (i === 0 ? { ...s, delay: 3 } : s)),
     ],
   ],
 };

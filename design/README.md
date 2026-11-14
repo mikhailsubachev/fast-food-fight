@@ -7,6 +7,8 @@ Artboardy z plátna „Fast Food Fight – Pan Mrkev“ (Claude Design), stav k 
   - `5-uroven-1.html` – herní obrazovka 1. úrovně (1920 × 1080)
   - `6-misto-na-zeleninu.html` – jak ubývá místa na sázení v dalších úrovních
 - `zdroj/` – původní soubory artboardů (`.dc.html`) a rozložení plátna (`canvas.json`) pro případné nahrání zpět do plátna
-- `generator/` – Python skripty, které artboardy vygenerovaly (kresba postav v SVG, projekce kamery 55°, tvar cesty)
+- `generator/` – Python skripty, které vygenerovaly listy postav a první verzi úrovně (kresba postav v SVG, projekce kamery 55°, tvar cesty)
+
+Obrazovka 1. úrovně a místo na zeleninu jsou ve verzi z plátna k 14. 11. 2026 večer: pravoúhlý pohled bez perspektivy (sklon asi 64°, 120 px na políčko) a nová klikatá cesta. Generátor k této verzi na plátně není; hra přebírá polohy cesty, překážek a velikosti postav přímo z SVG (`src/data/level1.ts`, `src/scene/meshes.ts`).
 
 Živá verze s možností komentářů je na plátně: https://claude.ai/artifact/2V4tP86yjmRVgdsLQppiyy

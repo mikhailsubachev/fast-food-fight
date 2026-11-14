@@ -19,7 +19,7 @@ npm test           # automatické testy včetně odehrání celé úrovně
 npm run build      # kontrola typů a sestavení do dist/
 ```
 
-Stav: **hratelná 1. úroveň** na výšku (pro telefon), s postavami z dětských kreseb (papírové loutky podle návrhu v `design/`). Chybí tutoriál a zvuk.
+Stav: **hratelná 1. úroveň** na šířku podle návrhu úrovně, s postavami z dětských kreseb (papírové loutky podle návrhu v `design/`). Chybí tutoriál a zvuk.
 
 Postavy se z návrhu znovu vyexportují příkazem `python3 tools/export_postavy.py` (zapíše SVG do `public/assets/postavy/`).
 

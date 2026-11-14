@@ -1,5 +1,5 @@
 // Celá obrazovka pro mobily. Android a iPad umí Fullscreen API (a na Androidu i zamknout
-// otočení na výšku). iPhone ho pro stránky nemá: tam se hra spustí přes celou obrazovku
+// otočení na šířku). iPhone ho pro stránky nemá: tam se hra spustí přes celou obrazovku
 // jen po „Přidat na plochu“ (viz manifest.webmanifest a meta značky v index.html).
 
 type FsDocument = Document & {
@@ -37,9 +37,9 @@ export async function enterFullscreen(): Promise<void> {
   } catch {
     return;
   }
-  // Na výšku zamknout jde jen v režimu celé obrazovky a jen někde (Android Chrome).
+  // Na šířku zamknout jde jen v režimu celé obrazovky a jen někde (Android Chrome).
   try {
-    await (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('portrait');
+    await (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('landscape');
   } catch {
     /* nepodporováno */
   }

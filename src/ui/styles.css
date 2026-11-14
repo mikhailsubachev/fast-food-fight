@@ -401,8 +401,8 @@ button:active {
   padding: 24px;
 }
 
-/* Hra je na výšku; na telefonu na šířku poprosí o otočení. */
-@media (orientation: landscape) and (pointer: coarse) and (max-height: 540px) {
+/* Hra je na šířku; na telefonu na výšku poprosí o otočení. */
+@media (orientation: portrait) and (pointer: coarse) {
   .rotate {
     display: flex;
   }
@@ -522,7 +522,7 @@ button:active {
   }
 }
 
-/* Úzký displej (telefon na výšku): horní lišta ve dvou řádcích,
+/* Úzké okno: horní lišta ve dvou řádcích,
    nahoře voda a tlačítka, pod nimi zoubky a vlna (nebo odpočet). */
 @media (max-width: 560px) {
   :root {
