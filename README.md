@@ -2,6 +2,8 @@
 
 Tower defense pro děti od 7 let: zdravá zelenina brání pusu před fast foodem. Webová hra v Three.js + TypeScript (Vite), pro Android a iOS zabalená přes Capacitor.
 
+**▶ [Hrát v prohlížeči](https://mikhailsubachev.github.io/fast-food-fight/)** (GitHub Pages, nová verze se zveřejní po každém nahrání do `main`)
+
 - [Úvodní požadavky](docs/Úvodní%20požadavky.md)
 - [Plán první úrovně](docs/Plán%20první%20úrovně.md)
 
