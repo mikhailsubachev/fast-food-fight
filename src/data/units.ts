@@ -1,0 +1,80 @@
+// Čísla jednotek pro první playtest (Plán první úrovně, kapitola 4).
+// Vzdálenosti jsou v políčkách, časy v sekundách.
+
+export type DefenderType = 'mrkev' | 'porek';
+export type AttackerType = 'hamburger' | 'hranolky' | 'velkyHamburger';
+
+export interface DefenderLevel {
+  range: number;
+  attackInterval: number;
+}
+
+export interface DefenderStats {
+  cost: number;
+  growTime: number;
+  upgradeCost: number;
+  /** Pórek střílí (střela letí), mrkev seká hned. */
+  projectileSpeed?: number;
+  levels: [DefenderLevel, DefenderLevel];
+}
+
+export const DEFENDERS: Record<DefenderType, DefenderStats> = {
+  mrkev: {
+    cost: 40,
+    growTime: 3,
+    upgradeCost: 30,
+    levels: [
+      { range: 1.5, attackInterval: 1 },
+      // o 40 % rychlejší sek, trochu větší mrkvomeč
+      { range: 1.7, attackInterval: 1 / 1.4 },
+    ],
+  },
+  porek: {
+    cost: 60,
+    growTime: 4,
+    upgradeCost: 45,
+    projectileSpeed: 8,
+    levels: [
+      { range: 3.5, attackInterval: 1.5 },
+      // dosah +1 políčko, o 20 % rychlejší střelba
+      { range: 4.5, attackInterval: 1.5 / 1.2 },
+    ],
+  },
+};
+
+export interface ThrowStats {
+  interval: number;
+  range: number;
+  freeze: number;
+  projectileSpeed: number;
+  firstDelay: number;
+}
+
+export interface AttackerStats {
+  hits: number;
+  speed: number;
+  reward: number;
+  scale: number;
+  throws?: ThrowStats;
+}
+
+export const ATTACKERS: Record<AttackerType, AttackerStats> = {
+  hamburger: { hits: 4, speed: 1, reward: 15, scale: 1 },
+  hranolky: {
+    hits: 5,
+    speed: 1.3,
+    reward: 20,
+    scale: 1,
+    throws: { interval: 5, range: 2.5, freeze: 2, projectileSpeed: 6, firstDelay: 2 },
+  },
+  velkyHamburger: { hits: 7, speed: 0.8, reward: 40, scale: 1.5 },
+};
+
+/** Utíkající fast food běží rychleji, než chodil. */
+export const FLEE_SPEED_FACTOR = 1.6;
+
+/** Pusa snese 3 kousnutí, čtvrté znamená prohru. */
+export const MOUTH_LIVES = 3;
+
+/** Pauza mezi vlnami, potom se další vlna spustí sama. */
+export const WAVE_PAUSE = 8;

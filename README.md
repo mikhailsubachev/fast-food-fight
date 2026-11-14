@@ -5,6 +5,20 @@ Tower defense pro děti od 7 let: zdravá zelenina brání pusu před fast foode
 - [Úvodní požadavky](docs/Úvodní%20požadavky.md)
 - [Plán první úrovně](docs/Plán%20první%20úrovně.md)
 
+## Spuštění
+
+Potřeba je Node.js 20 nebo novější.
+
+```bash
+npm install
+npm run dev        # hra na http://localhost:5173
+npm run dev:lan    # hra i pro telefon ve stejné Wi-Fi (adresu vypíše terminál)
+npm test           # automatické testy včetně odehrání celé úrovně
+npm run build      # kontrola typů a sestavení do dist/
+```
+
+Stav: **šedý prototyp 1. úrovně** (postavy jsou zatím jednoduché tvary, tutoriál a zvuk chybí).
+
 ## Struktura projektu
 
 ```
