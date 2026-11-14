@@ -309,6 +309,7 @@ button:active {
 .overlay {
   position: absolute;
   inset: 0;
+  z-index: 10;
   display: none;
   align-items: center;
   justify-content: center;
@@ -374,6 +375,7 @@ button:active {
 .rotate {
   position: absolute;
   inset: 0;
+  z-index: 20;
   display: none;
   align-items: center;
   justify-content: center;

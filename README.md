@@ -17,7 +17,9 @@ npm test           # automatické testy včetně odehrání celé úrovně
 npm run build      # kontrola typů a sestavení do dist/
 ```
 
-Stav: **šedý prototyp 1. úrovně** (postavy jsou zatím jednoduché tvary, tutoriál a zvuk chybí).
+Stav: **hratelná 1. úroveň** s postavami z dětských kreseb (papírové loutky podle návrhu v `design/`). Chybí tutoriál a zvuk.
+
+Postavy se z návrhu znovu vyexportují příkazem `python3 tools/export_postavy.py` (zapíše SVG do `public/assets/postavy/`).
 
 ## Struktura projektu
 
@@ -27,7 +29,7 @@ design/                návrhy grafiky z plátna (listy postav, obrazovka 1. úr
 kresby/                originální fotky dětských kreseb (vstup pro grafiku)
 src/
   core/                herní smyčka, stav hry, voda, životy pusy, ukládání postupu
-  scene/               Three.js: renderer, pevná kamera, mapa, cesta, políčka, toon materiály
+  scene/               Three.js: renderer, pevná kamera, záhon, cesta, překážky, papírové loutky
   entities/
     obranci/           mrkev, pórek (růst, útok, vylepšení, ztuhnutí)
     utocnici/          hamburger, hranolky, velký hamburger (chůze, zásah, útěk)
@@ -35,9 +37,9 @@ src/
   data/                čísla jednotek, vlny úrovní, všechny texty hry (jeden soubor kvůli překladu)
   audio/               přehrávání hudby a zvukových efektů
 public/assets/
-  postavy/             ořezané díly postav z kreseb (papírové loutky, max. 1024 × 1024 px)
+  postavy/             obrázky postav ve všech stavech (SVG z tools/export_postavy.py)
   prostredi/           textury prostředí (záhon, stůl, prostírání)
   zvuky/               hudba a efekty (licence CC0)
 tests/                 automatické testy (např. odehrání vlny)
-tools/                 pomocné skripty (zpracování nafocených kreseb na díly postav)
+tools/                 pomocné skripty (export postav z návrhu do hry)
 ```

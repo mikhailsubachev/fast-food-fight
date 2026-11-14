@@ -3,12 +3,12 @@ import type { LevelData } from '../data/level1';
 import type { Vec2 } from '../core/types';
 
 /** Pevný šikmý pohled shora a z boku, bez otáčení, zoomu a posouvání. */
-const CAMERA_TILT = THREE.MathUtils.degToRad(55);
+const CAMERA_TILT = THREE.MathUtils.degToRad(40);
 /** Místo nahoře pro horní lištu (v CSS pixelech). */
 export const HUD_HEIGHT = 72;
 const MARGIN = 0.03;
-/** Výška postav, aby se do obrazovky vešly i hlavy u horního okraje. */
-const FIGURE_HEIGHT = 1.4;
+/** Výška postav, aby se do obrazovky vešly i hlavy postav u horního okraje. */
+const FIGURE_HEIGHT = 1.8;
 
 export class Stage {
   readonly renderer: THREE.WebGLRenderer;
@@ -35,11 +35,12 @@ export class Stage {
     sun.position.set(-4, 10, 6);
     this.scene.add(sun);
 
-    const b = level.board;
-    this.target = new THREE.Vector3((b.minX + b.maxX) / 2, 0, (b.minZ + b.maxZ) / 2);
-    for (const x of [b.minX, b.maxX])
-      for (const z of [b.minZ, b.maxZ])
-        for (const y of [0, FIGURE_HEIGHT]) this.corners.push(new THREE.Vector3(x, y, z));
+    const v = level.view;
+    this.target = new THREE.Vector3((v.minX + v.maxX) / 2, 0, (v.minZ + v.maxZ) / 2);
+    // Vzadu musí být vidět i hlavy postav, vepředu stačí zem.
+    for (const x of [v.minX, v.maxX]) {
+      this.corners.push(new THREE.Vector3(x, FIGURE_HEIGHT, v.minZ), new THREE.Vector3(x, 0, v.maxZ));
+    }
 
     this.resize();
     window.addEventListener('resize', () => this.resize());

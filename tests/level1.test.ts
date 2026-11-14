@@ -207,6 +207,26 @@ describe('hratelnost', () => {
     expect(seconds).toBeLessThan(300);
   });
 
+  it('3. a 4. vlna jsou těžké: 3 mrkve a 4 pórky bez vylepšení nestačí', () => {
+    const g = new Game(LEVEL1);
+    const weak = (game: Game) => {
+      const carrots = game.defenders.filter((d) => d.type === 'mrkev').length;
+      const leeks = game.defenders.filter((d) => d.type === 'porek').length;
+      if (carrots < 3) plantFirst(game, designCarrots, 'mrkev');
+      else if (game.unlocked.has('porek') && leeks < 4) plantFirst(game, leekSpots, 'porek');
+    };
+    run(g, 600, weak);
+    expect(g.phase).toBe('lost');
+    expect(g.waveIndex).toBeGreaterThanOrEqual(2);
+  });
+
+  it('finále je největší vlna a fast food v něm chodí nejrychleji', () => {
+    const sizes = LEVEL1.waves.map((w) => w.length);
+    expect(Math.max(...sizes)).toBe(sizes[3]);
+    expect(LEVEL1.waveSpeed![3]).toBeGreaterThan(LEVEL1.waveSpeed![2]);
+    expect(LEVEL1.waveSpeed![2]).toBeGreaterThan(1);
+  });
+
   it('s jedinou mrkví se úroveň vyhrát nedá', () => {
     const g = new Game(LEVEL1);
     g.plant(designCarrots[1], 'mrkev');

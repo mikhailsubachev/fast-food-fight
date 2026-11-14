@@ -298,7 +298,7 @@ export class Game {
       return true;
     }
 
-    a.d += stats.speed * dt;
+    a.d += stats.speed * (this.level.waveSpeed?.[this.waveIndex] ?? 1) * dt;
     if (a.d >= this.path.length) {
       this.bites++;
       this.events.push({ type: 'bite', bites: this.bites });

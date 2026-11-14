@@ -64,7 +64,7 @@ function restart(): void {
 }
 
 function handle(events: GameEvent[]): void {
-  view.handleEvents(events);
+  view.handleEvents(events, game);
   for (const e of events) {
     switch (e.type) {
       case 'flee': {

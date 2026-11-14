@@ -59,7 +59,7 @@ Technické zásady:
 - Orientace na šířku (landscape). Ovládání myší i dotykem stejně: vše se dělá jedním kliknutím / ťuknutím, nic se netáhne a nic nezávisí na najetí myší (hover), protože na dotyku neexistuje.
 - Cíl 60 fps na střední třídě Androidu (např. 3 roky starý telefon), minimálně 30 fps.
 - Prostředí a případné 3D modely postav jsou low-poly (do ~3 000 trojúhelníků na model). Papírové loutky z kreseb mají místo toho limit na obrázek: nejvýš 1024 × 1024 px na postavu, aby se hra na telefonu rychle načetla. Toon shader + obrysy, žádné dynamické stíny kromě jednoduchého „blob“ stínu pod postavou.
-- Kamera: pevný šikmý pohled shora a z boku (asi 50–60°), bez otáčení, bez zoomu a bez posouvání. Celá mapa se vejde na obrazovku.
+- Kamera: pevný šikmý pohled shora a z boku (asi 40°, aby byly postavy víc vidět zboku), bez otáčení, bez zoomu a bez posouvání. Celá cesta a místa na sázení se vejdou na obrazovku.
 - Různé poměry stran (telefon 20:9, tablet 4:3, monitor 16:9): mapa se vždy celá vejde, na širších obrazovkách se po stranách jen doplní dekorace pozadí.
 
 ## 3. Základní herní smyčka
@@ -118,10 +118,12 @@ Startovní voda: **120** (stačí na 3 mrkve nebo 2 mrkve a pórek po odemčení
 | ---------- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
 | 1          | 3 hamburgery, rozestup 4 s                                             | sázet mrkev, voda se sbírá sama                          |
 | 2          | 6 hamburgerů, rozestup 3 s                                             | odemkne se pórek: střílí z dálky                         |
-| 3          | 4 hamburgery + 2 hranolky                                              | hranolky zmrazí obránce, pórek dál od cesty je v bezpečí |
-| 4 (finále) | 8 hamburgerů + 4 hranolky, na konci jeden „velký“ hamburger (7 zásahů) | vylepšení, kombinace mrkve a pórku                       |
+| 3          | 8 hamburgerů + 6 hranolek, rozestup 1,3 s, fast food o 10 % rychlejší | hranolky zmrazí obránce, pórek dál od cesty je v bezpečí |
+| 4 (finále) | 3 husté nápory: 9 hamburgerů + 16 hranolek + 10 „velkých“ hamburgerů (7 zásahů), o 40 % rychlejší | vylepšení, kombinace mrkve a pórku |
 
 Mezi vlnami pauza, pár sekund na oddechnutí. Další vlna se spouští automaticky. Celá úroveň je do 5 min.
+
+Obtížnost (ověřeno simulací v testech): 3. a 4. vlna jsou záměrně těžké. Hráč, který sází i vylepšuje, vyhraje (obvykle ⭐⭐); bez vylepšení vyhraje jen těsně a se 3 mrkvemi a 4 pórky bez vylepšení prohraje.
 
 - Pauza mezi vlnami trvá **8 s**, aby dítě stihlo zasadit nebo vylepšit zeleninu.
 - Odpočet je vidět velkými čísly (poslední 3 s jako 3-2-1). Tlačítko „Hned!“ odpočet přeskočí.
