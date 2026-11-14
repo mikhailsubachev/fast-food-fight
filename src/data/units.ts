@@ -65,7 +65,7 @@ export const ATTACKERS: Record<AttackerType, AttackerStats> = {
     speed: 1.3,
     reward: 20,
     scale: 1,
-    throws: { interval: 5, range: 2.5, freeze: 2, projectileSpeed: 6, firstDelay: 2 },
+    throws: { interval: 5, range: 1.6, freeze: 2, projectileSpeed: 6, firstDelay: 2 },
   },
   velkyHamburger: { hits: 7, speed: 0.8, reward: 40, scale: 1.5 },
 };

@@ -53,23 +53,27 @@ const B: AttackerType = 'velkyHamburger';
 
 const BOARD: Rect = { minX: -1, maxX: 12.2, minZ: 0.3, maxZ: 8.6 };
 
-/** Řídicí body zvlněné cesty „S“ z návrhu (design/generator/curve.py). */
+/** Řídicí body zvlněné cesty „S“: tři průchody přes celou šířku záhonu. */
 const PATH_CONTROL: Vec2[] = [
-  { x: -4.5, z: 2.6 },
-  { x: -1.8, z: 2.45 },
-  { x: 0.6, z: 2.25 },
-  { x: 3.0, z: 2.6 },
-  { x: 5.6, z: 2.35 },
-  { x: 7.6, z: 2.7 },
-  { x: 8.5, z: 3.7 },
-  { x: 7.9, z: 4.8 },
-  { x: 6.2, z: 5.15 },
-  { x: 4.2, z: 4.85 },
-  { x: 2.6, z: 5.25 },
-  { x: 2.1, z: 6.3 },
-  { x: 3.0, z: 7.3 },
-  { x: 5.0, z: 7.65 },
-  { x: 7.4, z: 7.35 },
+  { x: -4.5, z: 1.9 },
+  { x: -1.8, z: 1.8 },
+  { x: 0.6, z: 1.7 },
+  { x: 3.0, z: 1.95 },
+  { x: 5.6, z: 1.75 },
+  { x: 8.2, z: 1.9 },
+  { x: 10.2, z: 2.2 },
+  { x: 11.1, z: 3.3 },
+  { x: 10.3, z: 4.4 },
+  { x: 8.2, z: 4.7 },
+  { x: 6.0, z: 4.5 },
+  { x: 4.0, z: 4.75 },
+  { x: 2.0, z: 4.6 },
+  { x: 0.8, z: 5.2 },
+  { x: 0.5, z: 6.3 },
+  { x: 1.4, z: 7.3 },
+  { x: 3.4, z: 7.6 },
+  { x: 5.5, z: 7.35 },
+  { x: 7.6, z: 7.55 },
   { x: 9.9, z: 7.5 },
 ];
 
@@ -78,12 +82,12 @@ export const LEVEL1: LevelData = {
   name: 'Snídaňová cesta',
   path: clipStartAtX(catmullRom(PATH_CONTROL), BOARD.minX),
   // Sází se téměř kamkoliv na záhon; nejde na cestu, na tyto překážky a těsně k jiné zelenině.
-  // Polohy podle návrhu úrovně (design/artboardy/5-uroven-1.html).
+  // Cesta je delší a okraje užší než v návrhu úrovně (design/artboardy/5-uroven-1.html).
   obstacles: [
-    { kind: 'parez', x: 7.6, z: 0.9, r: 0.6 },
-    { kind: 'kamen', x: 0.6, z: 7.7, r: 0.6 },
-    { kind: 'kaluz', x: 3.6, z: 6.3, r: 0.85 },
-    { kind: 'krtina', x: 10.4, z: 2.2, r: 0.6 },
+    { kind: 'parez', x: 7.0, z: 3.2, r: 0.6 },
+    { kind: 'kamen', x: 4.2, z: 6.1, r: 0.6 },
+    { kind: 'kaluz', x: 9.0, z: 6.0, r: 0.85 },
+    { kind: 'krtina', x: 2.6, z: 0.75, r: 0.6 },
   ],
   board: BOARD,
   view: { minX: -0.6, maxX: 12.0, minZ: 0.5, maxZ: 8.4 },
@@ -91,17 +95,18 @@ export const LEVEL1: LevelData = {
   startWater: 120,
   startDefenders: ['mrkev'],
   unlocks: [{ wave: 1, type: 'porek' }],
-  waveSpeed: [1, 1, 1.1, 1.4],
+  waveSpeed: [1, 1, 1.2, 1.6],
   waves: [
     seq([H, H, H], 4),
     seq([H, H, H, H, H, H], 3),
     // 3. vlna: hranolky poprvé a hned v hloučcích s hamburgery.
     seq([H, F, H, H, F, H, F, H, H, F, H, F, F, H], 1.3),
-    // 4. vlna (finále): tři husté nápory, v každém velké hamburgery s doprovodem hranolek.
+    // 4. vlna (finále): čtyři husté nápory, v každém velké hamburgery s doprovodem hranolek.
     [
-      ...seq([H, F, H, F, H, F, H, F, B, F, B], 0.6),
-      ...seq([F, F, H, B, F, H, F, B, F, H, B, F], 0.55).map((s, i) => (i === 0 ? { ...s, delay: 3 } : s)),
-      ...seq([B, F, B, F, H, F, B, F, H, F, B, B], 0.5).map((s, i) => (i === 0 ? { ...s, delay: 3 } : s)),
+      ...seq([H, F, H, F, H, F, H, F, B, F, B], 0.45),
+      ...seq([F, F, H, B, F, H, F, B, F, H, B, F], 0.4).map((s, i) => (i === 0 ? { ...s, delay: 3 } : s)),
+      ...seq([B, F, B, F, H, F, B, F, H, F, B, B], 0.35).map((s, i) => (i === 0 ? { ...s, delay: 3 } : s)),
+      ...seq([B, B, F, B, F, B, F, B, B, F, B, B], 0.35).map((s, i) => (i === 0 ? { ...s, delay: 2.5 } : s)),
     ],
   ],
 };

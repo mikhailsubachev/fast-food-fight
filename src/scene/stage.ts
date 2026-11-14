@@ -3,7 +3,7 @@ import type { LevelData } from '../data/level1';
 import type { Vec2 } from '../core/types';
 
 /** Pevný šikmý pohled shora a z boku, bez otáčení, zoomu a posouvání. */
-const CAMERA_TILT = THREE.MathUtils.degToRad(40);
+const CAMERA_TILT = THREE.MathUtils.degToRad(50);
 /** Místo nahoře pro horní lištu (v CSS pixelech). */
 export const HUD_HEIGHT = 72;
 const MARGIN = 0.03;
