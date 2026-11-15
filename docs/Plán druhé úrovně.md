@@ -26,10 +26,10 @@ Podle návrhu na plátně „Úroveň 2 – Školní svačina“ (`design/zdroj/
 
 | Vlna | Kdo přijde | Rychlost |
 | ---- | ---------- | -------- |
-| 1 | 5 hamburgerů | normální |
-| 2 | hamburgery, hranolky, první 3 lízátka | o 10 % rychlejší |
-| 3 | lízátka ve dvojicích s hamburgery a hranolkami | o 20 % rychlejší |
-| 4 | velké hamburgery za hradbou lízátek | o 30 % rychlejší |
-| 5 (finále) | tři husté nápory: lízátka, hranolky a velké hamburgery | o 50 % rychlejší |
+| 1 | jen hamburgery (6) | normální |
+| 2 | jen hranolky (9) | o 10 % rychlejší |
+| 3 | jen lízátka (12) | o 20 % rychlejší |
+| 4 | jen velké hamburgery (8) | o 30 % rychlejší |
+| 5 (finále) | všechno smíchané ve třech hustých náporech | o 50 % rychlejší |
 
-Na začátku je 150 vody, k dispozici mrkev a pórek. Obtížnost ověřená simulací v testech (`tests/level2.test.ts`): plná zahrádka (6 mrkví, 4 pórky, 2 cibule) s vylepšením vyhraje na 3 hvězdy; bez vylepšení se úroveň prohraje.
+Každá z prvních čtyř vln ukáže jen jeden druh fast foodu, aby se ho hráč naučil. Na začátku je 150 vody, k dispozici mrkev a pórek. Obtížnost ověřená simulací v testech (`tests/level2.test.ts`): plná zahrádka (6 mrkví, 4 pórky, 2 cibule) s vylepšením vyhraje na 3 hvězdy; bez vylepšení se úroveň prohraje.

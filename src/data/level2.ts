@@ -34,16 +34,18 @@ export const LEVEL2: LevelData = {
   startDefenders: ['mrkev', 'porek'],
   unlocks: [{ wave: 1, type: 'cibule' }],
   waveSpeed: [1, 1.1, 1.2, 1.3, 1.5],
+  // Každá z prvních čtyř vln přinese jen jeden druh fast foodu, aby se ho hráč naučil;
+  // v páté se všechny smíchají.
   waves: [
-    // 1. vlna: hamburgery a hranolky na rozehřátí.
-    seq([H, H, H, H, H], 3.5),
-    // 2. vlna: první lízátka.
-    seq([H, L, H, H, F, L, H, L], 2.2),
-    // 3. vlna: lízátka chodí ve dvojicích a lepí zeleninu, hranolky ji zmrazí.
-    seq([L, L, H, F, H, L, L, F, H, H, F, L, L, H], 1.3),
-    // 4. vlna: velké hamburgery za hradbou lízátek.
-    [...seq([L, H, L, F, B, L, F, H, B, L], 1.0), ...seq([F, L, B, H, L, F, B, L, L], 0.9, 4)],
-    // 5. vlna (finále): tři husté nápory.
+    // 1. vlna: jen hamburgery.
+    seq([H, H, H, H, H, H], 3.2),
+    // 2. vlna: jen hranolky – házejí zdálky a zmrazí zeleninu.
+    seq([F, F, F, F, F, F, F, F, F], 2.0),
+    // 3. vlna: jen lízátka – točí se a oblepí zeleninu kolem sebe.
+    seq([L, L, L, L, L, L, L, L, L, L, L, L], 1.4),
+    // 4. vlna: jen velké hamburgery.
+    seq([B, B, B, B, B, B, B, B], 2.2),
+    // 5. vlna (finále): všechno dohromady ve třech náporech.
     [
       ...seq([H, L, F, H, L, F, B, L, F, B], 0.7),
       ...seq([L, L, F, B, H, L, F, B, L, F, H, B], 0.65, 3.5),

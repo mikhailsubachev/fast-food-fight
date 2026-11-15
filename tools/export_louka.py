@@ -4,8 +4,7 @@
 Čte obrazovky úrovní z plátna s celou mřížkou (design/zdroj/Uroven1D.dc.html
 a Uroven2D.dc.html, 1920 × 1080 px) a zapíše:
 
-- public/assets/prostredi/louka.svg – trávník s ozdobami (skvrny trávy, stébla, kytičky,
-  houby, jetel, kamínky, beruška, šnek), cesta s okrajem a kamínky, šipka startu, kaluž
+- public/assets/prostredi/louka.svg – trávník (skvrny trávy), cesta s okrajem a kamínky, šipka startu, kaluž
   a obrysy celé mřížky šestihranů (na trávě zelené, na cestě hnědé, u překážek šedé).
   Obrázek se ve hře natáhne na zem: 120 px návrhu = 1 políčko v ose x, 108 px = 1 políčko
   v ose z (pohled kamery pod úhlem asi 64°). Kolem výřezu návrhu je okraj louky pro
@@ -13,6 +12,8 @@ a Uroven2D.dc.html, 1920 × 1080 px) a zapíše:
 - public/assets/prostredi/louka-2.svg – totéž pro 2. úroveň „Školní svačina“; místo kaluže na
   louce leží školní věci (svačinový box, láhev, penál, sešit, pastelky, guma), které jsou ploché,
   a proto patří do obrázku země.
+- public/assets/prostredi/louka-ozdoby.svg a louka-2-ozdoby.svg – drobné ozdoby trávníku a ploché
+  předměty zvlášť, aby se ve hře kreslily nad políčky na sázení (šestihrany jsou vždy vespod).
 - public/assets/prostredi/motyl-modry.svg, motyl-ruzovy.svg, vcela.svg – poletující ozdoby.
 
 Políčka na sázení (volná, osázená, vybraná), postavy, překážky nad zemí (pařez, kámen,
@@ -90,7 +91,10 @@ def export_level(source: str, out_name: str, flat: list[tuple[float, float]]) ->
     items = children(src[src.index('>', start) + 1:])
 
     first_hex = next(i for i, el in enumerate(items) if 'fill="#D9F2A6"' in el)
-    ground = items[1:first_hex]  # items[0] je jednobarevné pozadí
+    # items[0] je jednobarevné pozadí. Velké skvrny trávy patří pod mřížku, drobné ozdoby
+    # (stébla, kytičky, houby, jetel, kamínky, beruška, šnek) se kreslí nad políčka.
+    ground = [el for el in items[1:first_hex] if el.startswith('<polygon')]
+    decor = [el for el in items[1:first_hex] if not el.startswith('<polygon')]
 
     # Okraj louky pro širší obrazovky: skvrny a stébla trávy z levého a horního pásu zopakovat vpravo a dole.
     grass = [el for el in ground if any(c in el for c in GRASS) and el.startswith(('<polygon', '<path'))]
@@ -121,15 +125,24 @@ def export_level(source: str, out_name: str, flat: list[tuple[float, float]]) ->
     assert len(things) == len(flat), f'{out_name}: nalezeno {len(things)} z {len(flat)} předmětů'
 
     x0, y0, w, h = VIEW
+    head = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0} {y0} {w} {h}" width="{TEXTURE_W}" height="{TEXTURE_H}">'
     svg = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0} {y0} {w} {h}" width="{TEXTURE_W}" height="{TEXTURE_H}">'
-        f'<rect x="{x0}" y="{y0}" width="{w}" height="{h}" fill="#8BB85A"/>'
-        + ''.join(margin) + ''.join(ground) + ''.join(path) + ''.join(puddle) + ''.join(grid) + ''.join(things) + '</svg>'
+        head + f'<rect x="{x0}" y="{y0}" width="{w}" height="{h}" fill="#8BB85A"/>'
+        + ''.join(margin) + ''.join(ground) + ''.join(path) + ''.join(puddle) + ''.join(grid) + '</svg>'
+    )
+    # Ozdoby nad políčky: v návrhu je zakrývá cesta a kaluž, proto se tam ořežou maskou.
+    cover = ''.join(re.sub(r'(fill|stroke)="#[0-9A-Fa-f]+"', r'\1="#000"', el) for el in path + puddle)
+    top = (
+        head + f'<defs><mask id="m" maskUnits="userSpaceOnUse" x="{x0}" y="{y0}" width="{w}" height="{h}">'
+        f'<rect x="{x0}" y="{y0}" width="{w}" height="{h}" fill="#fff"/>{cover}</mask></defs>'
+        f'<g mask="url(#m)">' + ''.join(decor) + '</g>' + ''.join(things) + '</svg>'
     )
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, out_name), 'w', encoding='utf-8') as f:
         f.write(svg)
-    print(f'{out_name}: {len(ground)} ozdob trávníku, {len(margin)} na okraji, {len(path)} prvků cesty, {len(puddle)} kaluž, {len(grid)} šestihranů mřížky, {len(things)} předmětů')
+    with open(os.path.join(OUT, out_name.replace('.svg', '-ozdoby.svg')), 'w', encoding='utf-8') as f:
+        f.write(top)
+    print(f'{out_name}: {len(ground)} skvrn trávy, {len(decor)} ozdob, {len(margin)} na okraji, {len(path)} prvků cesty, {len(puddle)} kaluž, {len(grid)} šestihranů mřížky, {len(things)} předmětů')
     return rest
 
 

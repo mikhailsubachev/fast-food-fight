@@ -44,11 +44,12 @@ function plantFirst(g: Game, spots: Vec2[], type: DefenderType): boolean {
 }
 
 describe('2. úroveň „Školní svačina“', () => {
-  it('má 5 vln, 150 vody na začátku a lízátka v pozdějších vlnách', () => {
+  it('má 5 vln: hamburgery, hranolky, lízátka, velké hamburgery a nakonec všechno', () => {
     expect(LEVEL2.waves).toHaveLength(5);
     expect(LEVEL2.startWater).toBe(150);
-    expect(LEVEL2.waves[0].some((s) => s.type === 'lizatko')).toBe(false);
-    expect(LEVEL2.waves.slice(1).every((w) => w.some((s) => s.type === 'lizatko'))).toBe(true);
+    const kinds = LEVEL2.waves.map((w) => [...new Set(w.map((s) => s.type))]);
+    expect(kinds.slice(0, 4)).toEqual([['hamburger'], ['hranolky'], ['lizatko'], ['velkyHamburger']]);
+    expect(new Set(kinds[4]).size).toBe(4);
   });
 
   it('školní věci leží mimo cestu a zaberou políčka', () => {

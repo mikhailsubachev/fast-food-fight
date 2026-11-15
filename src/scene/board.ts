@@ -17,15 +17,24 @@ export interface Board {
  */
 const MEADOW = { minX: -480 / 120, maxX: 2400 / 120, minZ: -270 / 108, maxZ: 1350 / 108 };
 
-function meadowFromDesign(file: string): THREE.Mesh {
+/**
+ * `top`: průhledná vrstva ozdob (stébla, kytičky, houby, školní věci), která leží nad políčky
+ * na sázení, aby šestihrany byly vždy vespod.
+ */
+function meadowFromDesign(file: string, top = false): THREE.Mesh {
   const map = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}assets/prostredi/${file}`);
   map.colorSpace = THREE.SRGBColorSpace;
   map.anisotropy = 8;
   const w = MEADOW.maxX - MEADOW.minX;
   const d = MEADOW.maxZ - MEADOW.minZ;
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ map }));
+  const mat = top
+    ? new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false })
+    : new THREE.MeshBasicMaterial({ map });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
   m.rotation.x = -Math.PI / 2;
-  m.position.set((MEADOW.minX + MEADOW.maxX) / 2, 0.001, (MEADOW.minZ + MEADOW.maxZ) / 2);
+  m.position.set((MEADOW.minX + MEADOW.maxX) / 2, top ? 0.04 : 0.001, (MEADOW.minZ + MEADOW.maxZ) / 2);
+  // Políčka mají pořadí 1, oblaky cibule 2.
+  if (top) m.renderOrder = 1.5;
   return m;
 }
 
@@ -90,7 +99,7 @@ export function buildBoard(level: LevelData): Board {
   // Jednobarevná louka všude kolem, aby na širších obrazovkách nic nechybělo.
   const meadow = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ color: GRASS }));
   meadow.rotation.x = -Math.PI / 2;
-  root.add(meadow, meadowFromDesign(level.ground));
+  root.add(meadow, meadowFromDesign(level.ground), meadowFromDesign(level.ground.replace('.svg', '-ozdoby.svg'), true));
 
   for (const o of level.obstacles) root.add(obstacleMesh(o));
 
