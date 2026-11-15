@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import type { LevelData } from '../data/level1';
 import type { Vec2 } from '../core/types';
 
+type Box = { minX: number; maxX: number; minY: number; maxY: number };
+
 /**
  * Pevný šikmý pohled shora a z boku, bez otáčení, zoomu a posouvání. Podle návrhu úrovně
  * (plátno „Úroveň 1 – Snídaňová cesta“) je pohled pravoúhlý, bez perspektivy: postavy mají
@@ -15,8 +17,13 @@ const HUD_HEIGHT = 72;
 
 /** Displej nižší než tohle (v CSS pixelech) šetří místem nahoře a dole. */
 const LOW_SCREEN = 500;
-/** O kolik políček se na nízkém displeji ořízne výřez nahoře a dole. */
-const LOW_TRIM = 0.3;
+/**
+ * Kolik z šestihranu (od středu políčka nahoru a dolů, v políčkách) musí být na nízkém displeji
+ * vidět pod lištou a nad spodním okrajem, aby se do krajních řad dalo pohodlně ťuknout.
+ */
+const SLOT_MARGIN = 0.5;
+/** Mezera mezi spodkem lišty a horní řadou políček (v CSS pixelech). */
+const HUD_GAP = 4;
 
 /** Spodní okraj horní lišty v pixelech. */
 function hudHeight(): number {
@@ -32,14 +39,14 @@ export class Stage {
   height = 1;
 
   /** Rohy výřezu, který musí být vždy celý vidět, v souřadnicích kamery. */
-  private readonly viewBox: { minX: number; maxX: number; minY: number; maxY: number };
-  /** Výřez oříznutý nahoře a dole pro nízké displeje. */
-  private readonly tightBox: { minX: number; maxX: number; minY: number; maxY: number };
+  private readonly viewBox: Box;
+  /** Políčka i s okrajem, která na nízkém displeji musí být celá pod lištou (osa y kamery). */
+  private readonly slotBox: Box;
   private readonly raycaster = new THREE.Raycaster();
   private readonly ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private readonly tmp = new THREE.Vector3();
 
-  constructor(container: HTMLElement, level: LevelData) {
+  constructor(container: HTMLElement, level: LevelData, slots: readonly Vec2[]) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.domElement.className = 'stage';
@@ -63,29 +70,41 @@ export class Stage {
 
     // Pravoúhlý pohled: poloha bodu na obrazovce nezávisí na vzdálenosti kamery,
     // takže rohy výřezu stačí jednou převést do souřadnic kamery.
+    this.viewBox = this.boxOf([
+      { x: v.minX, z: v.minZ },
+      { x: v.maxX, z: v.maxZ },
+    ]);
+    const zs = slots.map((p) => p.z);
+    this.slotBox = slots.length
+      ? this.boxOf([
+          { x: v.minX, z: Math.min(...zs) - SLOT_MARGIN },
+          { x: v.maxX, z: Math.max(...zs) + SLOT_MARGIN },
+        ])
+      : this.viewBox;
+
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  /** Obdélník kolem bodů na zemi v souřadnicích kamery. */
+  private boxOf(points: Vec2[]): Box {
     const box = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
-    for (const x of [v.minX, v.maxX]) {
-      for (const z of [v.minZ, v.maxZ]) {
-        const p = new THREE.Vector3(x, 0, z).applyMatrix4(this.camera.matrixWorldInverse);
+    for (const a of points) {
+      for (const b of points) {
+        const p = new THREE.Vector3(a.x, 0, b.z).applyMatrix4(this.camera.matrixWorldInverse);
         box.minX = Math.min(box.minX, p.x);
         box.maxX = Math.max(box.maxX, p.x);
         box.minY = Math.min(box.minY, p.y);
         box.maxY = Math.max(box.maxY, p.y);
       }
     }
-    this.viewBox = box;
-    const trim = LOW_TRIM * Math.sin(CAMERA_TILT);
-    this.tightBox = { ...box, minY: box.minY + trim, maxY: box.maxY - trim };
-
-    this.resize();
-    window.addEventListener('resize', () => this.resize());
+    return box;
   }
 
   /**
    * Celý výřez se vejde pod horní lištu, co největší a vycentrovaný. Na nízkých displejích
    * (telefon naležato s lištou prohlížeče) by tak zbylo hodně místa po stranách, proto se tam
-   * výřez nahoře a dole trochu ořízne (krajní pruhy louky bez cesty) a lišta smí zasahovat do
-   * horního pruhu, kde nejsou políčka.
+   * pod lištu vejdou jen políčka (s okrajem) a louka nad nimi a pod nimi se ořízne.
    */
   resize(): void {
     const w = window.innerWidth;
@@ -95,12 +114,21 @@ export class Stage {
     this.renderer.setSize(w, h);
 
     const low = h < LOW_SCREEN;
-    const hud = Math.min(hudHeight(), h * 0.3) * (low ? 0.55 : 1);
-    const b = low ? this.tightBox : this.viewBox;
-    const scale = Math.min(w / (b.maxX - b.minX), (h - hud) / (b.maxY - b.minY));
+    const hud = Math.min(hudHeight(), h * 0.3);
+    const b = this.viewBox;
+    // Na nízkém displeji stačí, aby se pod lištu vešla políčka; louka nad nimi a pod nimi se ořízne.
+    const fitY = low ? this.slotBox.maxY - this.slotBox.minY : b.maxY - b.minY;
+    const scale = Math.min(w / (b.maxX - b.minX), (h - hud - (low ? HUD_GAP : 0)) / fitY);
     const cx = (b.minX + b.maxX) / 2;
     // Střed výřezu patří doprostřed místa pod lištou, tedy o polovinu lišty níž než střed obrazovky.
-    const cy = (b.minY + b.maxY) / 2 + hud / 2 / scale;
+    let cy = (b.minY + b.maxY) / 2 + hud / 2 / scale;
+    if (low) {
+      // Horní řada políček musí být pod lištou a spodní nad okrajem obrazovky.
+      const halfH = h / 2 / scale;
+      const s = this.slotBox;
+      cy = Math.max(cy, s.maxY + (hud + HUD_GAP) / scale - halfH);
+      cy = Math.min(cy, s.minY + halfH);
+    }
     const halfW = w / 2 / scale;
     const halfH = h / 2 / scale;
     this.camera.left = cx - halfW;

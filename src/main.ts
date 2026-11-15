@@ -28,7 +28,7 @@ function goToLevel(id: number): void {
 }
 
 const game = new Game(level);
-const stage = new Stage(app, level);
+const stage = new Stage(app, level, game.slots);
 const view = new View(stage, level);
 
 let paused = false;
