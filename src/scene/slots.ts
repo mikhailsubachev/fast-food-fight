@@ -1,13 +1,11 @@
 // Šestihranná políčka na sázení, jak je kreslí návrh úrovně:
 // volné světle zelené, zasazené hnědé (hlína) a vybrané bílé se zeleným okrajem.
 import * as THREE from 'three';
-import { HEX_HALF_HEIGHT, HEX_HALF_WIDTH } from '../core/placement';
+import { SLOT_SCALE, type HexGrid } from '../core/placement';
 import type { Vec2 } from '../core/types';
 
-/** Šestihran s plochým vrškem; `scale` ho zvětší nebo zmenší (pro okraj a vnitřek). */
-function hexShape(scale = 1): THREE.Shape {
-  const w = HEX_HALF_WIDTH * scale;
-  const h = HEX_HALF_HEIGHT * scale;
+/** Šestihran s plochým vrškem o polovičních rozměrech `w` × `h`. */
+function hexShape(w: number, h: number): THREE.Shape {
   const s = new THREE.Shape();
   s.moveTo(w, 0);
   s.lineTo(w / 2, h);
@@ -20,16 +18,17 @@ function hexShape(scale = 1): THREE.Shape {
 }
 
 /** Plný šestihran ležící na zemi. */
-function hexFill(scale = 1): THREE.BufferGeometry {
-  const g = new THREE.ShapeGeometry(hexShape(scale));
+function hexFill(w: number, h: number): THREE.BufferGeometry {
+  const g = new THREE.ShapeGeometry(hexShape(w, h));
   g.rotateX(-Math.PI / 2);
   return g;
 }
 
 /** Okraj šestihranu široký `width` políček (tah štětce z návrhu převedený z px). */
-function hexEdge(width: number): THREE.BufferGeometry {
-  const outer = hexShape(1 + width / 2 / HEX_HALF_WIDTH);
-  outer.holes.push(hexShape(1 - width / 2 / HEX_HALF_WIDTH));
+function hexEdge(w: number, h: number, width: number): THREE.BufferGeometry {
+  const k = width / 2 / w;
+  const outer = hexShape(w * (1 + k), h * (1 + k));
+  outer.holes.push(hexShape(w * (1 - k), h * (1 - k)));
   const g = new THREE.ShapeGeometry(outer);
   g.rotateX(-Math.PI / 2);
   return g;
@@ -47,14 +46,6 @@ const PLANTED_EDGE = mat(0x2b2118);
 const SELECTED_FILL = mat(0xffffff, 0.6);
 const SELECTED_EDGE = mat(0x2f9e44);
 
-const GEO = {
-  fill: hexFill(),
-  inner: hexFill(0.743),
-  edgeThin: hexEdge(3 * PX),
-  edgePlanted: hexEdge(3.5 * PX),
-  edgeSelected: hexEdge(6 * PX),
-};
-
 type SlotState = 'free' | 'planted' | 'selected';
 
 interface SlotMesh {
@@ -70,7 +61,20 @@ export class SlotsView {
   private readonly meshes: SlotMesh[];
   private selected: Vec2 | null = null;
 
-  constructor(slots: readonly Vec2[]) {
+  private readonly geo: Record<'fill' | 'inner' | 'edgeThin' | 'edgePlanted' | 'edgeSelected', THREE.BufferGeometry>;
+
+  constructor(slots: readonly Vec2[], grid: HexGrid) {
+    // Políčko je menší než obrys v mřížce (návrh D): 0,66 poloměru, vnitřek osázeného 0,74 z toho.
+    const w = grid.halfWidth * SLOT_SCALE;
+    const h = grid.halfHeight * SLOT_SCALE;
+    this.geo = {
+      fill: hexFill(w, h),
+      inner: hexFill(w * 0.74, h * 0.74),
+      edgeThin: hexEdge(w, h, 3 * PX),
+      edgePlanted: hexEdge(w, h, 3.5 * PX),
+      edgeSelected: hexEdge(w, h, 6 * PX),
+    };
+    const GEO = this.geo;
     this.meshes = slots.map((p) => {
       const fill = new THREE.Mesh(GEO.fill, FREE_FILL);
       const inner = new THREE.Mesh(GEO.inner, PLANTED_INNER);
@@ -97,6 +101,7 @@ export class SlotsView {
       const isSelected = !isPlanted && this.selected !== null && Math.hypot(this.selected.x - m.p.x, this.selected.z - m.p.z) < 0.1;
       const state: SlotState = isPlanted ? 'planted' : isSelected ? 'selected' : 'free';
       if (state === m.state) continue;
+      const GEO = this.geo;
       m.state = state;
       m.inner.visible = state === 'planted';
       if (state === 'planted') {

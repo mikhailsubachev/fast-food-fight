@@ -16,13 +16,22 @@ const FEET_V = (FRAME_H - 438) / FRAME_H;
 const loader = new THREE.TextureLoader();
 const textures = new Map<string, THREE.Texture>();
 
-function texture(name: string): THREE.Texture {
-  let t = textures.get(name);
+function texture(name: string, mirrored = false): THREE.Texture {
+  const key = mirrored ? `${name}|zrcadlo` : name;
+  let t = textures.get(key);
   if (!t) {
-    t = loader.load(`${import.meta.env.BASE_URL}assets/postavy/${name}.svg`);
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = 4;
-    textures.set(name, t);
+    if (mirrored) {
+      // Zrcadlový obrázek: stejná kresba, jen čtená zprava doleva. (Sprite záporné měřítko
+      // neumí, proto se postava otáčí takhle.)
+      t = texture(name).clone();
+      t.repeat.x = -1;
+      t.offset.x = 1;
+    } else {
+      t = loader.load(`${import.meta.env.BASE_URL}assets/postavy/${name}.svg`);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 4;
+    }
+    textures.set(key, t);
   }
   return t;
 }
@@ -50,7 +59,10 @@ export interface Puppet {
   width: number;
   height: number;
   frame: string;
+  /** Postava otočená doleva (zrcadlově); nakreslené jsou čelem doprava. */
+  mirrored: boolean;
   setFrame(name: string): void;
+  setMirrored(mirrored: boolean): void;
 }
 
 /** Loutka: obrázek natočený ke kameře, chodidla na zemi v bodě `root`. */
@@ -69,10 +81,16 @@ function puppet(firstFrame: string, worldHeight: number): Puppet {
     width,
     height,
     frame: firstFrame,
+    mirrored: false,
     setFrame(name: string) {
       if (p.frame === name) return;
       p.frame = name;
-      mat.map = texture(name);
+      mat.map = texture(name, p.mirrored);
+    },
+    setMirrored(mirrored: boolean) {
+      if (p.mirrored === mirrored) return;
+      p.mirrored = mirrored;
+      mat.map = texture(p.frame, mirrored);
     },
   };
   return p;
@@ -93,7 +111,8 @@ function blobShadow(p: Puppet, r: number): void {
  * Výška obrázku (celého rámečku 450 px) ve světě, podle návrhu úrovně:
  * měřítko postavy v návrhu × 450 px / 120 px na políčko. Postava sama je asi o pětinu menší.
  */
-const DEFENDER_HEIGHT: Record<DefenderType, number> = { mrkev: 1.8, porek: 1.94 };
+// Zelenina podle návrhu D (menší, aby se vešla do políčka mřížky): 0,415 a 0,419 × 450 / 120.
+const DEFENDER_HEIGHT: Record<DefenderType, number> = { mrkev: 1.56, porek: 1.57 };
 const ATTACKER_HEIGHT: Record<'hamburger' | 'hranolky', number> = { hamburger: 1.73, hranolky: 1.58 };
 
 export function makeDefender(type: DefenderType): Puppet {

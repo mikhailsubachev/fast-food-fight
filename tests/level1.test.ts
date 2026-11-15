@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Game } from '../src/core/game';
 import { Path } from '../src/core/path';
-import { HEX_HALF_HEIGHT, HEX_HALF_WIDTH, SLOT_PATH_CLEARANCE } from '../src/core/placement';
+import { SLOT_SCALE } from '../src/core/placement';
 import type { Vec2 } from '../src/core/types';
 import { LEVEL1 } from '../src/data/level1';
 import { ATTACKER_BODY_RADIUS, ATTACKERS, DEFENDERS, type DefenderType } from '../src/data/units';
@@ -15,16 +15,16 @@ const throwRange = ATTACKERS.hranolky.throws!.range;
 const free: Vec2[] = new Game(LEVEL1).slots;
 /** Políčka dobrá pro mrkev: cesta v dosahu. */
 const carrotSpots = free.filter((p) => path.distanceTo(p) <= carrotRange + ATTACKER_BODY_RADIUS);
-/** Zasazená políčka z návrhu úrovně (plátno „Úroveň 1 – Snídaňová cesta“). */
+/** Zasazená políčka z návrhu úrovně, varianta D (design/generator/gen_level.py). */
 const designSlots: Vec2[] = [
-  { x: 0.617, z: 5.215 },
-  { x: 1.942, z: 7.765 },
-  { x: 4.592, z: 4.365 },
-  { x: 4.592, z: 6.065 },
-  { x: 7.242, z: 4.365 },
-  { x: 8.567, z: 5.215 },
-  { x: 8.567, z: 6.915 },
-  { x: 13.867, z: 3.515 },
+  { x: 3.6667, z: 6.3815 },
+  { x: 7.0042, z: 5.6678 },
+  { x: 3.6667, z: 3.5271 },
+  { x: 11.4542, z: 5.6678 },
+  { x: 11.4542, z: 7.095 },
+  { x: 8.1167, z: 7.8086 },
+  { x: 1.4417, z: 6.3815 },
+  { x: 13.6792, z: 4.2407 },
 ];
 /** Místa dobrá pro pórek: mimo hod hranolek, ale cesta v dosahu. */
 const leekSpots = free.filter((p) => path.distanceTo(p) > throwRange + 0.1 && path.distanceTo(p) <= leekRange - 0.3);
@@ -66,8 +66,8 @@ describe('záhon 1. úrovně', () => {
     expect(Math.hypot(end.x - LEVEL1.mouth.x, end.z - LEVEL1.mouth.z)).toBeLessThan(1);
   });
 
-  it('sází se do šestihranů: volná jsou skoro všechna políčka mimo cestu', () => {
-    expect(free.length).toBeGreaterThanOrEqual(20);
+  it('sází se do šestihranů: volná jsou skoro všechna políčka mimo cestu (v návrhu D 48)', () => {
+    expect(free.length).toBe(48);
   });
 
   it('políčka z návrhu úrovně jdou osázet', () => {
@@ -84,7 +84,7 @@ describe('záhon 1. úrovně', () => {
   });
 
   it('je dost políček pro mrkev u cesty i pro pórek mimo dosah hranolek', () => {
-    expect(carrotSpots.length).toBeGreaterThanOrEqual(10);
+    expect(carrotSpots.length).toBeGreaterThanOrEqual(15);
     expect(leekSpots.length).toBeGreaterThanOrEqual(6);
   });
 
@@ -101,17 +101,18 @@ describe('záhon 1. úrovně', () => {
 
   it('překážky ani pusa neleží na cestě', () => {
     for (const o of LEVEL1.obstacles) expect(path.distanceTo(o)).toBeGreaterThan(o.r);
-    for (const p of free) expect(path.distanceTo(p)).toBeGreaterThanOrEqual(SLOT_PATH_CLEARANCE);
+    for (const p of free) expect(path.distanceTo(p)).toBeGreaterThanOrEqual(LEVEL1.slotRules.pathClearance);
   });
 
-  it('políčka se nepřekrývají a leží celá na záhonu', () => {
+  it('políčka se nepřekrývají a leží na záhonu', () => {
     const b = LEVEL1.board;
+    const g = LEVEL1.hexGrid;
     for (const p of free) {
-      expect(p.x - HEX_HALF_WIDTH).toBeGreaterThanOrEqual(b.minX);
-      expect(p.x + HEX_HALF_WIDTH).toBeLessThanOrEqual(b.maxX);
-      expect(p.z - HEX_HALF_HEIGHT).toBeGreaterThanOrEqual(b.minZ);
-      expect(p.z + HEX_HALF_HEIGHT).toBeLessThanOrEqual(b.maxZ);
-      for (const q of free) if (p !== q) expect(Math.hypot(p.x - q.x, p.z - q.z)).toBeGreaterThan(2 * HEX_HALF_HEIGHT);
+      expect(p.x - g.halfWidth * SLOT_SCALE).toBeGreaterThanOrEqual(b.minX);
+      expect(p.x + g.halfWidth * SLOT_SCALE).toBeLessThanOrEqual(b.maxX);
+      expect(p.z - g.halfHeight * SLOT_SCALE).toBeGreaterThanOrEqual(b.minZ);
+      expect(p.z + g.halfHeight * SLOT_SCALE).toBeLessThanOrEqual(b.maxZ);
+      for (const q of free) if (p !== q) expect(Math.hypot(p.x - q.x, p.z - q.z)).toBeGreaterThan(g.dx * 0.99);
     }
   });
 

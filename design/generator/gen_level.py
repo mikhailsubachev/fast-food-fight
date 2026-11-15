@@ -23,29 +23,28 @@ import curve as _cv
 OBST=[('stump',0.9,8.4,0.6),('rock',14.7,3.0,0.7),('puddle',8.3,4.2,0.85),('mole',12.7,2.7,0.6)]
 def onpath(x,z,m=0.75): return _cv.dist(x,z)<m or any(math.hypot(x-ox,z-oz)<orr for _,ox,oz,orr in OBST)
 # ---- visible hex grid for planting (flat-top hexes, one plant per cell; a plant never overlaps its neighbours)
-HR=106; HH=HR*math.sqrt(3); HX0=74; HY0=196; HK=0.64
+# ---- variant C of the hex grid (chosen on the map sketches): 178 x 154 px hexes, only plantable hexes are shown
+HR=89; HH=HR*math.sqrt(3); HX0=40; HY0=150; HK=0.66
 MOUTHBOX=(1600,560,1920,1080)
-CELLS=[]
-for row in range(6):
-    for col in range(13):
+OBST=[('stump', 0.6166666666666667, 8.614717985270406, 0.6), ('rock', 15.191666666666666, 2.6648027111217636, 0.7), ('puddle', 8.566666666666666, 3.5147906074287127, 0.85), ('mole', 12.541666666666666, 2.6648027111217636, 0.6)]
+CELLS=[]; OBCELLS=set()
+for row in range(-1,9):
+    for col in range(-1,20):
         px=HX0+col*HR*1.5; py=HY0+row*HH+(HH/2 if col%2 else 0)
-        if not (50<px<W-50) or py>1010: continue
+        if not (40<px<W-40) or py>1030 or py<130: continue
         wx,wz=px/SX,py/SZ
-        if _cv.dist(wx,wz)<1.0: continue
+        if any(math.hypot(px-ox*SX,py-oz*SZ)<max(HR*0.95,orr*SX*0.9) for _,ox,oz,orr in OBST):
+            CELLS.append((wx,wz)); OBCELLS.add((wx,wz)); continue
+        if _cv.dist(wx,wz)<0.78: continue
         if MOUTHBOX[0]<px and py>MOUTHBOX[1]: continue
         CELLS.append((wx,wz))
-TAKEN=set()
+TAKEN=set(OBCELLS)
 def snap(x,z):
     c=min((c for c in CELLS if c not in TAKEN),key=lambda c:((c[0]-x)*SX)**2+((c[1]-z)*SZ)**2); TAKEN.add(c); return c
 def hexpts(wx,wz,k=None):
     k=HK if k is None else k
     cx,cy=wx*SX,wz*SZ
     return " ".join(f"{cx+k*HR*math.cos(math.radians(60*i)):.1f},{cy+k*HR*math.sin(math.radians(60*i)):.1f}" for i in range(6))
-_ob=[]
-for kk,ox,oz,orr in OBST:
-    c=snap(ox,oz); _ob.append((kk,c[0],c[1],orr))
-OBST=_ob
-OBCELLS=set(TAKEN)
 def unit(x,z):
     a=P(x,0,z); b_=P(x,0.1,z); return a,(a[1]-b_[1])/6.0   # px per "decor unit"
 # lighter / darker grass patches (irregular blobs)
@@ -124,9 +123,30 @@ for side in (Lc,Rc):
 c0=curve.nearest(0.3,3.0)
 out.append(f'<polygon points="{ground_poly([(c0[0]-0.25,c0[1]-0.32),(c0[0]+0.45,c0[1]),(c0[0]-0.25,c0[1]+0.32)])}" fill="#E0574F" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>')
 
+# ---- variant D: the whole map stays covered by hexes (path, obstacles, mouth and edges too)
+import os as _os
+ALLHEX=_os.environ.get("ALLHEX")=="1"
+if ALLHEX:
+    def _fullhex(px,py,k=0.97): return " ".join(f"{px+k*HR*math.cos(math.radians(60*i)):.1f},{py+k*HR*math.sin(math.radians(60*i)):.1f}" for i in range(6))
+    for row in range(-1,9):
+        for col in range(-1,20):
+            px=HX0+col*HR*1.5; py=HY0+row*HH+(HH/2 if col%2 else 0)
+            if px<-HR or px>W+HR or py<-HH or py>H+HH: continue
+            wx,wz=px/SX,py/SZ
+            if any(abs(wx-c[0])<1e-6 and abs(wz-c[1])<1e-6 for c in CELLS) and (wx,wz) not in OBCELLS:
+                out.append(f'<polygon points="{_fullhex(px,py)}" fill="none" stroke="#3E6B25" stroke-width="2.5" stroke-opacity=".55" stroke-linejoin="round"/>')
+            elif any(math.hypot(px-ox*SX,py-oz*SZ)<max(HR*0.95,orr*SX*0.9) for _,ox,oz,orr in OBST):
+                out.append(f'<polygon points="{_fullhex(px,py)}" fill="#8E8A82" fill-opacity=".18" stroke="#5A5550" stroke-width="2.5" stroke-opacity=".6" stroke-linejoin="round"/>')
+            elif _cv.dist(wx,wz)<0.78:
+                out.append(f'<polygon points="{_fullhex(px,py)}" fill="none" stroke="#7A4A24" stroke-width="2.5" stroke-opacity=".5" stroke-linejoin="round"/>')
+            else:
+                out.append(f'<polygon points="{_fullhex(px,py)}" fill="none" stroke="#3E6B25" stroke-width="2.5" stroke-opacity=".35" stroke-linejoin="round"/>')
 # ---- free planting: plants anywhere on the bed (no fixed slots)
-plants=[("mrkev",3.9,3.9),("mrkev_slash",5.1,5.0),("mrkev",3.9,6.7),("mrkev_frozen",9.2,5.1),("mrkev_grow",7.5,5.3),("porek_aim",8.3,7.4),("porek",1.2,5.9),("porek",13.6,4.6)]
+# carrots only reach ~1.5 hexes, so they go on hexes right next to the path, each beside a fast food;
+# leeks shoot far and stay further away
+plants=[("mrkev",3.67,6.38),("mrkev_slash",7.01,5.67),("mrkev",3.67,3.53),("mrkev_frozen",11.46,5.67),("mrkev_grow",11.46,7.1),("porek_aim",8.3,7.4),("porek",1.2,5.9),("porek",13.6,4.6)]
 plants=[(k,)+snap(x,z) for k,x,z in plants]
+_A3=curve.nearest(6.15,4.75)
 PL={k:(x,z) for k,x,z in plants}
 def mound(x,z,rad=0.36):
     pts=[(x+rad*math.cos(a/18*2*math.pi), z+rad*0.75*math.sin(a/18*2*math.pi)) for a in range(18)]
@@ -150,13 +170,13 @@ def place(inner,x,z,hw=1.25,flip=False,feet=(150,388),lift=0):
 figs=[]
 def add(z,svg): figs.append((z,svg))
 C=gen
-PF=0.913*106/92
+PF=0.913*106/92*(HH*0.97)/181.46
 def pplace(inner,x,z,hw=1.25,flip=False): return place(inner,x,z,hw*PF,flip)
 for kind,x,z in plants:
     if kind=="mrkev":
         add(z, pplace(C.carrot("smile"),x,z))
     elif kind=="mrkev_slash":
-        add(z, pplace(C.carrot("fight","slash"),x,z))
+        add(z, pplace(C.carrot("fight","slash"),x,z,flip=_A3[0]<x))
     elif kind=="mrkev_frozen":
         add(z, pplace(C.carrot("frozen",tint="ice",extra_front=C.ice_bits),x,z))
     elif kind=="mrkev_grow":
@@ -222,7 +242,7 @@ def walker(svg,x,z,hw=1.2,flip=False,rad=0.36):
     p=curve.nearest(x,z); add(p[1], blob(p[0],p[1],rad)+place(svg,p[0],p[1],hw,flip=flip)); return p
 A1=walker(gf.burger("scared","flail","run",extra=gf.sweat(220,150)),1.0,2.95,flip=True)
 A2=walker(gf.burger("angry","up","step",extra=gf.motion),2.8,5.9)
-A3=walker(gf.burger("hit","down"),6.2,5.3,1.1)
+A3=walker(gf.burger("hit","down"),6.15,4.75,1.1)
 A4=walker(gf.fries("throw","windup"),10.5,5.7)
 A5=walker(gf.burger("angry","up","stand"),8.6,2.55)
 A6=walker(gf.burger("angry","up","step",extra=gf.motion),12.1,8.05)
@@ -339,4 +359,8 @@ return {{}};
 </html>
 '''
 ROOT="/mnt/user-data/outputs/artifacts/0c045be6-49f0-4f56-9475-27d367f93a14/project"
-open(ROOT+"/Uroven1.dc.html","w").write(html); print(len(html))
+if ALLHEX:
+    html=html.replace("<title>Úroveň 1 – Snídaňová cesta</title>","<title>Úroveň 1 – varianta D, celá mřížka</title>").replace('aria-label="Úroveň 1: zelenina brání pusu u cesty ve tvaru S"','aria-label="Úroveň 1, varianta D: celá mapa v šestihranech, zelenina, pusa a útočníci"')
+    open(ROOT+"/Uroven1D.dc.html","w").write(html); print("D",len(html))
+else:
+    open(ROOT+"/Uroven1.dc.html","w").write(html); print(len(html))

@@ -20,6 +20,13 @@ interface Anim {
   joyT: number;
   /** Kdy příště mrknout. */
   blinkAt: number;
+  /**
+   * Kam je postava otočená: 1 doprava (jak je nakreslená, mrkvomeč i luk vpravo), −1 doleva.
+   * Zelenina se otáčí k cíli, aby sekla nebo střílela tou rukou, která je blíž k cestě.
+   */
+  face: number;
+  /** Kam mrkev naposledy sekla (místo cíle), aby k němu při seku doskočila. */
+  target: { x: number; z: number } | null;
 }
 
 interface Effect {
@@ -35,10 +42,17 @@ const puffGeo = new THREE.SphereGeometry(0.3, 12, 8);
 const dotGeo = new THREE.SphereGeometry(0.07, 8, 6);
 
 function newAnim(puppet: Puppet): Anim {
-  return { puppet, attackT: 99, hitT: 99, throwT: 99, joyT: 99, blinkAt: 1 + Math.random() * 3 };
+  return { puppet, attackT: 99, hitT: 99, throwT: 99, joyT: 99, blinkAt: 1 + Math.random() * 3, face: 1, target: null };
 }
 
 /** Převádí stav hry na 3D scénu: papírové loutky, střely a efekty. */
+/** Jak dlouho trvá sek nebo výstřel (s). */
+const ATTACK_TIME = 0.3;
+/** Jak daleko od středu mrkve sahá špička mrkvomeče (políčka). */
+const SWORD_REACH = 0.45;
+/** Kdy je mrkev při seku nejdál (první třetina seku). */
+const LUNGE_PEAK = ATTACK_TIME / 3;
+
 export class View {
   readonly board: Board;
   private readonly dynamic = new THREE.Group();
@@ -46,6 +60,7 @@ export class View {
   private readonly attackers = new Map<number, Anim>();
   private readonly projectiles = new Map<number, THREE.Sprite>();
   private effects: Effect[] = [];
+  private pending: { t: number; fn: () => void }[] = [];
   private readonly mouth: Puppet;
   private mouthPulse = 1;
   private mouthMood: 'play' | 'won' | 'lost' = 'play';
@@ -84,7 +99,7 @@ export class View {
     stage.scene.add(this.ring);
 
     // Šestihranná políčka na sázení a poletující motýli a včelka z návrhu.
-    this.slots = new SlotsView(hexSlots(level, new Path(level.path)));
+    this.slots = new SlotsView(hexSlots(level, new Path(level.path)), level.hexGrid);
     stage.scene.add(this.slots.root, this.critters.root);
   }
 
@@ -112,6 +127,7 @@ export class View {
   }
 
   reset(): void {
+    this.pending = [];
     this.dynamic.clear();
     this.defenders.clear();
     this.attackers.clear();
@@ -128,13 +144,21 @@ export class View {
       switch (e.type) {
         case 'attack': {
           const a = this.defenders.get(e.defenderId);
-          if (a) a.attackT = 0;
+          if (a) {
+            a.attackT = 0;
+            a.target = { x: e.x, z: e.z };
+            // Otočit se k cíli; když stojí skoro přesně nad nebo pod zeleninou, zůstat otočená.
+            const dx = e.x - a.puppet.root.position.x;
+            if (Math.abs(dx) > 0.15) a.face = Math.sign(dx);
+          }
           break;
         }
         case 'hit': {
+          // Sek mrkve: fast food cukne, až k němu mrkev doskočí (v nejzazším bodě výpadu).
+          const delay = e.melee ? LUNGE_PEAK : 0;
           const a = this.attackers.get(e.attackerId);
-          if (a) a.hitT = 0;
-          this.burst(e.x, 0.6, e.z, 0xd8312b, 5);
+          if (a) a.hitT = -delay;
+          this.later(delay, () => this.burst(e.x, 0.6, e.z, 0xd8312b, 5));
           break;
         }
         case 'flee': {
@@ -183,7 +207,6 @@ export class View {
     this.syncDefenders(game, dt, time);
     this.syncAttackers(game, dt, time);
     this.syncProjectiles(game, time);
-    this.fadeOverlaps(dt);
     this.updateMouth(game, dt, time);
     this.updateEffects(dt);
     this.slots.update(game.defenders);
@@ -200,6 +223,7 @@ export class View {
         puppet.root.position.set(d.x, 0, d.z);
         this.dynamic.add(puppet.root);
         anim = newAnim(puppet);
+        anim.face = this.faceTowardsPath(game, d.x, d.z);
         this.defenders.set(d.id, anim);
       }
       anim.attackT += dt;
@@ -210,6 +234,7 @@ export class View {
       // Vyrůstání: loutka vyleze ze záhonu se zavřenýma očima.
       if (d.growLeft > 0) {
         const k = 1 - d.growLeft / DEFENDERS[d.type].growTime;
+        anim.puppet.setMirrored(anim.face < 0);
         sprite.scale.set(width * (0.6 + 0.4 * k), height * Math.max(0.05, k), 1);
         sprite.position.set(0, 0, 0);
         anim.puppet.setFrame(`${d.type}-mrk`);
@@ -220,13 +245,16 @@ export class View {
       let squash = Math.sin(time * 3 + d.id) * 0.02;
       let jitter = 0;
       let hop = 0;
+      let lungeX = 0;
+      let lungeZ = 0;
       if (d.frozenLeft > 0) {
         frame = d.type === 'mrkev' ? 'mrkev-ztuhla' : 'porek-ztuhl';
         jitter = Math.sin(time * 60) * 0.04;
         squash = 0;
-      } else if (anim.attackT < 0.3) {
+      } else if (anim.attackT < ATTACK_TIME) {
         frame = d.type === 'mrkev' ? `${prefix}-sek` : `${prefix}-vystrel`;
-        squash = -Math.sin((anim.attackT / 0.3) * Math.PI) * 0.08;
+        squash = -Math.sin((anim.attackT / ATTACK_TIME) * Math.PI) * 0.08;
+        if (d.type === 'mrkev' && anim.target) [lungeX, lungeZ] = this.lunge(anim, d.x, d.z);
       } else if (anim.joyT < 0.7) {
         frame = `${prefix}-radost`;
         hop = Math.abs(Math.sin((anim.joyT / 0.7) * Math.PI * 2)) * 0.25;
@@ -238,40 +266,40 @@ export class View {
         if (time > anim.blinkAt) frame = `${prefix}-mrk`;
       }
       anim.puppet.setFrame(frame);
+      anim.puppet.setMirrored(anim.face < 0);
       sprite.scale.set(width * (1 - squash * 0.5), height * (1 + squash), 1);
-      sprite.position.set(jitter, hop, 0);
+      sprite.position.set(jitter + lungeX, hop, lungeZ);
     }
     this.removeMissing(this.defenders, alive);
   }
 
   /**
-   * Fast food, který stojí před zeleninou (blíž ke kameře) a zakrývá ji, zprůhlední.
-   * Zelenina zůstává vždy plně vidět, aby hráč věděl, co a kde má zasazeno.
+   * Výpad mrkve při seku: mrkev rychle doskočí k fast foodu, aby se ho mrkvomeč opravdu
+   * dotkl, a vrátí se zpátky na své políčko. Vrací posun loutky v ose x a z.
    */
-  private fadeOverlaps(dt: number): void {
-    const hidden = new Set<Anim>();
-    for (const d of this.defenders.values()) {
-      const dp = d.puppet.root.position;
-      for (const a of this.attackers.values()) {
-        const ap = a.puppet.root.position;
-        const size = a.puppet.root.scale.x;
-        if (Math.abs(ap.x - dp.x) > 0.45 + 0.35 * size) continue;
-        const dz = ap.z - dp.z;
-        // Přední postava zakryje zem za sebou zhruba do vzdálenosti své výšky.
-        if (dz > 0.05 && dz < 1.8 * size) hidden.add(a);
-      }
+  private lunge(anim: Anim, x: number, z: number): [number, number] {
+    const t = anim.target!;
+    const dx = t.x - x;
+    const dz = t.z - z;
+    const dist = Math.hypot(dx, dz);
+    // Špička mrkvomeče je asi 0,45 políčka od středu mrkve, fast food má tělo 0,35 políčka.
+    const reach = Math.max(0, dist - SWORD_REACH - ATTACKER_BODY_RADIUS);
+    if (dist < 1e-6 || reach === 0) return [0, 0];
+    // Rychle tam (první třetina seku), pomaleji zpátky.
+    const k = anim.attackT / ATTACK_TIME;
+    const out = k < 1 / 3 ? Math.sin((k * 3 * Math.PI) / 2) : Math.cos(((k - 1 / 3) * 1.5 * Math.PI) / 2);
+    return [(dx / dist) * reach * out, (dz / dist) * reach * out];
+  }
+
+  /** Na kterou stranu má zelenina k nejbližšímu kousku cesty (1 doprava, −1 doleva). */
+  private faceTowardsPath(game: Game, x: number, z: number): number {
+    let best = { x: x + 1, dist: Infinity };
+    for (let d = 0; d <= game.path.length; d += 0.2) {
+      const p = game.path.at(d);
+      const dist = Math.hypot(p.x - x, p.z - z);
+      if (dist < best.dist) best = { x: p.x, dist };
     }
-    const step = Math.min(1, dt * 10);
-    for (const anim of this.attackers.values()) {
-      const mat = anim.puppet.sprite.material;
-      const target = hidden.has(anim) ? 0.35 : 1;
-      mat.opacity += (target - mat.opacity) * step;
-      const see = mat.opacity < 0.98;
-      if (mat.transparent !== see) {
-        mat.transparent = see;
-        mat.needsUpdate = true;
-      }
-    }
+    return best.x < x - 0.15 ? -1 : 1;
   }
 
   private hasTarget(game: Game, x: number, z: number, range: number): boolean {
@@ -304,7 +332,7 @@ export class View {
       let frame = `${base}-krok${step ? 1 : 2}`;
       let squash = 0;
       if (a.fleeing) frame = `${base}-utek${step ? 1 : 2}`;
-      else if (anim.hitT < 0.25) {
+      else if (anim.hitT >= 0 && anim.hitT < 0.25) {
         frame = `${base}-zasah`;
         squash = Math.sin((anim.hitT / 0.25) * Math.PI) * 0.15;
       } else if (base === 'hranolky' && anim.throwT < 0.15) frame = 'hranolky-naprah';
@@ -314,9 +342,10 @@ export class View {
       // Otočit loutku podle toho, kam jde na obrazovce (doleva / doprava).
       const dir = a.fleeing ? -1 : 1;
       const sx = this.screenDirX(p.x, p.z, p.dirX * dir, p.dirZ * dir);
-      const flip = sx < -0.05 ? -1 : 1;
+      // Při chůzi skoro svisle nahoru nebo dolů zůstane otočená, jak byla, aby necukala.
+      if (Math.abs(sx) > 0.2) anim.puppet.setMirrored(sx < 0);
       const bounce = Math.abs(Math.sin(time * (a.fleeing ? 14 : 8) + a.id)) * (a.fleeing ? 0.14 : 0.07);
-      sprite.scale.set(width * flip * (1 + squash * 0.6), height * (1 - squash), 1);
+      sprite.scale.set(width * (1 + squash * 0.6), height * (1 - squash), 1);
       sprite.position.set(0, bounce, 0);
     }
     this.removeMissing(this.attackers, alive);
@@ -440,7 +469,19 @@ export class View {
     this.effects.push({ obj, age: 0, life, step });
   }
 
+  /** Udělá něco o chvilku později (efekt zásahu ve chvíli, kdy mrkvomeč dosekne). */
+  private later(seconds: number, fn: () => void): void {
+    if (seconds <= 0) fn();
+    else this.pending.push({ t: seconds, fn });
+  }
+
   private updateEffects(dt: number): void {
+    this.pending = this.pending.filter((p) => {
+      p.t -= dt;
+      if (p.t > 0) return true;
+      p.fn();
+      return false;
+    });
     this.effects = this.effects.filter((e) => {
       e.age += dt;
       const k = Math.min(1, e.age / e.life);

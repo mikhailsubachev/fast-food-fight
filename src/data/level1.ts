@@ -1,5 +1,5 @@
 import { catmullRom, clipStartAtX } from '../core/path';
-import type { HexGrid } from '../core/placement';
+import type { HexGrid, SlotRules } from '../core/placement';
 import type { Vec2 } from '../core/types';
 import type { AttackerType, DefenderType } from './units';
 
@@ -32,8 +32,10 @@ export interface LevelData {
   obstacles: Obstacle[];
   /** Záhon: obdélník, na který se dá sázet. */
   board: Rect;
-  /** Šestihranná políčka na sázení (z nich se vyřadí ta na cestě, u překážek a u pusy). */
+  /** Mřížka šestihranů přes celou mapu. */
   hexGrid: HexGrid;
+  /** Která políčka mřížky jsou k sázení. */
+  slotRules: SlotRules;
   /** Výřez, který kamera vždy celý ukáže (o kousek menší než záhon kvůli většímu přiblížení). */
   view: Rect;
   mouth: Vec2;
@@ -58,7 +60,7 @@ const B: AttackerType = 'velkyHamburger';
  * Záhon podle návrhu úrovně: na obrazovce 16 × 9 políček (1920 × 1080 px, 120 px na políčko),
  * nahoře pás pro horní lištu.
  */
-const BOARD: Rect = { minX: 0, maxX: 16, minZ: 1, maxZ: 10 };
+const BOARD: Rect = { minX: 0, maxX: 16, minZ: 0.85, maxZ: 10 };
 
 /**
  * Řídicí body cesty z návrhu úrovně (plátno „Úroveň 1 – Snídaňová cesta“): vstupuje zleva,
@@ -91,16 +93,33 @@ export const LEVEL1: LevelData = {
   id: 1,
   name: 'Snídaňová cesta',
   path: clipStartAtX(catmullRom(PATH_CONTROL), BOARD.minX),
-  // Sází se do šestihranů; na cestě, u těchto překážek a u pusy políčka nejsou.
+  // Sází se do šestihranů; na cestě, na překážkách a u pusy políčka nejsou.
+  // Polohy překážek z generátoru návrhu D; políčka pod nimi jsou šedá a nesází se do nich.
   obstacles: [
-    { kind: 'parez', x: 0.9, z: 8.3, r: 0.55 },
-    { kind: 'kamen', x: 14.7, z: 2.6, r: 0.6 },
-    { kind: 'kaluz', x: 8.3, z: 4.2, r: 0.85 },
-    { kind: 'krtina', x: 12.7, z: 2.4, r: 0.5 },
+    { kind: 'parez', x: 0.6167, z: 8.6147, r: 0.6 },
+    { kind: 'kamen', x: 15.1917, z: 2.6648, r: 0.7 },
+    { kind: 'kaluz', x: 8.5667, z: 3.5148, r: 0.85 },
+    { kind: 'krtina', x: 12.5417, z: 2.6648, r: 0.6 },
   ],
   board: BOARD,
-  // Mřížka šestihranů z návrhu úrovně (159 px mezi sloupci, 183,6 px mezi políčky ve sloupci).
-  hexGrid: { x0: 0.617, z0: 1.815, dx: 1.325, dz: 1.7 },
+  // Mřížka šestihranů z návrhu úrovně, varianta D (design/generator/gen_level.py): poloměr
+  // šestihranu 89 px, sloupce po 133,5 px, políčka ve sloupci po 154,15 px; 120 px = 1 políčko v ose x,
+  // 108 px v ose z.
+  hexGrid: {
+    x0: 40 / 120,
+    z0: 150 / 108,
+    dx: 133.5 / 120,
+    dz: (89 * Math.sqrt(3)) / 108,
+    halfWidth: 89 / 120,
+    halfHeight: (89 * Math.sqrt(3)) / 2 / 108,
+  },
+  slotRules: {
+    // Sází se mezi 40 a 1880 px na šířku a 130 až 1030 px na výšku obrazovky návrhu.
+    area: { minX: 40 / 120, maxX: 1880 / 120, minZ: 130 / 108 - 1e-6, maxZ: 1030 / 108 + 1e-6 },
+    pathClearance: 0.78,
+    // Kolem pusy vpravo dole se nesází (od 1600 px vpravo a 560 px dolů).
+    blocked: [{ minX: 1600 / 120, maxX: 99, minZ: 560 / 108, maxZ: 99 }],
+  },
   view: { minX: 0, maxX: 16, minZ: 1, maxZ: 10 },
   mouth: { x: 14.3, z: 8.0 },
   startWater: 120,

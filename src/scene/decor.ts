@@ -63,7 +63,11 @@ export class Critters {
       // Mávání křídly: obrázek se rytmicky zužuje; letí tam, kam se dívá.
       const wings = 0.55 + 0.45 * Math.abs(Math.sin(time * c.flap * Math.PI));
       const dir = -Math.sin(t) >= 0 ? 1 : -1;
-      c.sprite.scale.set(c.size * wings * dir, c.size, 1);
+      c.sprite.scale.set(c.size * wings, c.size, 1);
+      // Sprite záporné měřítko neumí: otočení se dělá zrcadlením obrázku.
+      const map = c.sprite.material.map!;
+      map.repeat.x = dir;
+      map.offset.x = dir < 0 ? 1 : 0;
     }
   }
 }

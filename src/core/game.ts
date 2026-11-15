@@ -32,8 +32,10 @@ export interface Projectile {
 export type GameEvent =
   | { type: 'planted'; defenderId: number }
   | { type: 'upgraded'; defenderId: number }
-  | { type: 'attack'; defenderId: number }
-  | { type: 'hit'; attackerId: number; x: number; z: number }
+  /** Zelenina útočí; `x`, `z` je místo, kde stojí cíl (aby se k němu otočila). */
+  | { type: 'attack'; defenderId: number; x: number; z: number }
+  /** Zásah fast foodu; `melee` je sek mrkve (mrkvomeč k cíli teprve doskočí). */
+  | { type: 'hit'; attackerId: number; x: number; z: number; melee: boolean }
   | { type: 'flee'; attackerId: number; x: number; z: number; water: number }
   | { type: 'escaped'; x: number; z: number }
   | { type: 'bite'; bites: number }
@@ -125,7 +127,7 @@ export class Game {
 
   /** Políčko pod prstem (střed šestihranu), nebo null. */
   slotAt(p: Vec2): Vec2 | null {
-    return slotAt(this.slots, p);
+    return slotAt(this.level, this.slots, p);
   }
 
   checkPlant(p: Vec2, type: DefenderType): PlantCheck {
@@ -250,7 +252,8 @@ export class Game {
       return;
     }
     d.cooldown = stats.attackInterval;
-    this.events.push({ type: 'attack', defenderId: d.id });
+    const at = this.path.at(target.d);
+    this.events.push({ type: 'attack', defenderId: d.id, x: at.x, z: at.z });
 
     const speed = DEFENDERS[d.type].projectileSpeed;
     if (speed) {
@@ -267,7 +270,7 @@ export class Game {
         targetId: target.id,
       });
     } else {
-      this.hitAttacker(target);
+      this.hitAttacker(target, true);
     }
   }
 
@@ -283,11 +286,11 @@ export class Game {
     return best;
   }
 
-  private hitAttacker(a: Attacker): void {
+  private hitAttacker(a: Attacker, melee = false): void {
     if (a.fleeing) return;
     const p = this.path.at(a.d);
     a.hitsLeft--;
-    this.events.push({ type: 'hit', attackerId: a.id, x: p.x, z: p.z });
+    this.events.push({ type: 'hit', attackerId: a.id, x: p.x, z: p.z, melee });
     if (a.hitsLeft > 0) return;
     a.fleeing = true;
     const reward = ATTACKERS[a.type].reward;
