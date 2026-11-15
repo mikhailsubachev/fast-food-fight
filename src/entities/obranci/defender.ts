@@ -12,6 +12,8 @@ export interface Defender {
   cooldown: number;
   /** Zbývající sekundy ztuhnutí po zásahu hranolkou. */
   frozenLeft: number;
+  /** Zbývající sekundy, než z ní skape šťáva z lízátka (do té doby nebojuje). */
+  stickyLeft: number;
 }
 
 export function createDefender(id: number, type: DefenderType, pos: Vec2): Defender {
@@ -24,6 +26,7 @@ export function createDefender(id: number, type: DefenderType, pos: Vec2): Defen
     growLeft: DEFENDERS[type].growTime,
     cooldown: 0,
     frozenLeft: 0,
+    stickyLeft: 0,
   };
 }
 

@@ -1,12 +1,14 @@
 // Čísla jednotek pro první playtest (Plán první úrovně, kapitola 4).
 // Vzdálenosti jsou v políčkách, časy v sekundách.
 
-export type DefenderType = 'mrkev' | 'porek';
-export type AttackerType = 'hamburger' | 'hranolky' | 'velkyHamburger';
+export type DefenderType = 'mrkev' | 'porek' | 'cibule';
+export type AttackerType = 'hamburger' | 'hranolky' | 'velkyHamburger' | 'lizatko';
 
 export interface DefenderLevel {
   range: number;
   attackInterval: number;
+  /** Cibule: jak dlouho vydrží oblak smradu (s). */
+  cloudTime?: number;
 }
 
 export interface DefenderStats {
@@ -15,6 +17,8 @@ export interface DefenderStats {
   upgradeCost: number;
   /** Pórek střílí (střela letí), mrkev seká hned. */
   projectileSpeed?: number;
+  /** Cibule nikoho nezasáhne: vypustí oblak smradu, ve kterém fast food chodí pomaleji (násobek rychlosti). */
+  cloudSlow?: number;
   levels: [DefenderLevel, DefenderLevel];
 }
 
@@ -40,6 +44,19 @@ export const DEFENDERS: Record<DefenderType, DefenderStats> = {
       { range: 4.5, attackInterval: 1.5 / 1.2 },
     ],
   },
+  // Pan Cibule (list postavy na plátně): 1× za 6 s, jen když je fast food v dosahu, vypustí
+  // oblak smradu asi 2 políčka kolem sebe; fast food v něm 3 s chodí poloviční rychlostí.
+  cibule: {
+    cost: 50,
+    growTime: 4,
+    upgradeCost: 40,
+    cloudSlow: 0.5,
+    levels: [
+      { range: 2, attackInterval: 6, cloudTime: 3 },
+      // úroveň 2: větší oblak, zpomalení déle
+      { range: 2.5, attackInterval: 6, cloudTime: 4.5 },
+    ],
+  },
 };
 
 export interface ThrowStats {
@@ -50,12 +67,24 @@ export interface ThrowStats {
   firstDelay: number;
 }
 
+/** Lízátko se jednou za čas zastaví, roztočí a oblepí šťávou všechnu zeleninu kolem sebe. */
+export interface SpinStats {
+  interval: number;
+  range: number;
+  /** Jak dlouho z oblepené zeleniny stéká šťáva (nebojuje). */
+  sticky: number;
+  /** Jak dlouho se točí (stojí na místě). */
+  duration: number;
+  firstDelay: number;
+}
+
 export interface AttackerStats {
   hits: number;
   speed: number;
   reward: number;
   scale: number;
   throws?: ThrowStats;
+  spin?: SpinStats;
 }
 
 export const ATTACKERS: Record<AttackerType, AttackerStats> = {
@@ -68,6 +97,15 @@ export const ATTACKERS: Record<AttackerType, AttackerStats> = {
     throws: { interval: 5, range: 1.6, freeze: 2, projectileSpeed: 6, firstDelay: 2 },
   },
   velkyHamburger: { hits: 8, speed: 0.8, reward: 40, scale: 1.5 },
+  // Lízátko (list postavy na plátně): 6 zásahů, ~1 políčko/s, 1× za 6 s roztočení do ~1,5 políčka,
+  // šťáva stéká 3 s, za odražení 25 vody.
+  lizatko: {
+    hits: 6,
+    speed: 1,
+    reward: 25,
+    scale: 1,
+    spin: { interval: 6, range: 1.5, sticky: 3, duration: 0.8, firstDelay: 3 },
+  },
 };
 
 /**

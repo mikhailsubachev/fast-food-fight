@@ -44,7 +44,11 @@ export const FRAMES = [
   'hamburger-krok1', 'hamburger-krok2', 'hamburger-zasah', 'hamburger-utek1', 'hamburger-utek2',
   'hranolky-krok1', 'hranolky-krok2', 'hranolky-naprah', 'hranolky-hod', 'hranolky-zasah',
   'hranolky-utek1', 'hranolky-utek2',
-  'pusa', 'porkosip', 'hranolka',
+  'cibule-klid', 'cibule-mrk', 'cibule-nalez', 'cibule-smrad', 'cibule-ztuhla', 'cibule-radost',
+  'cibule2-klid', 'cibule2-mrk', 'cibule2-nalez', 'cibule2-smrad', 'cibule2-radost',
+  'mrkev-lepkava', 'mrkev-lepkava2', 'porek-lepkavy', 'porek-lepkavy2', 'cibule-lepkava', 'cibule-lepkava2',
+  'lizatko-krok1', 'lizatko-krok2', 'lizatko-naprah', 'lizatko-toci', 'lizatko-zasah', 'lizatko-utek1', 'lizatko-utek2',
+  'pusa', 'porkosip', 'hranolka', 'oblak',
 ] as const;
 
 /** Načte všechny obrázky předem, aby postavy při prvním objevení neblikly. */
@@ -112,8 +116,14 @@ function blobShadow(p: Puppet, r: number): void {
  * měřítko postavy v návrhu × 450 px / 120 px na políčko. Postava sama je asi o pětinu menší.
  */
 // Zelenina podle návrhu D (menší, aby se vešla do políčka mřížky): 0,415 a 0,419 × 450 / 120.
-const DEFENDER_HEIGHT: Record<DefenderType, number> = { mrkev: 1.56, porek: 1.57 };
-const ATTACKER_HEIGHT: Record<'hamburger' | 'hranolky', number> = { hamburger: 1.73, hranolky: 1.58 };
+// Cibule má v návrhu 2. úrovně stejné měřítko jako mrkev, lízátko jako hamburger.
+const DEFENDER_HEIGHT: Record<DefenderType, number> = { mrkev: 1.56, porek: 1.57, cibule: 1.56 };
+const ATTACKER_HEIGHT: Record<'hamburger' | 'hranolky' | 'lizatko', number> = { hamburger: 1.73, hranolky: 1.58, lizatko: 1.73 };
+
+/** Jméno obrázků útočníka (velký hamburger je zvětšený hamburger). */
+export function attackerFrames(type: AttackerType): 'hamburger' | 'hranolky' | 'lizatko' {
+  return type === 'velkyHamburger' ? 'hamburger' : type;
+}
 
 export function makeDefender(type: DefenderType): Puppet {
   // Pod zeleninou je hnědé políčko (šestihran), takže hromádka hlíny není potřeba.
@@ -122,7 +132,7 @@ export function makeDefender(type: DefenderType): Puppet {
 }
 
 export function makeAttacker(type: AttackerType): Puppet {
-  const base = type === 'hranolky' ? 'hranolky' : 'hamburger';
+  const base = attackerFrames(type);
   const p = puppet(`${base}-krok1`, ATTACKER_HEIGHT[base]);
   blobShadow(p, 0.36);
   if (type === 'velkyHamburger') p.root.scale.setScalar(1.5);
@@ -131,6 +141,15 @@ export function makeAttacker(type: AttackerType): Puppet {
 
 export function makeMouth(): Puppet {
   return puppet('pusa', 2.9);
+}
+
+/** Oblak smradu cibule: leží na zemi kolem cibule (průměr 2r) a pomalu se rozplyne. */
+export function makeCloud(r: number): THREE.Mesh {
+  const mat = new THREE.MeshBasicMaterial({ map: texture('oblak'), transparent: true, opacity: 0.6, depthWrite: false });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * r * 1.08, 2 * r * 1.08 * (132 / 224)), mat);
+  m.rotation.x = -Math.PI / 2;
+  m.renderOrder = 2;
+  return m;
 }
 
 /** Střela: pórkošíp (letí hrotem napřed) nebo hranolka (točí se). */

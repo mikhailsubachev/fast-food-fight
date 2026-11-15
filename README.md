@@ -6,6 +6,7 @@ Tower defense pro děti od 7 let: zdravá zelenina brání pusu před fast foode
 
 - [Úvodní požadavky](docs/Úvodní%20požadavky.md)
 - [Plán první úrovně](docs/Plán%20první%20úrovně.md)
+- [Plán druhé úrovně](docs/Plán%20druhé%20úrovně.md)
 
 ## Spuštění
 
@@ -19,10 +20,10 @@ npm test           # automatické testy včetně odehrání celé úrovně
 npm run build      # kontrola typů a sestavení do dist/
 ```
 
-Stav: **hratelná 1. úroveň** na šířku podle návrhu úrovně, s postavami z dětských kreseb (papírové loutky podle návrhu v `design/`). Chybí tutoriál a zvuk.
+Stav: **hratelná 1. a 2. úroveň** (Snídaňová cesta, Školní svačina) na šířku podle návrhů úrovní, s postavami z dětských kreseb (papírové loutky podle návrhu v `design/`). Chybí tutoriál a zvuk.
 
 Postavy se z návrhu znovu vyexportují příkazem `python3 tools/export_postavy.py` (zapíše SVG do `public/assets/postavy/`).
-Zem 1. úrovně (trávník s ozdobami, cesta, kaluž) a poletující motýli a včelka se z návrhu vyexportují příkazem `python3 tools/export_louka.py` (zapíše SVG do `public/assets/prostredi/`).
+Zem obou úrovní (trávník s ozdobami, cesta, kaluž, školní věci, mřížka) a poletující motýli a včelka se z návrhu vyexportují příkazem `python3 tools/export_louka.py` (zapíše SVG do `public/assets/prostredi/`).
 
 ## Struktura projektu
 

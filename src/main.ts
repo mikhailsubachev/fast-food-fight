@@ -1,7 +1,7 @@
 import './ui/styles.css';
 import { Game, type GameEvent } from './core/game';
 import { loadProgress, recordWin, saveProgress } from './core/save';
-import { LEVEL1 } from './data/level1';
+import { LEVELS } from './data/levels';
 import { T } from './data/texts.cs';
 import { Stage } from './scene/stage';
 import { View } from './scene/view';
@@ -11,11 +11,25 @@ import { enterFullscreen, fullscreenSupported, isTouchDevice, runsAsApp } from '
 import { Screens } from './ui/screens';
 
 const app = document.getElementById('app')!;
-const level = LEVEL1;
+let progress = loadProgress();
+/**
+ * Hraje se úroveň z adresy (?uroven=2), pokud už je odemčená; jinak poslední odemčená.
+ * Přechod na jinou úroveň znovu načte stránku s jinou adresou.
+ */
+const unlocked = Math.min(progress.unlockedLevel, LEVELS.length);
+const asked = Number(new URLSearchParams(location.search).get('uroven'));
+const level = LEVELS[(asked >= 1 && asked <= unlocked ? asked : unlocked) - 1];
+const nextLevel = LEVELS.find((l) => l.id === level.id + 1);
+
+function goToLevel(id: number): void {
+  const url = new URL(location.href);
+  url.searchParams.set('uroven', String(id));
+  location.href = url.toString();
+}
+
 const game = new Game(level);
 const stage = new Stage(app, level);
 const view = new View(stage, level);
-let progress = loadProgress();
 
 let paused = false;
 let endTimer = 0;
@@ -48,6 +62,11 @@ function showPauseScreen(): void {
         showPauseScreen();
       },
     },
+    // Přepnutí na jinou odemčenou úroveň.
+    ...LEVELS.filter((l) => l.id !== level.id && l.id <= progress.unlockedLevel).map((l) => ({
+      text: `🗺️ ${T.nextLevel(l.id)}`,
+      onClick: () => goToLevel(l.id),
+    })),
   ]);
 }
 
@@ -86,12 +105,18 @@ function handle(events: GameEvent[]): void {
         progress = recordWin(progress, level.id, e.stars);
         saveProgress(progress);
         endTimer = window.setTimeout(() => {
-          screens.show('won', T.winTitle, [], [{ text: `↺ ${T.playAgain}`, onClick: restart, primary: true }]);
+          const buttons = nextLevel
+            ? [
+                { text: `▶ ${T.nextLevel(nextLevel.id)}`, onClick: () => goToLevel(nextLevel.id), primary: true },
+                { text: `↺ ${T.playAgain}`, onClick: restart },
+              ]
+            : [{ text: `↺ ${T.playAgain}`, onClick: restart, primary: true }];
+          screens.show('won', T.winTitle, [], buttons);
           const stars = document.createElement('p');
           stars.className = 'stars';
           stars.textContent = '⭐'.repeat(e.stars) + '☆'.repeat(3 - e.stars);
           const unlocked = document.createElement('p');
-          unlocked.textContent = `🔓 ${T.nextLevelSoon}`;
+          unlocked.textContent = nextLevel ? `🔓 ${T.levelTitle(nextLevel.id, nextLevel.name)}` : `🔓 ${T.nextLevelSoon}`;
           document.querySelector('.card h1')!.after(stars, unlocked);
         }, 1500);
         break;
@@ -159,6 +184,9 @@ function frame(now: number): void {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// Na začátku krátce ukázat, která úroveň se hraje.
+hud.showBanner(T.levelTitle(level.id, level.name), 2400);
 
 // Pro automatické testy v prohlížeči.
 (window as unknown as { __game: Game }).__game = game;

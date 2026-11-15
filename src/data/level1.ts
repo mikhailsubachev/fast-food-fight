@@ -9,7 +9,22 @@ export interface Spawn {
   delay: number;
 }
 
-export type ObstacleKind = 'parez' | 'kamen' | 'kaluz' | 'krtina';
+/**
+ * Překážky: v 1. úrovni pařez, kámen, kaluž a krtina, ve 2. úrovni školní věci ležící na louce
+ * (svačinový box, láhev, penál, sešit, pastelky, guma). Kaluž a školní věci jsou ploché a jsou
+ * nakreslené přímo v obrázku země.
+ */
+export type ObstacleKind =
+  | 'parez'
+  | 'kamen'
+  | 'kaluz'
+  | 'krtina'
+  | 'box'
+  | 'lahev'
+  | 'penal'
+  | 'sesit'
+  | 'pastelky'
+  | 'guma';
 
 export interface Obstacle extends Vec2 {
   kind: ObstacleKind;
@@ -27,6 +42,8 @@ export interface Rect {
 export interface LevelData {
   id: number;
   name: string;
+  /** Obrázek země z návrhu (public/assets/prostredi, z tools/export_louka.py). */
+  ground: string;
   /** Středová čára cesty od okraje záhonu k puse. */
   path: Vec2[];
   obstacles: Obstacle[];
@@ -48,8 +65,9 @@ export interface LevelData {
   waveSpeed?: number[];
 }
 
-function seq(types: AttackerType[], gap: number): Spawn[] {
-  return types.map((type, i) => ({ type, delay: i === 0 ? 0 : gap }));
+/** Fast food jeden za druhým po `gap` sekundách; `first` je pauza před prvním. */
+export function seq(types: AttackerType[], gap: number, first = 0): Spawn[] {
+  return types.map((type, i) => ({ type, delay: i === 0 ? first : gap }));
 }
 
 const H: AttackerType = 'hamburger';
@@ -60,13 +78,13 @@ const B: AttackerType = 'velkyHamburger';
  * Záhon podle návrhu úrovně: na obrazovce 16 × 9 políček (1920 × 1080 px, 120 px na políčko),
  * nahoře pás pro horní lištu.
  */
-const BOARD: Rect = { minX: 0, maxX: 16, minZ: 0.85, maxZ: 10 };
+export const BOARD: Rect = { minX: 0, maxX: 16, minZ: 0.85, maxZ: 10 };
 
 /**
  * Řídicí body cesty z návrhu úrovně (plátno „Úroveň 1 – Snídaňová cesta“): vstupuje zleva,
  * klikatí se dolů, nahoru kolem kaluže, znovu dolů a nahoru a končí vpravo dole u pusy.
  */
-const PATH_CONTROL: Vec2[] = [
+export const PATH_CONTROL: Vec2[] = [
   { x: -3.0, z: 3.1 },
   { x: -1.25, z: 3.05 },
   { x: 1.0, z: 2.95 },
@@ -89,9 +107,35 @@ const PATH_CONTROL: Vec2[] = [
   { x: 13.35, z: 7.95 },
 ];
 
+/**
+ * Mřížka šestihranů z návrhu úrovně, varianta D (design/generator/gen_level.py): poloměr
+ * šestihranu 89 px, sloupce po 133,5 px, políčka ve sloupci po 154,15 px; 120 px = 1 políčko v ose x,
+ * 108 px v ose z. Stejná je i ve 2. úrovni.
+ */
+export const HEX_GRID: HexGrid = {
+  x0: 40 / 120,
+  z0: 150 / 108,
+  dx: 133.5 / 120,
+  dz: (89 * Math.sqrt(3)) / 108,
+  halfWidth: 89 / 120,
+  halfHeight: (89 * Math.sqrt(3)) / 2 / 108,
+};
+
+export const SLOT_RULES: SlotRules = {
+  // Sází se mezi 40 a 1880 px na šířku a 130 až 1030 px na výšku obrazovky návrhu.
+  area: { minX: 40 / 120, maxX: 1880 / 120, minZ: 130 / 108 - 1e-6, maxZ: 1030 / 108 + 1e-6 },
+  pathClearance: 0.78,
+  // Kolem pusy vpravo dole se nesází (od 1600 px vpravo a 560 px dolů).
+  blocked: [{ minX: 1600 / 120, maxX: 99, minZ: 560 / 108, maxZ: 99 }],
+};
+
+export const VIEW: Rect = { minX: 0, maxX: 16, minZ: 1, maxZ: 10 };
+export const MOUTH: Vec2 = { x: 14.3, z: 8.0 };
+
 export const LEVEL1: LevelData = {
   id: 1,
   name: 'Snídaňová cesta',
+  ground: 'louka.svg',
   path: clipStartAtX(catmullRom(PATH_CONTROL), BOARD.minX),
   // Sází se do šestihranů; na cestě, na překážkách a u pusy políčka nejsou.
   // Polohy překážek z generátoru návrhu D; políčka pod nimi jsou šedá a nesází se do nich.
@@ -102,26 +146,10 @@ export const LEVEL1: LevelData = {
     { kind: 'krtina', x: 12.5417, z: 2.6648, r: 0.6 },
   ],
   board: BOARD,
-  // Mřížka šestihranů z návrhu úrovně, varianta D (design/generator/gen_level.py): poloměr
-  // šestihranu 89 px, sloupce po 133,5 px, políčka ve sloupci po 154,15 px; 120 px = 1 políčko v ose x,
-  // 108 px v ose z.
-  hexGrid: {
-    x0: 40 / 120,
-    z0: 150 / 108,
-    dx: 133.5 / 120,
-    dz: (89 * Math.sqrt(3)) / 108,
-    halfWidth: 89 / 120,
-    halfHeight: (89 * Math.sqrt(3)) / 2 / 108,
-  },
-  slotRules: {
-    // Sází se mezi 40 a 1880 px na šířku a 130 až 1030 px na výšku obrazovky návrhu.
-    area: { minX: 40 / 120, maxX: 1880 / 120, minZ: 130 / 108 - 1e-6, maxZ: 1030 / 108 + 1e-6 },
-    pathClearance: 0.78,
-    // Kolem pusy vpravo dole se nesází (od 1600 px vpravo a 560 px dolů).
-    blocked: [{ minX: 1600 / 120, maxX: 99, minZ: 560 / 108, maxZ: 99 }],
-  },
-  view: { minX: 0, maxX: 16, minZ: 1, maxZ: 10 },
-  mouth: { x: 14.3, z: 8.0 },
+  hexGrid: HEX_GRID,
+  slotRules: SLOT_RULES,
+  view: VIEW,
+  mouth: MOUTH,
   startWater: 120,
   startDefenders: ['mrkev'],
   unlocks: [{ wave: 1, type: 'porek' }],

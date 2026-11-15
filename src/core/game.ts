@@ -7,6 +7,7 @@ import {
   MOUTH_LIVES,
   WAVE_PAUSE,
   type DefenderType,
+  type SpinStats,
 } from '../data/units';
 import { createAttacker, type Attacker } from '../entities/utocnici/attacker';
 import { createDefender, defenderLevel, isGrown, type Defender } from '../entities/obranci/defender';
@@ -29,6 +30,17 @@ export interface Projectile {
   targetId: number;
 }
 
+/** Oblak smradu cibule: fast food uvnitř jde pomaleji, dokud oblak nevyvětrá. */
+export interface Cloud {
+  id: number;
+  x: number;
+  z: number;
+  r: number;
+  left: number;
+  /** Jak dlouho oblak vydrží celkem (pro zobrazení). */
+  life: number;
+}
+
 export type GameEvent =
   | { type: 'planted'; defenderId: number }
   | { type: 'upgraded'; defenderId: number }
@@ -42,6 +54,10 @@ export type GameEvent =
   | { type: 'miss'; x: number; z: number }
   | { type: 'throw'; attackerId: number }
   | { type: 'frozen'; defenderId: number }
+  /** Cibule vypustila oblak smradu. */
+  | { type: 'cloud'; defenderId: number; x: number; z: number; r: number }
+  /** Lízátko se roztočilo; `stuck` je zelenina, kterou oblepilo. */
+  | { type: 'spin'; attackerId: number; stuck: number[] }
   | { type: 'waveStart'; wave: number }
   | { type: 'unlocked'; defender: DefenderType }
   | { type: 'won'; stars: number }
@@ -64,6 +80,7 @@ export class Game {
   defenders: Defender[] = [];
   attackers: Attacker[] = [];
   projectiles: Projectile[] = [];
+  clouds: Cloud[] = [];
   readonly unlocked = new Set<DefenderType>();
 
   private events: GameEvent[] = [];
@@ -93,6 +110,7 @@ export class Game {
     this.defenders = [];
     this.attackers = [];
     this.projectiles = [];
+    this.clouds = [];
     this.queue = [];
     this.events = [];
     this.unlocked.clear();
@@ -179,6 +197,7 @@ export class Game {
     }
 
     for (const d of this.defenders) this.updateDefender(d, dt);
+    this.updateClouds(dt);
     const gone = new Set<number>();
     for (const a of this.attackers) {
       if (this.updateAttacker(a, dt)) gone.add(a.id);
@@ -242,6 +261,10 @@ export class Game {
       d.frozenLeft = Math.max(0, d.frozenLeft - dt);
       return;
     }
+    if (d.stickyLeft > 0) {
+      d.stickyLeft = Math.max(0, d.stickyLeft - dt);
+      return;
+    }
     d.cooldown -= dt;
     if (d.cooldown > 0) return;
 
@@ -255,6 +278,12 @@ export class Game {
     const at = this.path.at(target.d);
     this.events.push({ type: 'attack', defenderId: d.id, x: at.x, z: at.z });
 
+    if (stats.cloudTime) {
+      // Cibule nezasahuje: kolem sebe vypustí oblak smradu.
+      this.clouds.push({ id: this.nextId++, x: d.x, z: d.z, r: stats.range, left: stats.cloudTime, life: stats.cloudTime });
+      this.events.push({ type: 'cloud', defenderId: d.id, x: d.x, z: d.z, r: stats.range });
+      return;
+    }
     const speed = DEFENDERS[d.type].projectileSpeed;
     if (speed) {
       const p = this.path.at(target.d);
@@ -272,6 +301,19 @@ export class Game {
     } else {
       this.hitAttacker(target, true);
     }
+  }
+
+  private updateClouds(dt: number): void {
+    if (!this.clouds.length) return;
+    for (const c of this.clouds) c.left -= dt;
+    this.clouds = this.clouds.filter((c) => c.left > 0);
+  }
+
+  /** Zpomalení fast foodu v oblaku smradu (1 = bez oblaku). */
+  private cloudSlow(a: Attacker): number {
+    const p = this.path.at(a.d);
+    a.slowed = this.clouds.some((c) => Math.hypot(c.x - p.x, c.z - p.z) <= c.r + ATTACKER_BODY_RADIUS);
+    return a.slowed ? DEFENDERS.cibule.cloudSlow! : 1;
   }
 
   /** Nejdál došlý fast food v dosahu, který ještě neutíká. */
@@ -311,7 +353,9 @@ export class Game {
       return true;
     }
 
-    a.d += stats.speed * (this.level.waveSpeed?.[this.waveIndex] ?? 1) * dt;
+    const spin = stats.spin;
+    if (spin && this.updateSpin(a, spin, dt)) return false;
+    a.d += stats.speed * (this.level.waveSpeed?.[this.waveIndex] ?? 1) * this.cloudSlow(a) * dt;
     if (a.d >= this.path.length) {
       this.bites++;
       this.events.push({ type: 'bite', bites: this.bites });
@@ -348,6 +392,28 @@ export class Game {
       }
     }
     return false;
+  }
+
+  /** Lízátko: roztočení. Vrací true, dokud se točí (stojí na místě). */
+  private updateSpin(a: Attacker, spin: SpinStats, dt: number): boolean {
+    if (a.spinLeft > 0) {
+      a.spinLeft = Math.max(0, a.spinLeft - dt);
+      return true;
+    }
+    a.spinCooldown -= dt;
+    if (a.spinCooldown > 0) return false;
+    const p = this.path.at(a.d);
+    // Oblepit jde jen vyrostlá zelenina (rostoucí je schovaná v zemi).
+    const stuck = this.defenders.filter((d) => isGrown(d) && Math.hypot(d.x - p.x, d.z - p.z) <= spin.range);
+    if (!stuck.length) {
+      a.spinCooldown = 0.25;
+      return false;
+    }
+    a.spinCooldown = spin.interval;
+    a.spinLeft = spin.duration;
+    for (const d of stuck) d.stickyLeft = spin.sticky;
+    this.events.push({ type: 'spin', attackerId: a.id, stuck: stuck.map((d) => d.id) });
+    return true;
   }
 
   private nearestGrownDefender(x: number, z: number, range: number): Defender | undefined {

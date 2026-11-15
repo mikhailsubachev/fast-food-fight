@@ -1,14 +1,23 @@
 import * as THREE from 'three';
 import type { Game, GameEvent } from '../core/game';
 import type { LevelData } from '../data/level1';
-import { ATTACKER_BODY_RADIUS, DEFENDERS, MOUTH_LIVES, type DefenderType } from '../data/units';
+import { ATTACKER_BODY_RADIUS, ATTACKERS, DEFENDERS, MOUTH_LIVES, type DefenderType } from '../data/units';
 import { defenderLevel } from '../entities/obranci/defender';
 import { buildBoard, type Board } from './board';
 import { Path } from '../core/path';
 import { hexSlots } from '../core/placement';
 import { Critters } from './decor';
 import { SlotsView } from './slots';
-import { makeAttacker, makeDefender, makeMouth, makeProjectile, preloadFrames, type Puppet } from './meshes';
+import {
+  attackerFrames,
+  makeAttacker,
+  makeCloud,
+  makeDefender,
+  makeMouth,
+  makeProjectile,
+  preloadFrames,
+  type Puppet,
+} from './meshes';
 import type { Stage } from './stage';
 
 interface Anim {
@@ -17,6 +26,8 @@ interface Anim {
   attackT: number;
   hitT: number;
   throwT: number;
+  /** Lízátko: sekundy od začátku roztočení. */
+  spinT: number;
   joyT: number;
   /** Kdy příště mrknout. */
   blinkAt: number;
@@ -42,12 +53,22 @@ const puffGeo = new THREE.SphereGeometry(0.3, 12, 8);
 const dotGeo = new THREE.SphereGeometry(0.07, 8, 6);
 
 function newAnim(puppet: Puppet): Anim {
-  return { puppet, attackT: 99, hitT: 99, throwT: 99, joyT: 99, blinkAt: 1 + Math.random() * 3, face: 1, target: null };
+  return { puppet, attackT: 99, hitT: 99, throwT: 99, spinT: 99, joyT: 99, blinkAt: 1 + Math.random() * 3, face: 1, target: null };
 }
 
 /** Převádí stav hry na 3D scénu: papírové loutky, střely a efekty. */
 /** Jak dlouho trvá sek nebo výstřel (s). */
 const ATTACK_TIME = 0.3;
+/** Jak dlouho se cibule naježí a vypouští oblak (s). */
+const CLOUD_ANIM = 1.1;
+
+const FROZEN: Record<DefenderType, string> = { mrkev: 'mrkev-ztuhla', porek: 'porek-ztuhl', cibule: 'cibule-ztuhla' };
+const STICKY: Record<DefenderType, string> = { mrkev: 'mrkev-lepkava', porek: 'porek-lepkavy', cibule: 'cibule-lepkava' };
+const STICKY_HALF: Record<DefenderType, string> = {
+  mrkev: 'mrkev-lepkava2',
+  porek: 'porek-lepkavy2',
+  cibule: 'cibule-lepkava2',
+};
 /** Jak daleko od středu mrkve sahá špička mrkvomeče (políčka). */
 const SWORD_REACH = 0.45;
 /** Kdy je mrkev při seku nejdál (první třetina seku). */
@@ -59,6 +80,7 @@ export class View {
   private readonly defenders = new Map<number, Anim>();
   private readonly attackers = new Map<number, Anim>();
   private readonly projectiles = new Map<number, THREE.Sprite>();
+  private readonly clouds = new Map<number, THREE.Mesh>();
   private effects: Effect[] = [];
   private pending: { t: number; fn: () => void }[] = [];
   private readonly mouth: Puppet;
@@ -132,6 +154,7 @@ export class View {
     this.defenders.clear();
     this.attackers.clear();
     this.projectiles.clear();
+    this.clouds.clear();
     this.effects = [];
     this.mouthMood = 'play';
     this.mouthPulse = 1;
@@ -177,6 +200,16 @@ export class View {
           if (a) a.throwT = 0;
           break;
         }
+        case 'spin': {
+          // Lízátko se roztočí a oblepí zeleninu kolem sebe: „Plác!“ (červené kapky šťávy).
+          const a = this.attackers.get(e.attackerId);
+          if (a) a.spinT = 0;
+          for (const id of e.stuck) {
+            const d = this.defenders.get(id);
+            if (d) this.later(0.25, () => this.burst(d.puppet.root.position.x, 1.0, d.puppet.root.position.z, 0xe8424a, 7));
+          }
+          break;
+        }
         case 'escaped':
           this.puff(e.x, e.z, 0xffffff, 1.6);
           break;
@@ -207,6 +240,7 @@ export class View {
     this.syncDefenders(game, dt, time);
     this.syncAttackers(game, dt, time);
     this.syncProjectiles(game, time);
+    this.syncClouds(game);
     this.updateMouth(game, dt, time);
     this.updateEffects(dt);
     this.slots.update(game.defenders);
@@ -248,10 +282,24 @@ export class View {
       let lungeX = 0;
       let lungeZ = 0;
       if (d.frozenLeft > 0) {
-        frame = d.type === 'mrkev' ? 'mrkev-ztuhla' : 'porek-ztuhl';
+        frame = FROZEN[d.type];
         jitter = Math.sin(time * 60) * 0.04;
         squash = 0;
-      } else if (anim.attackT < ATTACK_TIME) {
+      } else if (d.stickyLeft > 0) {
+        // Oblepená šťávou z lízátka: nejdřív celá, v druhé polovině už šťáva stéká dolů.
+        const half = d.stickyLeft < ATTACKERS.lizatko.spin!.sticky / 2;
+        frame = half ? STICKY_HALF[d.type] : STICKY[d.type];
+        squash = 0;
+      } else if (d.type === 'cibule' && anim.attackT < CLOUD_ANIM) {
+        // Cibule se naježí (třese se), pak vypustí oblak: „Pššš!“
+        if (anim.attackT < 0.35) {
+          frame = `${prefix}-nalez`;
+          jitter = Math.sin(time * 70) * 0.05;
+        } else {
+          frame = `${prefix}-smrad`;
+          squash = -Math.sin(((anim.attackT - 0.35) / (CLOUD_ANIM - 0.35)) * Math.PI) * 0.06;
+        }
+      } else if (d.type !== 'cibule' && anim.attackT < ATTACK_TIME) {
         frame = d.type === 'mrkev' ? `${prefix}-sek` : `${prefix}-vystrel`;
         squash = -Math.sin((anim.attackT / ATTACK_TIME) * Math.PI) * 0.08;
         if (d.type === 'mrkev' && anim.target) [lungeX, lungeZ] = this.lunge(anim, d.x, d.z);
@@ -291,6 +339,31 @@ export class View {
     return [(dx / dist) * reach * out, (dz / dist) * reach * out];
   }
 
+  /** Oblaky smradu cibule: rychle se nafouknou a na konci vyblednou. */
+  private syncClouds(game: Game): void {
+    const alive = new Set<number>();
+    for (const c of game.clouds) {
+      alive.add(c.id);
+      let m = this.clouds.get(c.id);
+      if (!m) {
+        m = makeCloud(c.r);
+        m.position.set(c.x, 0.08, c.z);
+        this.dynamic.add(m);
+        this.clouds.set(c.id, m);
+      }
+      const age = c.life - c.left;
+      const grow = Math.min(1, age / 0.35);
+      m.scale.setScalar(0.5 + 0.5 * grow);
+      (m.material as THREE.MeshBasicMaterial).opacity = 0.6 * Math.min(1, c.left / 0.6);
+    }
+    for (const [id, m] of this.clouds) {
+      if (!alive.has(id)) {
+        this.dynamic.remove(m);
+        this.clouds.delete(id);
+      }
+    }
+  }
+
   /** Na kterou stranu má zelenina k nejbližšímu kousku cesty (1 doprava, −1 doleva). */
   private faceTowardsPath(game: Game, x: number, z: number): number {
     let best = { x: x + 1, dist: Infinity };
@@ -323,11 +396,12 @@ export class View {
       }
       anim.hitT += dt;
       anim.throwT += dt;
+      anim.spinT += dt;
       const p = game.path.at(a.d);
       const { root, sprite, width, height } = anim.puppet;
       root.position.set(p.x, 0, p.z);
 
-      const base = a.type === 'hranolky' ? 'hranolky' : 'hamburger';
+      const base = attackerFrames(a.type);
       const step = Math.floor(time * (a.fleeing ? 7 : 4) + a.id) % 2 === 0;
       let frame = `${base}-krok${step ? 1 : 2}`;
       let squash = 0;
@@ -337,13 +411,17 @@ export class View {
         squash = Math.sin((anim.hitT / 0.25) * Math.PI) * 0.15;
       } else if (base === 'hranolky' && anim.throwT < 0.15) frame = 'hranolky-naprah';
       else if (base === 'hranolky' && anim.throwT < 0.45) frame = 'hranolky-hod';
+      else if (base === 'lizatko' && a.spinLeft > 0) frame = anim.spinT < 0.2 ? 'lizatko-naprah' : 'lizatko-toci';
       anim.puppet.setFrame(frame);
 
       // Otočit loutku podle toho, kam jde na obrazovce (doleva / doprava).
       const dir = a.fleeing ? -1 : 1;
       const sx = this.screenDirX(p.x, p.z, p.dirX * dir, p.dirZ * dir);
       // Při chůzi skoro svisle nahoru nebo dolů zůstane otočená, jak byla, aby necukala.
-      if (Math.abs(sx) > 0.2) anim.puppet.setMirrored(sx < 0);
+      if (base === 'lizatko' && a.spinLeft > 0) {
+        // Roztočení: lízátko se otáčí sem a tam.
+        anim.puppet.setMirrored(Math.floor(anim.spinT * 10) % 2 === 1);
+      } else if (Math.abs(sx) > 0.2) anim.puppet.setMirrored(sx < 0);
       const bounce = Math.abs(Math.sin(time * (a.fleeing ? 14 : 8) + a.id)) * (a.fleeing ? 0.14 : 0.07);
       sprite.scale.set(width * (1 + squash * 0.6), height * (1 - squash), 1);
       sprite.position.set(0, bounce, 0);

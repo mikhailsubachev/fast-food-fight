@@ -7,8 +7,8 @@ import type { Stage } from '../scene/stage';
 import type { View } from '../scene/view';
 import { button, el } from './dom';
 
-const ICONS: Record<DefenderType, string> = { mrkev: '🥕', porek: '🌿' };
-const ORDER: DefenderType[] = ['mrkev', 'porek'];
+const ICONS: Record<DefenderType, string> = { mrkev: '🥕', porek: '🌿', cibule: '🧅' };
+const ORDER: DefenderType[] = ['mrkev', 'porek', 'cibule'];
 
 /**
  * Kruhové menu nad místem na záhoně.
@@ -102,7 +102,10 @@ export class Menus {
 
   private buildPlant(): void {
     const row = el('div', 'menu-row');
-    for (const type of ORDER) {
+    // Jen zelenina, která v této úrovni je (na začátku nebo se později odemkne).
+    const lv = this.game.level;
+    const inLevel = new Set<DefenderType>([...lv.startDefenders, ...lv.unlocks.map((u) => u.type)]);
+    for (const type of ORDER.filter((t) => inLevel.has(t))) {
       const b = button('veg', '', () => this.onVeg(type));
       const locked = !this.game.unlocked.has(type);
       b.append(el('span', 'icon', locked ? '🔒' : ICONS[type]));

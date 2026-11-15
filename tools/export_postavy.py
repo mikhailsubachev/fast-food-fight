@@ -39,12 +39,12 @@ def load_generator():
     stdout = sys.stdout
     sys.stdout = io.StringIO()
     try:
-        import gen, gen_porek, gen_ff, gen_level  # noqa: E401
+        import gen, gen_porek, gen_ff, gen_level, gen_cibule, gen_lizatko  # noqa: E401
     finally:
         builtins.open = real_open
         os.makedirs = real_makedirs
         sys.stdout = stdout
-    return gen, gen_porek, gen_ff, gen_level
+    return gen, gen_porek, gen_ff, gen_level, gen_cibule, gen_lizatko
 
 
 def svg(inner: str, seed: int, wobble: bool = True) -> str:
@@ -66,7 +66,7 @@ def svg(inner: str, seed: int, wobble: bool = True) -> str:
 
 
 def main() -> None:
-    gen, gp, gf, gl = load_generator()
+    gen, gp, gf, gl, gc, gz = load_generator()
     star = gen.star
     frames: dict[str, str] = {}
 
@@ -121,6 +121,42 @@ def main() -> None:
     frames["hranolky-utek1"] = f("scared", "run", extra=gf.sweat(214, 226))
     frames["hranolky-utek2"] = f("scared", "hop", extra=gf.sweat(226, 256))
 
+    # --- Pan Cibule (2. úroveň) ---
+    o = gc.onion
+    shake = (
+        f'<path d="M22,250 l-12,4 M22,270 l-14,0 M22,290 l-12,-4 M278,250 l12,4 M278,270 l14,0 M278,290 l12,-4" '
+        f'stroke="{gen.INK}" stroke-width="4" stroke-linecap="round"/>'
+    )
+    onion_glow = f'<path d="{gc.BODY}" fill="none" stroke="#FFD447" stroke-width="22" stroke-linejoin="round" opacity=".7"/>'
+    onion_badge = star(254, 96, 30)
+    onion_syrup = gz.syrup(165, 330, 62, 238, 5) + gz.falling(120, 340) + gz.falling(196, 352)
+    for prefix, extra in (("cibule", {}), ("cibule2", dict(shine=True, back=onion_glow))):
+        badge_ = onion_badge if prefix == "cibule2" else ""
+        frames[f"{prefix}-klid"] = o("smile", front=badge_, **extra)
+        frames[f"{prefix}-mrk"] = o("closed", front=badge_, **extra)
+        frames[f"{prefix}-nalez"] = o("bristle", "clench", spikes=True, straight=True, front=shake + badge_, **extra)
+        frames[f"{prefix}-smrad"] = o("puff", "up", front=badge_, **extra)
+        frames[f"{prefix}-radost"] = '<g transform="translate(0,-24)">' + o("joy", "up", front=badge_, **extra) + "</g>"
+    frames["cibule-ztuhla"] = o("frozen", tint="ice", front=gen.ice_bits)
+
+    # --- Zelenina oblepená šťávou z lízátka (stejné jako v listu lízátka) ---
+    frames["mrkev-lepkava"] = gz.carrot_syrup(0)
+    frames["mrkev-lepkava2"] = gz.carrot_syrup(1)
+    frames["porek-lepkavy"] = gz.leek_syrup(0)
+    frames["porek-lepkavy2"] = gz.leek_syrup(1)
+    frames["cibule-lepkava"] = o("frozen", front=onion_syrup)
+    frames["cibule-lepkava2"] = o("frozen", front=gz.syrup(240, 340, 80, 220, 6, False) + gz.drips_ground(3))
+
+    # --- Lízátko (2. úroveň) ---
+    lo = gz.lolli
+    frames["lizatko-krok1"] = '<g transform="translate(0,-14) rotate(5 150 388)">' + lo(legs_="hop") + "</g>"
+    frames["lizatko-krok2"] = lo(legs_="stand")
+    frames["lizatko-naprah"] = lo("spin", "weapons", rot=0)
+    frames["lizatko-toci"] = '<g transform="rotate(-8 150 388)">' + lo("spin", "weapons", rot=140) + "</g>"
+    frames["lizatko-zasah"] = '<g transform="translate(150,388) scale(1.1,.88) translate(-150,-388)">' + lo("hit", "down") + "</g>"
+    frames["lizatko-utek1"] = lo("scared", "up", "run", extra=gf.sweat(236, 110) + gf.sweat(248, 140))
+    frames["lizatko-utek2"] = lo("scared", "up", "hop", extra=gf.sweat(236, 110))
+
     # --- Pusa (z návrhu úrovně) ---
     frames["pusa"] = gl.mouth_svg()
 
@@ -135,7 +171,11 @@ def main() -> None:
     with open(os.path.join(OUT, "hranolka.svg"), "w", encoding="utf-8") as fh:
         fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 -108 28 116" width="56" height="232">{gf.big_fry()}</svg>')
 
-    print(f"{len(frames) + 2} obrázků v {os.path.relpath(OUT, ROOT)}")
+    # Oblak smradu cibule (při pohledu shora se natáhne na zem kolem cibule).
+    with open(os.path.join(OUT, "oblak.svg"), "w", encoding="utf-8") as fh:
+        fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-112 -66 224 132" width="448" height="264">{gc.cloud(0, 0, 1.0, 1.0)}</svg>')
+
+    print(f"{len(frames) + 3} obrázků v {os.path.relpath(OUT, ROOT)}")
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Vyexportuje zem 1. úrovně z návrhu do hry.
+"""Vyexportuje zem úrovní z návrhu do hry.
 
-Čte obrazovku úrovně z plátna, variantu D s celou mřížkou (design/zdroj/Uroven1D.dc.html,
-1920 × 1080 px) a zapíše:
+Čte obrazovky úrovní z plátna s celou mřížkou (design/zdroj/Uroven1D.dc.html
+a Uroven2D.dc.html, 1920 × 1080 px) a zapíše:
 
 - public/assets/prostredi/louka.svg – trávník s ozdobami (skvrny trávy, stébla, kytičky,
   houby, jetel, kamínky, beruška, šnek), cesta s okrajem a kamínky, šipka startu, kaluž
@@ -10,6 +10,9 @@
   Obrázek se ve hře natáhne na zem: 120 px návrhu = 1 políčko v ose x, 108 px = 1 políčko
   v ose z (pohled kamery pod úhlem asi 64°). Kolem výřezu návrhu je okraj louky pro
   širší obrazovky.
+- public/assets/prostredi/louka-2.svg – totéž pro 2. úroveň „Školní svačina“; místo kaluže na
+  louce leží školní věci (svačinový box, láhev, penál, sešit, pastelky, guma), které jsou ploché,
+  a proto patří do obrázku země.
 - public/assets/prostredi/motyl-modry.svg, motyl-ruzovy.svg, vcela.svg – poletující ozdoby.
 
 Políčka na sázení (volná, osázená, vybraná), postavy, překážky nad zemí (pařez, kámen,
@@ -21,7 +24,16 @@ import os
 import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, 'design', 'zdroj', 'Uroven1D.dc.html')
+SRC = os.path.join(ROOT, 'design', 'zdroj', '{}')
+# (zdroj, výstup, ploché překážky ležící na louce v px návrhu: x × 120, z × 108)
+LEVELS = [
+    ('Uroven1D.dc.html', 'louka.svg', []),
+    (
+        'Uroven2D.dc.html',
+        'louka-2.svg',
+        [(1.6, 8.6), (8.9, 8.9), (8.6, 3.9), (13.4, 2.9), (5.0, 1.4), (15.2, 5.9)],
+    ),
+]
 OUT = os.path.join(ROOT, 'public', 'assets', 'prostredi')
 
 # Výřez obrázku země v pixelech návrhu (o 4 políčka víc do stran, o 2,5 nahoru a dolů).
@@ -72,8 +84,8 @@ def shift(el: str, dx: float, dy: float) -> str:
     return f'<g transform="translate({dx:g},{dy:g})">{el}</g>'
 
 
-def main() -> None:
-    src = open(SRC, encoding='utf-8').read()
+def export_level(source: str, out_name: str, flat: list[tuple[float, float]]) -> list[str]:
+    src = open(SRC.format(source), encoding='utf-8').read()
     start = src.index('<g transform="translate(1060,800) scale(')
     items = children(src[src.index('>', start) + 1:])
 
@@ -99,16 +111,34 @@ def main() -> None:
             puddle.append(el)
         elif puddle and el.startswith('<path') and 'stroke="#FFFFFF"' in el:
             puddle.append(el)  # odlesky na vodě
+    # Ploché předměty na louce (2. úroveň): skupina posunutá přesně na místo předmětu a natočená.
+    spots = {(round(x * 120), round(z * 108)) for x, z in flat}
+    things = []
+    for el in rest:
+        m = re.match(r'<g transform="translate\((-?\d+),(-?\d+)\) rotate\(-?\d+\)">', el)
+        if m and (int(m.group(1)), int(m.group(2))) in spots:
+            things.append(el)
+    assert len(things) == len(flat), f'{out_name}: nalezeno {len(things)} z {len(flat)} předmětů'
 
     x0, y0, w, h = VIEW
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0} {y0} {w} {h}" width="{TEXTURE_W}" height="{TEXTURE_H}">'
         f'<rect x="{x0}" y="{y0}" width="{w}" height="{h}" fill="#8BB85A"/>'
-        + ''.join(margin) + ''.join(ground) + ''.join(path) + ''.join(puddle) + ''.join(grid) + '</svg>'
+        + ''.join(margin) + ''.join(ground) + ''.join(path) + ''.join(puddle) + ''.join(grid) + ''.join(things) + '</svg>'
     )
     os.makedirs(OUT, exist_ok=True)
-    with open(os.path.join(OUT, 'louka.svg'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(OUT, out_name), 'w', encoding='utf-8') as f:
         f.write(svg)
+    print(f'{out_name}: {len(ground)} ozdob trávníku, {len(margin)} na okraji, {len(path)} prvků cesty, {len(puddle)} kaluž, {len(grid)} šestihranů mřížky, {len(things)} předmětů')
+    return rest
+
+
+def main() -> None:
+    rest = []
+    for source, out_name, flat in LEVELS:
+        r = export_level(source, out_name, flat)
+        if not rest:
+            rest = r
 
     critters = {
         'motyl-modry': lambda el: 'fill="#9FD3F5"' in el,
@@ -125,7 +155,6 @@ def main() -> None:
         with open(os.path.join(OUT, f'{name}.svg'), 'w', encoding='utf-8') as f:
             f.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-26 -26 52 52" width="208" height="208">{el}</svg>')
 
-    print(f'louka.svg: {len(ground)} ozdob trávníku, {len(margin)} na okraji, {len(path)} prvků cesty, {len(puddle)} kaluž, {len(grid)} šestihranů mřížky')
 
 
 if __name__ == '__main__':

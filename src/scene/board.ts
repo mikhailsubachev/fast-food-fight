@@ -17,8 +17,8 @@ export interface Board {
  */
 const MEADOW = { minX: -480 / 120, maxX: 2400 / 120, minZ: -270 / 108, maxZ: 1350 / 108 };
 
-function meadowFromDesign(): THREE.Mesh {
-  const map = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}assets/prostredi/louka.svg`);
+function meadowFromDesign(file: string): THREE.Mesh {
+  const map = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}assets/prostredi/${file}`);
   map.colorSpace = THREE.SRGBColorSpace;
   map.anisotropy = 8;
   const w = MEADOW.maxX - MEADOW.minX;
@@ -76,6 +76,9 @@ function obstacleMesh(o: Obstacle): THREE.Object3D {
       g.add(hill);
       break;
     }
+    default:
+      // Školní věci 2. úrovně leží naplocho a jsou nakreslené v obrázku země.
+      break;
   }
   return g;
 }
@@ -87,7 +90,7 @@ export function buildBoard(level: LevelData): Board {
   // Jednobarevná louka všude kolem, aby na širších obrazovkách nic nechybělo.
   const meadow = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ color: GRASS }));
   meadow.rotation.x = -Math.PI / 2;
-  root.add(meadow, meadowFromDesign());
+  root.add(meadow, meadowFromDesign(level.ground));
 
   for (const o of level.obstacles) root.add(obstacleMesh(o));
 
