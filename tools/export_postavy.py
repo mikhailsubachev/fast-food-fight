@@ -39,12 +39,12 @@ def load_generator():
     stdout = sys.stdout
     sys.stdout = io.StringIO()
     try:
-        import gen, gen_porek, gen_ff, gen_level, gen_cibule, gen_lizatko  # noqa: E401
+        import gen, gen_porek, gen_ff, gen_level, gen_cibule, gen_lizatko, gen_brokolice, gen_kecup  # noqa: E401
     finally:
         builtins.open = real_open
         os.makedirs = real_makedirs
         sys.stdout = stdout
-    return gen, gen_porek, gen_ff, gen_level, gen_cibule, gen_lizatko
+    return gen, gen_porek, gen_ff, gen_level, gen_cibule, gen_lizatko, gen_brokolice, gen_kecup
 
 
 def svg(inner: str, seed: int, wobble: bool = True) -> str:
@@ -66,7 +66,7 @@ def svg(inner: str, seed: int, wobble: bool = True) -> str:
 
 
 def main() -> None:
-    gen, gp, gf, gl, gc, gz = load_generator()
+    gen, gp, gf, gl, gc, gz, gb, gk = load_generator()
     star = gen.star
     frames: dict[str, str] = {}
 
@@ -160,6 +160,33 @@ def main() -> None:
     # --- Pusa (z návrhu úrovně) ---
     frames["pusa"] = gl.mouth_svg()
 
+    # --- Pan Brokolice (3. úroveň) ---
+    br = gb.broc
+    broc_glow = f'<path d="{gb.STALKP}" fill="none" stroke="#FFD447" stroke-width="22" stroke-linejoin="round" opacity=".7"/>' + "".join(
+        f'<circle cx="{x}" cy="{y}" r="{r + 8}" fill="#FFD447" opacity=".45"/>' for x, y, r in gb.CL
+    )
+    broc_badge = star(262, 52, 30)
+    for prefix, extra in (("brokolice", {}), ("brokolice2", dict(shine=True, back=broc_glow))):
+        badge_ = broc_badge if prefix == "brokolice2" else ""
+        frames[f"{prefix}-klid"] = br("smile", front=badge_, **extra)
+        frames[f"{prefix}-mrk"] = br("closed", front=badge_, **extra)
+        frames[f"{prefix}-mir"] = br("aim", "pluck", front=badge_, **extra)
+        frames[f"{prefix}-hod"] = br("aim", "throw", front=badge_, **extra)
+        frames[f"{prefix}-radost"] = '<g transform="translate(0,-24)">' + br("joy", "up", front=badge_, **extra) + "</g>"
+    frames["brokolice-ztuhla"] = br("frozen", tint="ice", front=gen.ice_bits)
+    frames["brokolice-lepkava"] = br("frozen", front=gz.syrup(238, 340, 104, 204, 5) + gz.falling(110, 340) + gz.falling(200, 352))
+    frames["brokolice-lepkava2"] = br("frozen", front=gz.syrup(240, 340, 100, 210, 6, False) + gz.drips_ground(3))
+
+    # --- Pan Kečup (3. úroveň) ---
+    ke = gk.kecup
+    frames["kecup-krok1"] = '<g transform="translate(0,-14) rotate(5 150 388)">' + ke(legs_="hop") + "</g>"
+    frames["kecup-krok2"] = ke()
+    frames["kecup-nastvani"] = ke("furious", "fists", angry=True, extra=gk.steam())
+    frames["kecup-prsk"] = '<g transform="translate(0,-10)">' + ke("squirt", "up", big=True) + "</g>"
+    frames["kecup-zasah"] = '<g transform="translate(150,388) scale(1.1,.88) translate(-150,-388)">' + ke("hit", "down") + "</g>"
+    frames["kecup-utek1"] = ke("scared", "up", "run", extra=gf.sweat(232, 190) + gf.sweat(246, 220))
+    frames["kecup-utek2"] = ke("scared", "up", "hop", extra=gf.sweat(232, 190))
+
     os.makedirs(OUT, exist_ok=True)
     for i, (name, inner) in enumerate(frames.items(), start=1):
         with open(os.path.join(OUT, f"{name}.svg"), "w", encoding="utf-8") as fh:
@@ -175,7 +202,16 @@ def main() -> None:
     with open(os.path.join(OUT, "oblak.svg"), "w", encoding="utf-8") as fh:
         fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-112 -66 224 132" width="448" height="264">{gc.cloud(0, 0, 1.0, 1.0)}</svg>')
 
-    print(f"{len(frames) + 3} obrázků v {os.path.relpath(OUT, ROOT)}")
+    # Brokolicová raketa (letí doprava) a rozprsk do deštníku nad cílem.
+    with open(os.path.join(OUT, "raketa.svg"), "w", encoding="utf-8") as fh:
+        fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-96 -40 136 80" width="272" height="160">{gb.rocket(0, 0, 0, 1.0)}</svg>')
+    with open(os.path.join(OUT, "destnik.svg"), "w", encoding="utf-8") as fh:
+        fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-110 -80 220 220" width="440" height="440">{gb.burst(0, 0, 1.0)}</svg>')
+    # Kečupová louže na cestě (při pohledu shora se natáhne na zem).
+    with open(os.path.join(OUT, "louze.svg"), "w", encoding="utf-8") as fh:
+        fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-92 -34 184 68" width="368" height="136">{gk.puddle(0, 0, 1.0, 2)}</svg>')
+
+    print(f"{len(frames) + 6} obrázků v {os.path.relpath(OUT, ROOT)}")
 
 
 if __name__ == "__main__":

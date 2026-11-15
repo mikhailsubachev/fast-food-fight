@@ -15,6 +15,8 @@ import {
   makeDefender,
   makeMouth,
   makeProjectile,
+  makePuddlePiece,
+  makeUmbrella,
   preloadFrames,
   type Puppet,
 } from './meshes';
@@ -62,13 +64,33 @@ const ATTACK_TIME = 0.3;
 /** Jak dlouho se cibule naježí a vypouští oblak (s). */
 const CLOUD_ANIM = 1.1;
 
-const FROZEN: Record<DefenderType, string> = { mrkev: 'mrkev-ztuhla', porek: 'porek-ztuhl', cibule: 'cibule-ztuhla' };
-const STICKY: Record<DefenderType, string> = { mrkev: 'mrkev-lepkava', porek: 'porek-lepkavy', cibule: 'cibule-lepkava' };
+const FROZEN: Record<DefenderType, string> = {
+  mrkev: 'mrkev-ztuhla',
+  porek: 'porek-ztuhl',
+  cibule: 'cibule-ztuhla',
+  brokolice: 'brokolice-ztuhla',
+};
+const STICKY: Record<DefenderType, string> = {
+  mrkev: 'mrkev-lepkava',
+  porek: 'porek-lepkavy',
+  cibule: 'cibule-lepkava',
+  brokolice: 'brokolice-lepkava',
+};
 const STICKY_HALF: Record<DefenderType, string> = {
   mrkev: 'mrkev-lepkava2',
   porek: 'porek-lepkavy2',
   cibule: 'cibule-lepkava2',
+  brokolice: 'brokolice-lepkava2',
 };
+/** Dosah: mrkev oranžově, ostatní modře (barvy z návrhu). */
+const RANGE_COLOR: Record<DefenderType, number> = { mrkev: 0xf08a24, porek: 0x2d8cd6, cibule: 0x2d8cd6, brokolice: 0x2d8cd6 };
+/** Brokolice: utržení růžičky a hod (s). */
+const PLUCK_TIME = 0.3;
+const THROW_TIME = 0.6;
+/** Kečup: jak dlouho se zlobí, než vyprskne (s). */
+const MAD_TIME = 0.4;
+/** Kousky louže leží na cestě po tomhle kroku (políčka). */
+const PUDDLE_STEP = 0.6;
 /** Jak daleko od středu mrkve sahá špička mrkvomeče (políčka). */
 const SWORD_REACH = 0.45;
 /** Kdy je mrkev při seku nejdál (první třetina seku). */
@@ -81,6 +103,7 @@ export class View {
   private readonly attackers = new Map<number, Anim>();
   private readonly projectiles = new Map<number, THREE.Sprite>();
   private readonly clouds = new Map<number, THREE.Mesh>();
+  private readonly puddles = new Map<number, THREE.Group>();
   private effects: Effect[] = [];
   private pending: { t: number; fn: () => void }[] = [];
   private readonly mouth: Puppet;
@@ -125,9 +148,9 @@ export class View {
     stage.scene.add(this.slots.root, this.critters.root);
   }
 
-  /** Dosah zeleniny: mrkev oranžově, pórek modře (barvy z návrhu). */
+  /** Dosah zeleniny (barvy z návrhu). */
   showRange(x: number, z: number, r: number, type: DefenderType): void {
-    const color = type === 'mrkev' ? 0xf08a24 : 0x2d8cd6;
+    const color = RANGE_COLOR[type];
     this.ringFill.color.setHex(color);
     this.ringEdge.color.setHex(color);
     this.ring.position.set(x, 0.06, z);
@@ -155,6 +178,7 @@ export class View {
     this.attackers.clear();
     this.projectiles.clear();
     this.clouds.clear();
+    this.puddles.clear();
     this.effects = [];
     this.mouthMood = 'play';
     this.mouthPulse = 1;
@@ -210,6 +234,16 @@ export class View {
           }
           break;
         }
+        case 'burst':
+          // Bum! Růžička se nad cílem rozprskne do deštníku z malých růžiček.
+          this.umbrella(e.x, e.z, e.r);
+          this.burst(e.x, 0.8, e.z, 0x4caf50, 8);
+          break;
+        case 'squirt': {
+          const a = this.attackers.get(e.attackerId);
+          if (a) a.throwT = 0;
+          break;
+        }
         case 'escaped':
           this.puff(e.x, e.z, 0xffffff, 1.6);
           break;
@@ -241,6 +275,7 @@ export class View {
     this.syncAttackers(game, dt, time);
     this.syncProjectiles(game, time);
     this.syncClouds(game);
+    this.syncPuddles(game);
     this.updateMouth(game, dt, time);
     this.updateEffects(dt);
     this.slots.update(game.defenders);
@@ -299,6 +334,10 @@ export class View {
           frame = `${prefix}-smrad`;
           squash = -Math.sin(((anim.attackT - 0.35) / (CLOUD_ANIM - 0.35)) * Math.PI) * 0.06;
         }
+      } else if (d.type === 'brokolice' && anim.attackT < THROW_TIME) {
+        // Brokolice si utrhne z korunky růžičku a vystřelí ji jako raketu.
+        frame = anim.attackT < PLUCK_TIME ? `${prefix}-mir` : `${prefix}-hod`;
+        squash = anim.attackT < PLUCK_TIME ? 0 : -Math.sin(((anim.attackT - PLUCK_TIME) / (THROW_TIME - PLUCK_TIME)) * Math.PI) * 0.08;
       } else if (d.type !== 'cibule' && anim.attackT < ATTACK_TIME) {
         frame = d.type === 'mrkev' ? `${prefix}-sek` : `${prefix}-vystrel`;
         squash = -Math.sin((anim.attackT / ATTACK_TIME) * Math.PI) * 0.08;
@@ -308,6 +347,11 @@ export class View {
         hop = Math.abs(Math.sin((anim.joyT / 0.7) * Math.PI * 2)) * 0.25;
       } else if (d.type === 'porek' && this.hasTarget(game, d.x, d.z, defenderLevel(d).range)) {
         frame = `${prefix}-miri`;
+      } else if (d.type === 'brokolice') {
+        // Pohupuje korunkou a občas mrkne.
+        squash = Math.sin(time * 2 + d.id) * 0.03;
+        if (time > anim.blinkAt + 0.15) anim.blinkAt = time + 2 + Math.random() * 3;
+        if (time > anim.blinkAt) frame = `${prefix}-mrk`;
       } else {
         // Mrkání: čas od času na chvilku zavře oči.
         if (time > anim.blinkAt + 0.15) anim.blinkAt = time + 2 + Math.random() * 3;
@@ -412,6 +456,7 @@ export class View {
       } else if (base === 'hranolky' && anim.throwT < 0.15) frame = 'hranolky-naprah';
       else if (base === 'hranolky' && anim.throwT < 0.45) frame = 'hranolky-hod';
       else if (base === 'lizatko' && a.spinLeft > 0) frame = anim.spinT < 0.2 ? 'lizatko-naprah' : 'lizatko-toci';
+      else if (base === 'kecup' && a.squirtLeft > 0) frame = anim.throwT < MAD_TIME ? 'kecup-nastvani' : 'kecup-prsk';
       anim.puppet.setFrame(frame);
 
       // Otočit loutku podle toho, kam jde na obrazovce (doleva / doprava).
@@ -422,9 +467,19 @@ export class View {
         // Roztočení: lízátko se otáčí sem a tam.
         anim.puppet.setMirrored(Math.floor(anim.spinT * 10) % 2 === 1);
       } else if (Math.abs(sx) > 0.2) anim.puppet.setMirrored(sx < 0);
-      const bounce = Math.abs(Math.sin(time * (a.fleeing ? 14 : 8) + a.id)) * (a.fleeing ? 0.14 : 0.07);
+      let bounce = Math.abs(Math.sin(time * (a.fleeing ? 14 : 8) + a.id)) * (a.fleeing ? 0.14 : 0.07);
+      let tilt = 0;
+      if (base === 'kecup' && a.squirtLeft > 0 && anim.throwT < MAD_TIME) {
+        // Naštvaný kečup poskočí do vzduchu.
+        bounce = Math.sin((anim.throwT / MAD_TIME) * Math.PI) * 0.45;
+      } else if (a.sliding && !a.fleeing) {
+        // Klouže po kečupu: nehýbe nohama, jen se nakloní dopředu („Víííí!“).
+        bounce = 0;
+        tilt = anim.puppet.mirrored ? 0.25 : -0.25;
+      }
       sprite.scale.set(width * (1 + squash * 0.6), height * (1 - squash), 1);
       sprite.position.set(0, bounce, 0);
+      (sprite.material as THREE.SpriteMaterial).rotation = tilt;
     }
     this.removeMissing(this.attackers, alive);
   }
@@ -448,16 +503,19 @@ export class View {
         this.projectiles.set(p.id, s);
       }
       const k = Math.min(1, p.t / p.duration);
+      // Brokolicová raketa letí vysokým obloukem a rozprskne se nad cílem.
+      const arc = p.kind === 'brokolice' ? 3 : p.kind === 'porek' ? 1.1 : 0.9;
+      const endY = p.kind === 'brokolice' ? 1.4 : 0.9;
       const at = (t: number) => ({
         x: p.x0 + (p.tx - p.x0) * t,
-        y: 0.9 + Math.sin(t * Math.PI) * (p.kind === 'porek' ? 1.1 : 0.9),
+        y: 0.9 + (endY - 0.9) * t + Math.sin(t * Math.PI) * arc,
         z: p.z0 + (p.tz - p.z0) * t,
       });
       const now = at(k);
       s.position.set(now.x, now.y, now.z);
       const mat = s.material as THREE.SpriteMaterial;
-      if (p.kind === 'porek') {
-        // Pórkošíp letí hrotem napřed po oblouku.
+      if (p.kind === 'porek' || p.kind === 'brokolice') {
+        // Pórkošíp a raketa letí hrotem napřed po oblouku.
         const next = at(Math.min(1, k + 0.05));
         const cam = this.stage.camera;
         const a = this.tmpA.set(now.x, now.y, now.z).project(cam);
@@ -471,6 +529,45 @@ export class View {
       if (!alive.has(id)) {
         this.dynamic.remove(s);
         this.projectiles.delete(id);
+      }
+    }
+  }
+
+  /** Kečupové louže: kousky louže podél cesty, na konci zaschnou (vyblednou). */
+  private syncPuddles(game: Game): void {
+    const alive = new Set<number>();
+    for (const p of game.puddles) {
+      alive.add(p.id);
+      let g = this.puddles.get(p.id);
+      if (!g) {
+        g = new THREE.Group();
+        const n = Math.max(1, Math.round((p.d1 - p.d0) / PUDDLE_STEP));
+        for (let i = 0; i <= n; i++) {
+          const at = game.path.at(p.d0 + ((p.d1 - p.d0) * i) / n);
+          const m = makePuddlePiece();
+          m.position.set(at.x + (Math.random() - 0.5) * 0.12, 0.05 + i * 0.001, at.z + (Math.random() - 0.5) * 0.12);
+          // Louže leží jako v návrhu (naplocho, skoro vodorovně), kousky se překrývají.
+          m.rotation.z = (Math.random() - 0.5) * 0.5;
+          m.scale.setScalar(0.7 + Math.random() * 0.25);
+          g.add(m);
+        }
+        this.dynamic.add(g);
+        this.puddles.set(p.id, g);
+      }
+      // Louže se rozlije postupně od kečupu dopředu a na konci zaschne.
+      const age = p.life - p.left;
+      const shown = Math.min(1, age / 0.4);
+      const fade = Math.min(1, p.left / 0.8);
+      g.children.forEach((c, i) => {
+        const m = c as THREE.Mesh;
+        m.visible = i / g!.children.length <= shown;
+        (m.material as THREE.MeshBasicMaterial).opacity = fade;
+      });
+    }
+    for (const [id, g] of this.puddles) {
+      if (!alive.has(id)) {
+        this.dynamic.remove(g);
+        this.puddles.delete(id);
       }
     }
   }
@@ -506,6 +603,19 @@ export class View {
     this.addEffect(mesh, 0.45, (e, k) => {
       e.obj.scale.setScalar(size * (0.4 + k));
       mat.opacity = 0.85 * (1 - k);
+    });
+  }
+
+  /** Deštník z malých růžiček nad místem dopadu brokolicové rakety. */
+  private umbrella(x: number, z: number, r: number): void {
+    const s = makeUmbrella(r);
+    const mat = s.material as THREE.SpriteMaterial;
+    const base = s.scale.x;
+    s.position.set(x, 0.9, z);
+    this.addEffect(s, 0.6, (e, k) => {
+      e.obj.scale.set(base * (0.6 + 0.4 * Math.min(1, k * 3)), base * (0.6 + 0.4 * Math.min(1, k * 3)), 1);
+      e.obj.position.y = 0.9 - k * 0.3;
+      mat.opacity = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4;
     });
   }
 

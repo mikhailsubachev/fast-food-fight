@@ -8,7 +8,7 @@ import type { View } from '../scene/view';
 import { button, el } from './dom';
 import { DROP_SVG, LOCK_SVG, iconEl, vegImage } from './icons';
 
-const ORDER: DefenderType[] = ['mrkev', 'porek', 'cibule'];
+const ORDER: DefenderType[] = ['mrkev', 'porek', 'cibule', 'brokolice'];
 
 /**
  * Kruhové menu nad místem na záhoně.

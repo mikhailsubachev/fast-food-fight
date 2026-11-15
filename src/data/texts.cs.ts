@@ -10,6 +10,8 @@ export const T = {
     velkyHamburger: 'Velký hamburger',
     cibule: 'Cibule',
     lizatko: 'Lízátko',
+    brokolice: 'Brokolice',
+    kecup: 'Kečup',
   } satisfies Record<DefenderType | AttackerType, string>,
   wave: (n: number, total: number) => `Vlna ${n}/${total}`,
   nextWaveIn: (n: number, seconds: number) => `Vlna ${n} za ${seconds}`,

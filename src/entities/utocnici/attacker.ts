@@ -15,6 +15,12 @@ export interface Attacker {
   spinLeft: number;
   /** Je právě v oblaku smradu (jde pomaleji). */
   slowed: boolean;
+  /** Kečup: za kolik sekund zase vyprskne. */
+  squirtCooldown: number;
+  /** Kečup: jak dlouho se ještě zlobí a prská (stojí na místě). */
+  squirtLeft: number;
+  /** Klouže po kečupu (jede rychleji). */
+  sliding: boolean;
 }
 
 export function createAttacker(id: number, type: AttackerType): Attacker {
@@ -29,5 +35,8 @@ export function createAttacker(id: number, type: AttackerType): Attacker {
     spinCooldown: stats.spin?.firstDelay ?? 0,
     spinLeft: 0,
     slowed: false,
+    squirtCooldown: stats.squirt?.firstDelay ?? 0,
+    squirtLeft: 0,
+    sliding: false,
   };
 }

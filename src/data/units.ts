@@ -1,14 +1,16 @@
 // Čísla jednotek pro první playtest (Plán první úrovně, kapitola 4).
 // Vzdálenosti jsou v políčkách, časy v sekundách.
 
-export type DefenderType = 'mrkev' | 'porek' | 'cibule';
-export type AttackerType = 'hamburger' | 'hranolky' | 'velkyHamburger' | 'lizatko';
+export type DefenderType = 'mrkev' | 'porek' | 'cibule' | 'brokolice';
+export type AttackerType = 'hamburger' | 'hranolky' | 'velkyHamburger' | 'lizatko' | 'kecup';
 
 export interface DefenderLevel {
   range: number;
   attackInterval: number;
   /** Cibule: jak dlouho vydrží oblak smradu (s). */
   cloudTime?: number;
+  /** Brokolice: poloměr deštníku, do kterého se růžička nad cílem rozprskne. */
+  splash?: number;
 }
 
 export interface DefenderStats {
@@ -19,6 +21,8 @@ export interface DefenderStats {
   projectileSpeed?: number;
   /** Cibule nikoho nezasáhne: vypustí oblak smradu, ve kterém fast food chodí pomaleji (násobek rychlosti). */
   cloudSlow?: number;
+  /** Brokolice: jak dlouho letí raketa z růžičky vysokým obloukem (s). */
+  rocketTime?: number;
   levels: [DefenderLevel, DefenderLevel];
 }
 
@@ -57,6 +61,20 @@ export const DEFENDERS: Record<DefenderType, DefenderStats> = {
       { range: 2.5, attackInterval: 6, cloudTime: 4.5 },
     ],
   },
+  // Pan Brokolice (list postavy na plátně): nejdražší a nejpomalejší, ale nejdál dostřelí.
+  // Růžička letí vysokým obloukem a nad cílem se rozprskne do deštníku: každý fast food
+  // do ~1 políčka dostane jeden zásah.
+  brokolice: {
+    cost: 80,
+    growTime: 5,
+    upgradeCost: 60,
+    rocketTime: 1,
+    levels: [
+      { range: 5, attackInterval: 2.5, splash: 1 },
+      // úroveň 2: větší roztříštění
+      { range: 5.5, attackInterval: 2.5, splash: 1.4 },
+    ],
+  },
 };
 
 export interface ThrowStats {
@@ -78,6 +96,20 @@ export interface SpinStats {
   firstDelay: number;
 }
 
+/** Kečup se jednou za čas naštve, poskočí a vyprskne louži kečupu na cestu před sebe. */
+export interface SquirtStats {
+  interval: number;
+  /** Kolik políček cesty před sebou pokryje. */
+  length: number;
+  /** Kolikrát rychleji jede fast food po kečupu. */
+  boost: number;
+  /** Za jak dlouho louže zaschne (s). */
+  dry: number;
+  /** Jak dlouho se zlobí a prská (stojí na místě). */
+  duration: number;
+  firstDelay: number;
+}
+
 export interface AttackerStats {
   hits: number;
   speed: number;
@@ -85,6 +117,7 @@ export interface AttackerStats {
   scale: number;
   throws?: ThrowStats;
   spin?: SpinStats;
+  squirt?: SquirtStats;
 }
 
 export const ATTACKERS: Record<AttackerType, AttackerStats> = {
@@ -105,6 +138,15 @@ export const ATTACKERS: Record<AttackerType, AttackerStats> = {
     reward: 25,
     scale: 1,
     spin: { interval: 6, range: 1.5, sticky: 3, duration: 0.8, firstDelay: 3 },
+  },
+  // Pan Kečup (list postavy na plátně): 5 zásahů, ~1 políčko/s, 1× za 7 s vyprskne kečup
+  // na ~3 políčka cesty, fast food na něm jede 2× rychleji, po 5 s zaschne; 20 vody.
+  kecup: {
+    hits: 5,
+    speed: 1,
+    reward: 20,
+    scale: 1,
+    squirt: { interval: 7, length: 3, boost: 2, dry: 5, duration: 0.9, firstDelay: 3 },
   },
 };
 

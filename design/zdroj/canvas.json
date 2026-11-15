@@ -82,6 +82,22 @@
       "x": 2880,
       "y": 0
     },
+    "Uroven2D.dc.html": {
+      "h": 1080,
+      "page": "page-0ulohc",
+      "title": "Úroveň 2 – Školní svačina",
+      "w": 1920,
+      "x": 4880,
+      "y": 0
+    },
+    "Uroven3D.dc.html": {
+      "h": 1080,
+      "page": "page-0ulohc",
+      "title": "Úroveň 3 – Oběd v Mekáči",
+      "w": 1920,
+      "x": 6880,
+      "y": 0
+    },
     "MapaSestihrany.dc.html": {
       "h": 1260,
       "page": "page-0ulohc",
@@ -136,6 +152,8 @@
   "order": [
     "Uroven1.dc.html",
     "Uroven1D.dc.html",
+    "Uroven2D.dc.html",
+    "Uroven3D.dc.html",
     "MistoNaZeleninu.dc.html",
     "MapaSestihrany.dc.html",
     "MapaSestihranyStredni.dc.html",

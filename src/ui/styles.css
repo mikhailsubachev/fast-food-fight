@@ -662,3 +662,12 @@ button:active {
     height: 86px;
   }
 }
+
+/* Nízký displej (telefon naležato): nižší horní lišta, aby zbylo víc místa na hru. */
+@media (max-height: 420px) {
+  .hud {
+    height: 56px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}

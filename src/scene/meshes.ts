@@ -48,7 +48,11 @@ export const FRAMES = [
   'cibule2-klid', 'cibule2-mrk', 'cibule2-nalez', 'cibule2-smrad', 'cibule2-radost',
   'mrkev-lepkava', 'mrkev-lepkava2', 'porek-lepkavy', 'porek-lepkavy2', 'cibule-lepkava', 'cibule-lepkava2',
   'lizatko-krok1', 'lizatko-krok2', 'lizatko-naprah', 'lizatko-toci', 'lizatko-zasah', 'lizatko-utek1', 'lizatko-utek2',
-  'pusa', 'porkosip', 'hranolka', 'oblak',
+  'brokolice-klid', 'brokolice-mrk', 'brokolice-mir', 'brokolice-hod', 'brokolice-ztuhla', 'brokolice-radost',
+  'brokolice2-klid', 'brokolice2-mrk', 'brokolice2-mir', 'brokolice2-hod', 'brokolice2-radost',
+  'brokolice-lepkava', 'brokolice-lepkava2',
+  'kecup-krok1', 'kecup-krok2', 'kecup-nastvani', 'kecup-prsk', 'kecup-zasah', 'kecup-utek1', 'kecup-utek2',
+  'pusa', 'porkosip', 'hranolka', 'oblak', 'raketa', 'destnik', 'louze',
 ] as const;
 
 /** Načte všechny obrázky předem, aby postavy při prvním objevení neblikly. */
@@ -117,11 +121,14 @@ function blobShadow(p: Puppet, r: number): void {
  */
 // Zelenina podle návrhu D (menší, aby se vešla do políčka mřížky): 0,415 a 0,419 × 450 / 120.
 // Cibule má v návrhu 2. úrovně stejné měřítko jako mrkev, lízátko jako hamburger.
-const DEFENDER_HEIGHT: Record<DefenderType, number> = { mrkev: 1.56, porek: 1.57, cibule: 1.56 };
-const ATTACKER_HEIGHT: Record<'hamburger' | 'hranolky' | 'lizatko', number> = { hamburger: 1.73, hranolky: 1.58, lizatko: 1.73 };
+// Brokolice má v návrhu 3. úrovně měřítko mrkve, kečup hamburgeru.
+const DEFENDER_HEIGHT: Record<DefenderType, number> = { mrkev: 1.56, porek: 1.57, cibule: 1.56, brokolice: 1.56 };
+const ATTACKER_HEIGHT: Record<AttackerFrames, number> = { hamburger: 1.73, hranolky: 1.58, lizatko: 1.73, kecup: 1.73 };
+
+type AttackerFrames = 'hamburger' | 'hranolky' | 'lizatko' | 'kecup';
 
 /** Jméno obrázků útočníka (velký hamburger je zvětšený hamburger). */
-export function attackerFrames(type: AttackerType): 'hamburger' | 'hranolky' | 'lizatko' {
+export function attackerFrames(type: AttackerType): AttackerFrames {
   return type === 'velkyHamburger' ? 'hamburger' : type;
 }
 
@@ -152,15 +159,38 @@ export function makeCloud(r: number): THREE.Mesh {
   return m;
 }
 
-/** Střela: pórkošíp (letí hrotem napřed) nebo hranolka (točí se). */
-export function makeProjectile(kind: 'porek' | 'hranolka'): THREE.Sprite {
+/** Střela: pórkošíp a brokolicová raketa (letí hrotem napřed) nebo hranolka (točí se). */
+export function makeProjectile(kind: 'porek' | 'hranolka' | 'brokolice'): THREE.Sprite {
   const mat = new THREE.SpriteMaterial({
-    map: texture(kind === 'porek' ? 'porkosip' : 'hranolka'),
+    map: texture(kind === 'porek' ? 'porkosip' : kind === 'brokolice' ? 'raketa' : 'hranolka'),
     alphaTest: 0.3,
     depthWrite: true,
   });
   const s = new THREE.Sprite(mat);
   if (kind === 'porek') s.scale.set(0.5, 0.21, 1);
+  else if (kind === 'brokolice') s.scale.set(0.85, 0.5, 1);
   else s.scale.set(0.11, 0.46, 1);
   return s;
+}
+
+/** Deštník z rozprsknuté růžičky brokolice nad cílem (stojí ke kameře, `r` je poloměr zásahu). */
+export function makeUmbrella(r: number): THREE.Sprite {
+  const mat = new THREE.SpriteMaterial({ map: texture('destnik'), transparent: true, depthWrite: false });
+  const s = new THREE.Sprite(mat);
+  // Obrázek 220 × 220, žebra deštníku sahají ±92 px do stran.
+  const size = (2 * r * 220) / 184;
+  s.scale.set(size, size, 1);
+  s.renderOrder = 3;
+  return s;
+}
+
+/** Kus kečupové louže ležící na cestě. */
+export function makePuddlePiece(): THREE.Mesh {
+  const mat = new THREE.MeshBasicMaterial({ map: texture('louze'), transparent: true, depthWrite: false });
+  // Obrázek 184 × 68 je kreslený už šikmo; na zemi se natáhne, aby na obrazovce vypadal stejně.
+  const w = 1.15;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, ((w * 68) / 184) / 0.9), mat);
+  m.rotation.x = -Math.PI / 2;
+  m.renderOrder = 2;
+  return m;
 }

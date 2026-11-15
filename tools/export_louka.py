@@ -12,6 +12,8 @@ a Uroven2D.dc.html, 1920 × 1080 px) a zapíše:
 - public/assets/prostredi/louka-2.svg – totéž pro 2. úroveň „Školní svačina“; místo kaluže na
   louce leží školní věci (svačinový box, láhev, penál, sešit, pastelky, guma), které jsou ploché,
   a proto patří do obrázku země.
+- public/assets/prostredi/louka-3.svg – 3. úroveň „Oběd v Mekáči“: na louce leží tác, kelímky,
+  ubrousky, sáčky s omáčkou, účtenka, krabička od hranolek a papír od burgeru.
 - public/assets/prostredi/louka-ozdoby.svg a louka-2-ozdoby.svg – drobné ozdoby trávníku a ploché
   předměty zvlášť, aby se ve hře kreslily nad políčky na sázení (šestihrany jsou vždy vespod).
 - public/assets/prostredi/motyl-modry.svg, motyl-ruzovy.svg, vcela.svg – poletující ozdoby.
@@ -33,6 +35,11 @@ LEVELS = [
         'Uroven2D.dc.html',
         'louka-2.svg',
         [(1.6, 8.6), (8.9, 8.9), (8.6, 3.9), (13.4, 2.9), (5.0, 1.4), (15.2, 5.9)],
+    ),
+    (
+        'Uroven3D.dc.html',
+        'louka-3.svg',
+        [(1.5, 8.6), (8.9, 8.9), (8.7, 3.9), (5.0, 1.4), (13.4, 2.9), (15.2, 6.0), (0.9, 5.2), (11.9, 1.2), (4.75, 4.9)],
     ),
 ]
 OUT = os.path.join(ROOT, 'public', 'assets', 'prostredi')
@@ -85,6 +92,46 @@ def shift(el: str, dx: float, dy: float) -> str:
     return f'<g transform="translate({dx:g},{dy:g})">{el}</g>'
 
 
+HR = 89  # poloměr šestihranu mřížky v px
+HH = HR * 3 ** 0.5
+
+
+def hex_points(px: float, py: float, k: float = 0.97) -> str:
+    import math
+    return ' '.join(f'{px + k * HR * math.cos(math.radians(60 * i)):.1f},{py + k * HR * math.sin(math.radians(60 * i)):.1f}' for i in range(6))
+
+
+def margin_grid(grid: list[str]) -> list[str]:
+    """Obrysy mřížky i na okraji louky mimo obrazovku návrhu (pro širší displeje)."""
+    have = []
+    for el in grid:
+        pts = [tuple(map(float, q.split(','))) for q in re.search(r'points="([^"]+)"', el).group(1).split()]
+        have.append((sum(q[0] for q in pts) / 6, sum(q[1] for q in pts) / 6))
+    x0, y0, w, h = VIEW
+    out = []
+    for col in range(-8, 26):
+        for row in range(-4, 12):
+            px = 40 + col * HR * 1.5
+            py = 150 + row * HH + (HH / 2 if col % 2 else 0)
+            if px < x0 - HR or px > x0 + w + HR or py < y0 - HH or py > y0 + h + HH:
+                continue
+            if any(abs(px - a) < 2 and abs(py - b) < 2 for a, b in have):
+                continue
+            on_path = px < 0 and 250 < py < 420  # cesta vstupuje zleva
+            style = 'stroke="#7A4A24" stroke-width="2.5" stroke-opacity=".5"' if on_path else 'stroke="#3E6B25" stroke-width="2.5" stroke-opacity=".35"'
+            out.append(f'<polygon points="{hex_points(px, py)}" fill="none" {style} stroke-linejoin="round"/>')
+    return out
+
+
+# Cesta v návrhu začíná na −360 px; ve hře pokračuje rovně až k okraji obrázku země.
+PATH_LEAD = (
+    '<polygon points="-500,275.4 -350,272.4 -350,396.8 -500,394.2" fill="#C9965A"/>'
+    '<path d="M-500,275.4 L-350,272.4 M-500,394.2 L-350,396.8" stroke="#2B2118" stroke-width="4.5" fill="none"/>'
+    '<polygon points="-500,292.2 -350,289.8 -350,379.4 -500,377.6" fill="#DDB27A"/>'
+    '<path d="M-500,309 L-350,308.7 M-500,361 L-350,360.5" stroke="#B9844B" stroke-width="5" stroke-linecap="round" stroke-dasharray="40 14 22 10" fill="none"/>'
+)
+
+
 def export_level(source: str, out_name: str, flat: list[tuple[float, float]]) -> list[str]:
     src = open(SRC.format(source), encoding='utf-8').read()
     start = src.index('<g transform="translate(1060,800) scale(')
@@ -98,13 +145,21 @@ def export_level(source: str, out_name: str, flat: list[tuple[float, float]]) ->
 
     # Okraj louky pro širší obrazovky: skvrny a stébla trávy z levého a horního pásu zopakovat vpravo a dole.
     grass = [el for el in ground if any(c in el for c in GRASS) and el.startswith(('<polygon', '<path'))]
-    margin = []
-    for el in grass:
-        x, y = center(el)
-        if 0 <= x < 480:
-            margin.append(shift(el, 1920, 0))
-        if 100 <= y < 370:
-            margin.append(shift(el, 0, 1080))
+    def copy_to_margin(els: list[str]) -> list[str]:
+        out = []
+        for el in els:
+            x, y = center(el)
+            if 0 <= x < 480:
+                out.append(shift(el, 1920, 0))
+            if 100 <= y < 370:
+                out.append(shift(el, 0, 1080))
+            if 40 <= x < 480 and 380 <= y < 1080:
+                out.append(shift(el, -520, 0))  # vlevo pod a nad cestou
+            if 710 <= y < 980:
+                out.append(shift(el, 0, -980))
+        return out
+
+    margin = copy_to_margin(grass)
 
     rest = items[first_hex:]
     path = [el for el in rest if el.startswith(('<polygon', '<polyline', '<ellipse', '<path')) and any(k in el for k in PATH)]
@@ -128,14 +183,14 @@ def export_level(source: str, out_name: str, flat: list[tuple[float, float]]) ->
     head = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0} {y0} {w} {h}" width="{TEXTURE_W}" height="{TEXTURE_H}">'
     svg = (
         head + f'<rect x="{x0}" y="{y0}" width="{w}" height="{h}" fill="#8BB85A"/>'
-        + ''.join(margin) + ''.join(ground) + ''.join(path) + ''.join(puddle) + ''.join(grid) + '</svg>'
+        + ''.join(margin) + ''.join(ground) + ''.join(path) + PATH_LEAD + ''.join(puddle) + ''.join(grid) + ''.join(margin_grid(grid)) + '</svg>'
     )
     # Ozdoby nad políčky: v návrhu je zakrývá cesta a kaluž, proto se tam ořežou maskou.
-    cover = ''.join(re.sub(r'(fill|stroke)="#[0-9A-Fa-f]+"', r'\1="#000"', el) for el in path + puddle)
+    cover = ''.join(re.sub(r'(fill|stroke)="#[0-9A-Fa-f]+"', r'\1="#000"', el) for el in path + puddle + [PATH_LEAD])
     top = (
         head + f'<defs><mask id="m" maskUnits="userSpaceOnUse" x="{x0}" y="{y0}" width="{w}" height="{h}">'
         f'<rect x="{x0}" y="{y0}" width="{w}" height="{h}" fill="#fff"/>{cover}</mask></defs>'
-        f'<g mask="url(#m)">' + ''.join(decor) + '</g>' + ''.join(things) + '</svg>'
+        f'<g mask="url(#m)">' + ''.join(copy_to_margin(decor)) + ''.join(decor) + '</g>' + ''.join(things) + '</svg>'
     )
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, out_name), 'w', encoding='utf-8') as f:

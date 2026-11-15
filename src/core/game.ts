@@ -8,6 +8,7 @@ import {
   WAVE_PAUSE,
   type DefenderType,
   type SpinStats,
+  type SquirtStats,
 } from '../data/units';
 import { createAttacker, type Attacker } from '../entities/utocnici/attacker';
 import { createDefender, defenderLevel, isGrown, type Defender } from '../entities/obranci/defender';
@@ -19,15 +20,26 @@ export type Phase = 'countdown' | 'wave' | 'won' | 'lost';
 
 export interface Projectile {
   id: number;
-  kind: 'porek' | 'hranolka';
+  kind: 'porek' | 'hranolka' | 'brokolice';
   x0: number;
   z0: number;
-  /** Cíl; pórek ho sleduje, dokud cíl nezačne utíkat. */
+  /** Cíl; pórek a brokolicová raketa ho sledují, dokud cíl nezačne utíkat. */
   tx: number;
   tz: number;
   t: number;
   duration: number;
   targetId: number;
+  /** Brokolice: poloměr deštníku, do kterého se raketa nad cílem rozprskne. */
+  splash?: number;
+}
+
+/** Kečupová louže na cestě mezi `d0` a `d1`: fast food po ní klouže rychleji. */
+export interface Puddle {
+  id: number;
+  d0: number;
+  d1: number;
+  left: number;
+  life: number;
 }
 
 /** Oblak smradu cibule: fast food uvnitř jde pomaleji, dokud oblak nevyvětrá. */
@@ -56,6 +68,10 @@ export type GameEvent =
   | { type: 'frozen'; defenderId: number }
   /** Cibule vypustila oblak smradu. */
   | { type: 'cloud'; defenderId: number; x: number; z: number; r: number }
+  /** Brokolicová raketa se nad cílem rozprskla do deštníku (poloměr `r`). */
+  | { type: 'burst'; x: number; z: number; r: number }
+  /** Kečup se naštval a vyprskl louži na cestu. */
+  | { type: 'squirt'; attackerId: number }
   /** Lízátko se roztočilo; `stuck` je zelenina, kterou oblepilo. */
   | { type: 'spin'; attackerId: number; stuck: number[] }
   | { type: 'waveStart'; wave: number }
@@ -81,6 +97,7 @@ export class Game {
   attackers: Attacker[] = [];
   projectiles: Projectile[] = [];
   clouds: Cloud[] = [];
+  puddles: Puddle[] = [];
   readonly unlocked = new Set<DefenderType>();
 
   private events: GameEvent[] = [];
@@ -111,6 +128,7 @@ export class Game {
     this.attackers = [];
     this.projectiles = [];
     this.clouds = [];
+    this.puddles = [];
     this.queue = [];
     this.events = [];
     this.unlocked.clear();
@@ -198,6 +216,7 @@ export class Game {
 
     for (const d of this.defenders) this.updateDefender(d, dt);
     this.updateClouds(dt);
+    this.updatePuddles(dt);
     const gone = new Set<number>();
     for (const a of this.attackers) {
       if (this.updateAttacker(a, dt)) gone.add(a.id);
@@ -284,6 +303,24 @@ export class Game {
       this.events.push({ type: 'cloud', defenderId: d.id, x: d.x, z: d.z, r: stats.range });
       return;
     }
+    const rocketTime = DEFENDERS[d.type].rocketTime;
+    if (rocketTime) {
+      // Brokolice: růžička letí vysokým obloukem za cílem a nad ním se rozprskne.
+      const p = this.path.at(target.d);
+      this.projectiles.push({
+        id: this.nextId++,
+        kind: 'brokolice',
+        x0: d.x,
+        z0: d.z,
+        tx: p.x,
+        tz: p.z,
+        t: 0,
+        duration: rocketTime,
+        targetId: target.id,
+        splash: stats.splash,
+      });
+      return;
+    }
     const speed = DEFENDERS[d.type].projectileSpeed;
     if (speed) {
       const p = this.path.at(target.d);
@@ -307,6 +344,18 @@ export class Game {
     if (!this.clouds.length) return;
     for (const c of this.clouds) c.left -= dt;
     this.clouds = this.clouds.filter((c) => c.left > 0);
+  }
+
+  private updatePuddles(dt: number): void {
+    if (!this.puddles.length) return;
+    for (const p of this.puddles) p.left -= dt;
+    this.puddles = this.puddles.filter((p) => p.left > 0);
+  }
+
+  /** Zrychlení fast foodu na kečupu (1 = bez kečupu). */
+  private puddleBoost(a: Attacker): number {
+    a.sliding = this.puddles.some((p) => a.d >= p.d0 && a.d <= p.d1);
+    return a.sliding ? ATTACKERS.kecup.squirt!.boost : 1;
   }
 
   /** Zpomalení fast foodu v oblaku smradu (1 = bez oblaku). */
@@ -335,7 +384,7 @@ export class Game {
     this.events.push({ type: 'hit', attackerId: a.id, x: p.x, z: p.z, melee });
     if (a.hitsLeft > 0) return;
     a.fleeing = true;
-    const reward = ATTACKERS[a.type].reward;
+    const reward = Math.round((ATTACKERS[a.type].reward * (this.level.rewardScale ?? 1)) / 5) * 5;
     this.water += reward;
     this.events.push({ type: 'flee', attackerId: a.id, x: p.x, z: p.z, water: reward });
   }
@@ -355,7 +404,9 @@ export class Game {
 
     const spin = stats.spin;
     if (spin && this.updateSpin(a, spin, dt)) return false;
-    a.d += stats.speed * (this.level.waveSpeed?.[this.waveIndex] ?? 1) * this.cloudSlow(a) * dt;
+    const squirt = stats.squirt;
+    if (squirt && this.updateSquirt(a, squirt, dt)) return false;
+    a.d += stats.speed * (this.level.waveSpeed?.[this.waveIndex] ?? 1) * this.cloudSlow(a) * this.puddleBoost(a) * dt;
     if (a.d >= this.path.length) {
       this.bites++;
       this.events.push({ type: 'bite', bites: this.bites });
@@ -416,6 +467,28 @@ export class Game {
     return true;
   }
 
+  /** Kečup: naštvání a vyprsknutí louže. Vrací true, dokud prská (stojí na místě). */
+  private updateSquirt(a: Attacker, squirt: SquirtStats, dt: number): boolean {
+    if (a.squirtLeft > 0) {
+      a.squirtLeft = Math.max(0, a.squirtLeft - dt);
+      return true;
+    }
+    a.squirtCooldown -= dt;
+    // Prská jen na cestu, kde ještě zbývá kus k puse.
+    if (a.squirtCooldown > 0 || a.d < 0.5 || a.d > this.path.length - 1) return false;
+    a.squirtCooldown = squirt.interval;
+    a.squirtLeft = squirt.duration;
+    this.puddles.push({
+      id: this.nextId++,
+      d0: a.d,
+      d1: Math.min(this.path.length, a.d + squirt.length),
+      left: squirt.dry,
+      life: squirt.dry,
+    });
+    this.events.push({ type: 'squirt', attackerId: a.id });
+    return true;
+  }
+
   private nearestGrownDefender(x: number, z: number, range: number): Defender | undefined {
     let best: Defender | undefined;
     let bestDist = Infinity;
@@ -437,7 +510,26 @@ export class Game {
     const left: Projectile[] = [];
     for (const p of this.projectiles) {
       p.t += dt;
-      if (p.kind === 'porek') {
+      if (p.kind === 'brokolice') {
+        const target = this.attackers.find((a) => a.id === p.targetId);
+        if (target && !target.fleeing) {
+          const pos = this.path.at(target.d);
+          p.tx = pos.x;
+          p.tz = pos.z;
+        }
+        if (p.t < p.duration) {
+          left.push(p);
+          continue;
+        }
+        // Bum! Každý fast food pod deštníkem dostane jeden zásah.
+        const r = p.splash ?? 1;
+        this.events.push({ type: 'burst', x: p.tx, z: p.tz, r });
+        for (const a of this.attackers) {
+          if (a.fleeing) continue;
+          const q = this.path.at(a.d);
+          if (Math.hypot(q.x - p.tx, q.z - p.tz) <= r + ATTACKER_BODY_RADIUS) this.hitAttacker(a);
+        }
+      } else if (p.kind === 'porek') {
         const target = this.attackers.find((a) => a.id === p.targetId);
         if (target && !target.fleeing) {
           const pos = this.path.at(target.d);

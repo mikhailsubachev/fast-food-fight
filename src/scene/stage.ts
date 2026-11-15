@@ -13,6 +13,11 @@ const CAMERA_DISTANCE = 60;
 /** Místo nahoře pro horní lištu (v CSS pixelech), než se dá změřit skutečná lišta. */
 const HUD_HEIGHT = 72;
 
+/** Displej nižší než tohle (v CSS pixelech) šetří místem nahoře a dole. */
+const LOW_SCREEN = 500;
+/** O kolik políček se na nízkém displeji ořízne výřez nahoře a dole. */
+const LOW_TRIM = 0.3;
+
 /** Spodní okraj horní lišty v pixelech. */
 function hudHeight(): number {
   const hud = document.querySelector<HTMLElement>('.hud');
@@ -28,6 +33,8 @@ export class Stage {
 
   /** Rohy výřezu, který musí být vždy celý vidět, v souřadnicích kamery. */
   private readonly viewBox: { minX: number; maxX: number; minY: number; maxY: number };
+  /** Výřez oříznutý nahoře a dole pro nízké displeje. */
+  private readonly tightBox: { minX: number; maxX: number; minY: number; maxY: number };
   private readonly raycaster = new THREE.Raycaster();
   private readonly ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private readonly tmp = new THREE.Vector3();
@@ -67,12 +74,19 @@ export class Stage {
       }
     }
     this.viewBox = box;
+    const trim = LOW_TRIM * Math.sin(CAMERA_TILT);
+    this.tightBox = { ...box, minY: box.minY + trim, maxY: box.maxY - trim };
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
   }
 
-  /** Celý výřez se vejde pod horní lištu, co největší a vycentrovaný. */
+  /**
+   * Celý výřez se vejde pod horní lištu, co největší a vycentrovaný. Na nízkých displejích
+   * (telefon naležato s lištou prohlížeče) by tak zbylo hodně místa po stranách, proto se tam
+   * výřez nahoře a dole trochu ořízne (krajní pruhy louky bez cesty) a lišta smí zasahovat do
+   * horního pruhu, kde nejsou políčka.
+   */
   resize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -80,8 +94,9 @@ export class Stage {
     this.height = h;
     this.renderer.setSize(w, h);
 
-    const hud = Math.min(hudHeight(), h * 0.3);
-    const b = this.viewBox;
+    const low = h < LOW_SCREEN;
+    const hud = Math.min(hudHeight(), h * 0.3) * (low ? 0.55 : 1);
+    const b = low ? this.tightBox : this.viewBox;
     const scale = Math.min(w / (b.maxX - b.minX), (h - hud) / (b.maxY - b.minY));
     const cx = (b.minX + b.maxX) / 2;
     // Střed výřezu patří doprostřed místa pod lištou, tedy o polovinu lišty níž než střed obrazovky.

@@ -11,8 +11,9 @@ export interface Spawn {
 
 /**
  * Překážky: v 1. úrovni pařez, kámen, kaluž a krtina, ve 2. úrovni školní věci ležící na louce
- * (svačinový box, láhev, penál, sešit, pastelky, guma). Kaluž a školní věci jsou ploché a jsou
- * nakreslené přímo v obrázku země.
+ * (svačinový box, láhev, penál, sešit, pastelky, guma), ve 3. zbytky oběda (tác, kelímek, ubrousky,
+ * sáčky s omáčkou, účtenka, krabička od hranolek, papír od burgeru). Kaluž, školní věci a zbytky
+ * oběda jsou ploché a jsou nakreslené přímo v obrázku země.
  */
 export type ObstacleKind =
   | 'parez'
@@ -24,7 +25,14 @@ export type ObstacleKind =
   | 'penal'
   | 'sesit'
   | 'pastelky'
-  | 'guma';
+  | 'guma'
+  | 'tac'
+  | 'kelimek'
+  | 'ubrousky'
+  | 'omacky'
+  | 'uctenka'
+  | 'krabicka'
+  | 'papir';
 
 export interface Obstacle extends Vec2 {
   kind: ObstacleKind;
@@ -63,6 +71,8 @@ export interface LevelData {
   waves: Spawn[][];
   /** Násobek rychlosti chůze fast foodu v jednotlivých vlnách (pozdější vlny jsou rychlejší). */
   waveSpeed?: number[];
+  /** Násobek vody za odražený fast food (v těžších úrovních se zahrádka plní pomaleji). */
+  rewardScale?: number;
 }
 
 /** Fast food jeden za druhým po `gap` sekundách; `first` je pauza před prvním. */
