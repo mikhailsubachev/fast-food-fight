@@ -2,6 +2,7 @@ import type { Game } from '../core/game';
 import { T } from '../data/texts.cs';
 import { MOUTH_LIVES } from '../data/units';
 import { button, el, replayAnimation } from './dom';
+import { DROP_SVG, TOOTH_SVG, iconEl } from './icons';
 import {
   enterFullscreen,
   exitFullscreen,
@@ -36,14 +37,14 @@ export class Hud {
   ) {
     const bar = el('div', 'hud');
     this.waterPill = el('div', 'pill water');
-    this.waterPill.append(el('span', 'icon', '💧'));
+    this.waterPill.append(iconEl('icon', DROP_SVG));
     this.waterValue = el('span', 'value', '0');
     this.waterPill.append(this.waterValue);
 
     const mid = el('div', 'hud-mid');
     const teeth = el('div', 'pill teeth');
     for (let i = 0; i < MOUTH_LIVES; i++) {
-      const t = el('span', 'tooth', '🦷');
+      const t = iconEl('tooth', TOOTH_SVG);
       teeth.append(t);
       this.teeth.push(t);
     }
@@ -101,7 +102,8 @@ export class Hud {
   /** Kapka vyskočí z utíkajícího fast foodu a obloukem odletí do počítadla vody. */
   flyDrop(x: number, y: number, amount: number): void {
     this.pendingWater += amount;
-    const drop = el('div', 'drop', '💧');
+    const drop = el('div', 'drop');
+    drop.innerHTML = DROP_SVG;
     drop.style.left = `${x}px`;
     drop.style.top = `${y}px`;
     this.parent.append(drop);

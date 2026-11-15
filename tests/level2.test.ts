@@ -148,17 +148,23 @@ describe('hratelnost 2. úrovně', () => {
     };
   }
 
-  it('rozumný hráč (mrkve, pórky, cibule, vylepšení) vyhraje na aspoň 2 hvězdy', () => {
+  it('rozumný hráč (8 mrkví, 6 pórků, 3 cibule, vylepšení) vyhraje na aspoň 2 hvězdy', () => {
     const g = new Game(LEVEL2);
-    const seconds = run(g, 900, player(6, 4, 2, true));
+    const seconds = run(g, 900, player(8, 6, 3, true));
     expect(g.phase).toBe('won');
     expect(g.stars).toBeGreaterThanOrEqual(2);
     expect(seconds).toBeLessThan(420);
   });
 
+  it('malá zahrádka jako na 1. úrovni nestačí', () => {
+    const g = new Game(LEVEL2);
+    run(g, 900, player(6, 4, 2, true));
+    expect(g.phase).toBe('lost');
+  });
+
   it('bez vylepšení se úroveň vyhrát nedá', () => {
     const g = new Game(LEVEL2);
-    run(g, 900, player(6, 4, 0, false));
+    run(g, 900, player(8, 6, 3, false));
     expect(g.phase).toBe('lost');
   });
 });

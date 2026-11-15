@@ -6,8 +6,8 @@ import { defenderLevel } from '../entities/obranci/defender';
 import type { Stage } from '../scene/stage';
 import type { View } from '../scene/view';
 import { button, el } from './dom';
+import { DROP_SVG, LOCK_SVG, iconEl, vegImage } from './icons';
 
-const ICONS: Record<DefenderType, string> = { mrkev: '🥕', porek: '🌿', cibule: '🧅' };
 const ORDER: DefenderType[] = ['mrkev', 'porek', 'cibule'];
 
 /**
@@ -23,6 +23,8 @@ export class Menus {
   private selected: DefenderType | null = null;
   private vegButtons = new Map<DefenderType, HTMLButtonElement>();
   private upgradeButton: HTMLButtonElement | null = null;
+  /** Vylepšení je vybrané (ukazuje se nový dosah), dalším ťuknutím se provede. */
+  private upgradeArmed = false;
 
   constructor(
     parent: HTMLElement,
@@ -65,6 +67,7 @@ export class Menus {
     this.selected = null;
     this.vegButtons.clear();
     this.upgradeButton = null;
+    this.upgradeArmed = false;
     this.root.replaceChildren();
     this.root.classList.remove('show');
     this.view.hideRange();
@@ -108,8 +111,17 @@ export class Menus {
     for (const type of ORDER.filter((t) => inLevel.has(t))) {
       const b = button('veg', '', () => this.onVeg(type));
       const locked = !this.game.unlocked.has(type);
-      b.append(el('span', 'icon', locked ? '🔒' : ICONS[type]));
-      if (!locked) b.append(el('span', 'price', `${DEFENDERS[type].cost}`));
+      // Ikona je zmenšená postavička; zamčená zelenina je šedá se zámkem.
+      const icon = el('span', 'icon');
+      icon.append(vegImage(type));
+      if (locked) icon.append(iconEl('lock', LOCK_SVG));
+      b.append(icon);
+      if (!locked) {
+        const price = el('span', 'price');
+        price.innerHTML = DROP_SVG;
+        price.append(String(DEFENDERS[type].cost));
+        b.append(price);
+      }
       b.append(el('span', 'check', '✓'));
       b.setAttribute('aria-label', locked ? T.locked : T.names[type]);
       this.vegButtons.set(type, b);
@@ -139,9 +151,21 @@ export class Menus {
     if (cost === null) {
       row.append(el('div', 'pill maxed', `⭐ ${T.maxLevel}`));
     } else {
-      const b = button('big upgrade', `⭐ ${T.upgrade}  ${cost} 💧`, () => {
-        if (this.game.upgrade(defenderId)) this.close();
+      // Jako u sázení: 1. ťuknutí ukáže dosah po vylepšení, 2. ťuknutí vylepší.
+      const b = button('big upgrade', `⭐ ${T.upgrade}  ${cost}`, () => {
+        if (this.upgradeArmed) {
+          if (this.game.upgrade(defenderId)) this.close();
+          return;
+        }
+        const now = this.game.defenders.find((x) => x.id === defenderId);
+        if (!now) return;
+        const next = DEFENDERS[now.type].levels[1];
+        this.view.showRange(now.x, now.z, next.range, now.type);
+        this.upgradeArmed = true;
+        b.classList.add('selected');
       });
+      b.insertAdjacentHTML('beforeend', DROP_SVG);
+      b.append(el('span', 'check', '✓'));
       this.upgradeButton = b;
       row.append(b);
     }
