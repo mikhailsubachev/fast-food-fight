@@ -32,6 +32,7 @@ export const LEVEL2: LevelData = {
   // V návrhu má hráč na začátku 150 vody a 5 vln.
   startWater: 150,
   startDefenders: ['mrkev', 'porek'],
+  intros: true,
   unlocks: [{ wave: 1, type: 'cibule' }],
   waveSpeed: [1, 1.15, 1.3, 1.45, 1.6],
   // Každá z prvních čtyř vln přinese jen jeden druh fast foodu, aby se ho hráč naučil;

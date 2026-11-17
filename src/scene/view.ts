@@ -10,6 +10,7 @@ import { Critters } from './decor';
 import { SlotsView } from './slots';
 import {
   attackerFrames,
+  attackerHeadY,
   makeAttacker,
   makeCloud,
   makeDefender,
@@ -51,6 +52,12 @@ interface Effect {
   life: number;
   step: (e: Effect, k: number, dt: number) => void;
 }
+
+/**
+ * Kamera se dívá šikmo shora (sin sklonu 0,9), takže posun o 1 nahoru ve světě je na obrazovce
+ * kratší (cos sklonu ≈ 0,44). Loutky stojí ke kameře, proto věci „nad hlavou“ musí jít výš o tenhle násobek.
+ */
+const SCREEN_UP = 1 / Math.sqrt(1 - 0.9 * 0.9);
 
 const MOUTH_SICK = new THREE.Color(0xa6e07a);
 const WHITE = new THREE.Color(0xffffff);
@@ -213,7 +220,7 @@ export class View {
           const a = this.attackers.get(e.attackerId);
           if (a) a.hitT = -delay;
           // Zásah je vidět jako žlutá hvězdička na fast foodu (jako v návrhu karet postav).
-          const y = a ? a.puppet.height * a.puppet.root.scale.y * 0.5 : 0.8;
+          const y = (a ? a.puppet.height * a.puppet.root.scale.y * 0.45 : 0.8) * SCREEN_UP;
           this.later(delay, () => this.hitStar(e.x, y, e.z));
           break;
         }
@@ -450,7 +457,8 @@ export class View {
         // Štítek nad hlavou; u velkého hamburgeru je loutka zvětšená, štítek ale stejně velký.
         const k = 1 / puppet.root.scale.x;
         life.sprite.scale.multiplyScalar(k);
-        life.sprite.position.set(0, puppet.height * 0.94, 0);
+        // Těsně nad temenem, aby štítek nezakrýval obličej.
+        life.sprite.position.set(0, (attackerHeadY(a.type) + 0.05 * k) * SCREEN_UP, 0);
         puppet.root.add(life.sprite);
         this.lifeBars.set(a.id, life);
       }

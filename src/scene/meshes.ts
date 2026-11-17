@@ -209,8 +209,8 @@ const INK = '#2B2118';
 const LIFE_PX = 48; // jedno srdce v obrázku
 const LIFE_GAP = 8;
 const LIFE_PAD = 12;
-/** Kolik pixelů obrázku připadá na jedno políčko ve světě (srdce je pak 0,2 políčka). */
-const LIFE_SCALE = 240;
+/** Kolik pixelů obrázku připadá na jedno políčko ve světě (srdce je pak asi 0,1 políčka). */
+const LIFE_SCALE = 480;
 
 export interface LifeBar {
   sprite: THREE.Sprite;
@@ -282,4 +282,13 @@ export function makeLifeBar(max: number): LifeBar {
       mat.dispose();
     },
   };
+}
+
+/** Kde v obrázku 330 × 450 začíná hlava útočníka (horní okraj kresby, px od vrchu). */
+const HEAD_TOP_PX: Record<AttackerFrames, number> = { hamburger: 163, hranolky: 133, lizatko: 79, kecup: 119 };
+
+/** Výška temene útočníka nad zemí (v souřadnicích loutky, bez zvětšení velkého hamburgeru). */
+export function attackerHeadY(type: AttackerType): number {
+  const base = attackerFrames(type);
+  return (ATTACKER_HEIGHT[base] * (FRAME_H - 12 - HEAD_TOP_PX[base])) / FRAME_H;
 }

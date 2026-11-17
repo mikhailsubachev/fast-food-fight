@@ -39,6 +39,7 @@ export const LEVEL3: LevelData = {
   // V návrhu má hráč na začátku 180 vody a 6 vln.
   startWater: 180,
   startDefenders: ['mrkev', 'porek', 'cibule'],
+  intros: true,
   unlocks: [{ wave: 1, type: 'brokolice' }],
   waveSpeed: [1, 1.25, 1.45, 1.6, 1.75, 1.95],
   // Za odražený fast food je jen polovina vody: zahrádka se plní pomaleji a záleží na tom, co a kam

@@ -183,7 +183,8 @@ def export_level(source: str, out_name: str, flat: list[tuple[float, float]]) ->
     head = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0} {y0} {w} {h}" width="{TEXTURE_W}" height="{TEXTURE_H}">'
     svg = (
         head + f'<rect x="{x0}" y="{y0}" width="{w}" height="{h}" fill="#8BB85A"/>'
-        + ''.join(margin) + ''.join(ground) + ''.join(path) + PATH_LEAD + ''.join(puddle) + ''.join(grid) + ''.join(margin_grid(grid)) + '</svg>'
+        # Kaluž leží nad mřížkou: šestihrany nesmí překrývat věci na zemi.
+        + ''.join(margin) + ''.join(ground) + ''.join(path) + PATH_LEAD + ''.join(grid) + ''.join(margin_grid(grid)) + ''.join(puddle) + '</svg>'
     )
     # Ozdoby nad políčky: v návrhu je zakrývá cesta a kaluž, proto se tam ořežou maskou.
     cover = ''.join(re.sub(r'(fill|stroke)="#[0-9A-Fa-f]+"', r'\1="#000"', el) for el in path + puddle + [PATH_LEAD])
