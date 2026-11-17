@@ -1,3 +1,5 @@
+import { POTATO } from '../data/units';
+
 // Postup hráče uložený v zařízení. Úložiště může chybět (soukromé okno), proto vše v try/catch.
 
 export interface Progress {
@@ -6,11 +8,13 @@ export interface Progress {
   sound: boolean;
   /** Postavy, jejichž kartu představení už hráč viděl (ukáže se jen poprvé). */
   seenIntros: string[];
+  /** Kolik Panů Bramborů má hráč v zásobě (na začátku 2, další za přes 1000 kapek na konci úrovně). */
+  potatoes: number;
 }
 
 const KEY = 'fast-food-fight:postup';
 
-const DEFAULT: Progress = { unlockedLevel: 1, stars: {}, sound: true, seenIntros: [] };
+const DEFAULT: Progress = { unlockedLevel: 1, stars: {}, sound: true, seenIntros: [], potatoes: POTATO.startStock };
 
 export function loadProgress(): Progress {
   try {

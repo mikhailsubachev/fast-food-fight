@@ -25,6 +25,12 @@ export class Menus {
   private upgradeButton: HTMLButtonElement | null = null;
   /** Vylepšení je vybrané (ukazuje se nový dosah), dalším ťuknutím se provede. */
   private upgradeArmed = false;
+  /** Místo na cestě, kam se může postavit Pan Brambora. */
+  private potatoSpot: Vec2 | null = null;
+  private potatoArmed = false;
+  /** Kolik brambor má hráč v zásobě a co se stane po postavení (nastaví main). */
+  potatoStock: () => number = () => 0;
+  onPotato: (p: Vec2) => void = () => undefined;
 
   constructor(
     parent: HTMLElement,
@@ -38,7 +44,7 @@ export class Menus {
   }
 
   get isOpen(): boolean {
-    return this.spot !== null || this.defenderId !== null;
+    return this.spot !== null || this.defenderId !== null || this.potatoSpot !== null;
   }
 
   /** Menu pro sázení na volné místo. */
@@ -47,6 +53,39 @@ export class Menus {
     this.spot = p;
     this.view.showSpot(p.x, p.z);
     this.buildPlant();
+    this.show(p);
+  }
+
+  /**
+   * Menu na cestě: Pan Brambora. 1. ťuknutí ho vybere, 2. ťuknutí ho postaví na cestu.
+   * Nekupuje se za vodu, bere se ze zásoby brambor.
+   */
+  openPotato(p: Vec2): void {
+    this.close();
+    this.potatoSpot = p;
+    const row = el('div', 'menu-row');
+    const b = button('veg potato', '', () => {
+      if (!this.potatoSpot) return;
+      if (this.potatoArmed) {
+        const at = this.potatoSpot;
+        this.close();
+        this.onPotato(at);
+        return;
+      }
+      this.potatoArmed = true;
+      b.classList.add('selected');
+    });
+    const icon = el('span', 'icon');
+    const img = document.createElement('img');
+    img.className = 'ico-veg';
+    img.src = `${import.meta.env.BASE_URL}assets/postavy/brambora-klid.svg`;
+    img.alt = '';
+    img.draggable = false;
+    icon.append(img);
+    b.append(icon, el('span', 'price', T.potatoCount(this.potatoStock())), el('span', 'check', '✓'));
+    b.setAttribute('aria-label', T.potato);
+    row.append(b);
+    this.root.append(row);
     this.show(p);
   }
 
@@ -68,6 +107,8 @@ export class Menus {
     this.vegButtons.clear();
     this.upgradeButton = null;
     this.upgradeArmed = false;
+    this.potatoSpot = null;
+    this.potatoArmed = false;
     this.root.replaceChildren();
     this.root.classList.remove('show');
     this.view.hideRange();
@@ -96,6 +137,7 @@ export class Menus {
       // Místo mohla mezitím zabrat jiná zelenina (nebo skončila hra).
       if (this.game.checkPlace(this.spot) !== 'ok' || this.game.finished) this.close();
     }
+    if (this.potatoSpot && (this.game.checkPotato(this.potatoSpot) !== 'ok' || this.potatoStock() <= 0)) this.close();
     if (this.upgradeButton && this.defenderId !== null) {
       const d = this.game.defenders.find((x) => x.id === this.defenderId);
       const cost = d ? this.game.upgradeCost(d) : null;

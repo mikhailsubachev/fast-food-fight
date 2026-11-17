@@ -164,3 +164,23 @@ export const MOUTH_LIVES = 3;
 
 /** Pauza mezi vlnami, potom se další vlna spustí sama. */
 export const WAVE_PAUSE = 8;
+
+/**
+ * Pan Brambora (list postavy na plátně): jako jediný stojí přímo na cestě a fast food přes něj
+ * nemůže projít. Každý náraz vezme 1 srdíčko; bez srdíček se rozpadne na hranolky.
+ * Nekupuje se za vodu: hráč má na začátku 2 brambory a další dostane, když mu na konci
+ * vyhrané úrovně zbyde víc než 1000 kapek (nejvýš 1 za úroveň).
+ */
+export const POTATO = {
+  lives: 10,
+  /** Jak často do něj jeden zablokovaný fast food narazí (s). */
+  bumpInterval: 1,
+  /** Jak daleko před bramborou (podél cesty) se fast food zastaví. */
+  blockGap: 0.6,
+  /** Nejmenší rozestup dvou brambor na cestě. */
+  spacing: 1.2,
+  /** Kolik brambor má nový hráč. */
+  startStock: 2,
+  /** Kolik kapek musí na konci vyhrané úrovně zbýt, aby hráč dostal další bramboru. */
+  rewardWater: 1000,
+};

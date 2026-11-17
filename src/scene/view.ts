@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { Game, GameEvent } from '../core/game';
 import type { LevelData } from '../data/level1';
-import { ATTACKER_BODY_RADIUS, ATTACKERS, DEFENDERS, MOUTH_LIVES, type DefenderType } from '../data/units';
+import { ATTACKER_BODY_RADIUS, ATTACKERS, DEFENDERS, MOUTH_LIVES, POTATO, type DefenderType } from '../data/units';
 import { defenderLevel } from '../entities/obranci/defender';
 import { buildBoard, type Board } from './board';
 import { Path } from '../core/path';
@@ -17,6 +17,8 @@ import {
   makeHitStar,
   makeLifeBar,
   makeMouth,
+  makePotato,
+  POTATO_HEAD_Y,
   makeProjectile,
   makePuddlePiece,
   makeUmbrella,
@@ -111,6 +113,8 @@ export class View {
   private readonly dynamic = new THREE.Group();
   private readonly defenders = new Map<number, Anim>();
   private readonly attackers = new Map<number, Anim>();
+  /** Páni Bramborové na cestě: loutka, srdíčka a kdy naposledy dostali náraz. */
+  private readonly potatoes = new Map<number, { puppet: Puppet; life: LifeBar; bumpT: number }>();
   /** Srdíčka zbývajících životů nad každým fast foodem. */
   private readonly lifeBars = new Map<number, LifeBar>();
   private readonly projectiles = new Map<number, THREE.Sprite>();
@@ -190,6 +194,8 @@ export class View {
     this.attackers.clear();
     for (const life of this.lifeBars.values()) life.dispose();
     this.lifeBars.clear();
+    for (const p of this.potatoes.values()) p.life.dispose();
+    this.potatoes.clear();
     this.projectiles.clear();
     this.clouds.clear();
     this.puddles.clear();
@@ -260,6 +266,23 @@ export class View {
           if (a) a.throwT = 0;
           break;
         }
+        case 'potato': {
+          const p = game.potatoes.find((o) => o.id === e.potatoId);
+          if (p) this.burst(p.x, 0.3, p.z, 0xc98b57, 8);
+          break;
+        }
+        case 'bump': {
+          const p = this.potatoes.get(e.potatoId);
+          if (p) p.bumpT = 0;
+          // Hvězdička na štítu: na straně, odkud fast food přichází.
+          const g = game.potatoes.find((o) => o.id === e.potatoId);
+          const at = g ? game.path.at(g.d - 0.35) : { x: e.x, z: e.z };
+          this.hitStar(at.x, 0.55 * SCREEN_UP, at.z);
+          break;
+        }
+        case 'crumble':
+          this.crumble(e.potatoId, e.x, e.z);
+          break;
         case 'escaped':
           this.puff(e.x, e.z, 0xffffff, 1.6);
           break;
@@ -292,6 +315,7 @@ export class View {
     this.syncProjectiles(game, time);
     this.syncClouds(game);
     this.syncPuddles(game);
+    this.syncPotatoes(game, dt, time);
     this.updateMouth(game, dt, time);
     this.updateEffects(dt);
     this.slots.update(game.defenders);
@@ -651,6 +675,59 @@ export class View {
       e.obj.position.y = 0.9 - k * 0.3;
       mat.opacity = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4;
       if (k >= 1) mat.dispose();
+    });
+  }
+
+  /** Páni Bramborové na cestě: štít proti fast foodu, srdíčka nad hlavou. */
+  private syncPotatoes(game: Game, dt: number, time: number): void {
+    const alive = new Set<number>();
+    for (const g of game.potatoes) {
+      alive.add(g.id);
+      let p = this.potatoes.get(g.id);
+      if (!p) {
+        const puppet = makePotato();
+        puppet.root.position.set(g.x, 0, g.z);
+        // Štít (vlevo na obrázku) má mířit proti fast foodu, který přichází od startu cesty.
+        const at = game.path.at(g.d);
+        puppet.setMirrored(this.screenDirX(g.x, g.z, at.dirX, at.dirZ) < 0);
+        const life = makeLifeBar(POTATO.lives);
+        life.sprite.position.set(0, (POTATO_HEAD_Y + 0.05) * SCREEN_UP, 0);
+        puppet.root.add(life.sprite);
+        this.dynamic.add(puppet.root);
+        p = { puppet, life, bumpT: 9 };
+        this.potatoes.set(g.id, p);
+      }
+      p.bumpT += dt;
+      p.life.set(g.lives);
+      const blink = Math.floor(time * 0.5 + g.id) % 7 === 0 && (time * 0.5 + g.id) % 1 < 0.08;
+      let frame = blink ? 'brambora-mrk' : 'brambora-klid';
+      if (g.lives <= 3) frame = 'brambora-pocuchany';
+      if (p.bumpT < 0.35) frame = 'brambora-naraz';
+      p.puppet.setFrame(frame);
+      // Při nárazu se zapře a trochu zmáčkne.
+      const squash = p.bumpT < 0.2 ? Math.sin((p.bumpT / 0.2) * Math.PI) * 0.08 : 0;
+      p.puppet.sprite.scale.set(p.puppet.width * (1 + squash), p.puppet.height * (1 - squash), 1);
+    }
+    for (const [id, p] of this.potatoes) {
+      if (!alive.has(id)) {
+        this.dynamic.remove(p.puppet.root);
+        p.life.dispose();
+        this.potatoes.delete(id);
+      }
+    }
+  }
+
+  /** Pan Brambora se rozpadne na malé hranolky („Krach!“) a hromádka po chvíli zmizí. */
+  private crumble(_id: number, x: number, z: number): void {
+    const pile = makePotato();
+    pile.setFrame('brambora-rozpad');
+    pile.root.position.set(x, 0, z);
+    const mat = pile.sprite.material as THREE.SpriteMaterial;
+    mat.transparent = true;
+    mat.alphaTest = 0.05;
+    this.burst(x, 0.5, z, 0xffd54a, 10);
+    this.addEffect(pile.root, 1.6, (_e, k) => {
+      mat.opacity = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4;
     });
   }
 

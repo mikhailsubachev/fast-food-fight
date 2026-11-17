@@ -193,6 +193,21 @@
       "w": 1680,
       "x": 7040,
       "y": 6020
+    },
+    "PredstaveniBrambora.dc.html": {
+      "h": 1560,
+      "page": "page-1",
+      "title": "Pan Brambora – představení",
+      "w": 1680,
+      "x": 7040,
+      "y": 4160
+    },
+    "Brambora.dc.html": {
+      "h": 1760,
+      "title": "Pan Brambora – list postavy",
+      "w": 1680,
+      "x": 7040,
+      "y": 0
     }
   },
   "createdOnFiles": {
@@ -209,7 +224,7 @@
       "y": -260,
       "text": "Obránci",
       "kind": "title1",
-      "maxW": 6960,
+      "maxW": 8720,
       "page": "page-1"
     },
     "utocnici": {
@@ -254,7 +269,9 @@
     "PredstaveniHranolky.dc.html",
     "PredstaveniVelkyHamburger.dc.html",
     "PredstaveniLizatko.dc.html",
-    "PredstaveniKecup.dc.html"
+    "PredstaveniKecup.dc.html",
+    "PredstaveniBrambora.dc.html",
+    "Brambora.dc.html"
   ],
   "pages": [
     {

@@ -187,6 +187,19 @@ def main() -> None:
     frames["kecup-utek1"] = ke("scared", "up", "run", extra=gf.sweat(232, 190) + gf.sweat(246, 220))
     frames["kecup-utek2"] = ke("scared", "up", "hop", extra=gf.sweat(232, 190))
 
+    # --- Pan Brambora (zátaras na cestě; za vodu se nekupuje) ---
+    # Až za ostatními, aby se jejich chvění čar (podle pořadí) nezměnilo.
+    import gen_brambora as gpb
+
+    po = gpb.potato
+    frames["brambora-klid"] = po("smile")
+    frames["brambora-mrk"] = po("closed")
+    frames["brambora-naraz"] = po("brace", "brace")
+    frames["brambora-zasah"] = po("ouch", "hit", cracks=1)
+    frames["brambora-pocuchany"] = po("worried", "brace", cracks=2)
+    frames["brambora-radost"] = '<g transform="translate(0,-24)">' + po("joy", "up") + "</g>"
+    frames["brambora-rozpad"] = gpb.crumble()
+
     os.makedirs(OUT, exist_ok=True)
     for i, (name, inner) in enumerate(frames.items(), start=1):
         with open(os.path.join(OUT, f"{name}.svg"), "w", encoding="utf-8") as fh:

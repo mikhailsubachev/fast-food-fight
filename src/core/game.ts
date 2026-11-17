@@ -5,6 +5,7 @@ import {
   DEFENDERS,
   FLEE_SPEED_FACTOR,
   MOUTH_LIVES,
+  POTATO,
   WAVE_PAUSE,
   type DefenderType,
   type SpinStats,
@@ -32,6 +33,18 @@ export interface Projectile {
   /** Brokolice: poloměr deštníku, do kterého se raketa nad cílem rozprskne. */
   splash?: number;
 }
+
+/** Pan Brambora stojí přímo na cestě (`d` od startu) a fast food přes něj nemůže projít. */
+export interface Potato {
+  id: number;
+  d: number;
+  x: number;
+  z: number;
+  lives: number;
+}
+
+/** Proč se Pan Brambora na tohle místo postavit nemůže. */
+export type PotatoCheck = 'ok' | 'notPath' | 'mouth' | 'crowded' | 'finished';
 
 /** Kečupová louže na cestě mezi `d0` a `d1`: fast food po ní klouže rychleji. */
 export interface Puddle {
@@ -76,6 +89,9 @@ export type GameEvent =
   | { type: 'spin'; attackerId: number; stuck: number[] }
   | { type: 'waveStart'; wave: number }
   | { type: 'unlocked'; defender: DefenderType }
+  | { type: 'potato'; potatoId: number }
+  | { type: 'bump'; potatoId: number; attackerId: number; x: number; z: number }
+  | { type: 'crumble'; potatoId: number; x: number; z: number }
   | { type: 'won'; stars: number }
   | { type: 'lost' };
 
@@ -98,6 +114,7 @@ export class Game {
   projectiles: Projectile[] = [];
   clouds: Cloud[] = [];
   puddles: Puddle[] = [];
+  potatoes: Potato[] = [];
   readonly unlocked = new Set<DefenderType>();
 
   private events: GameEvent[] = [];
@@ -129,6 +146,7 @@ export class Game {
     this.projectiles = [];
     this.clouds = [];
     this.puddles = [];
+    this.potatoes = [];
     this.queue = [];
     this.events = [];
     this.unlocked.clear();
@@ -154,6 +172,27 @@ export class Game {
       }
     }
     return best;
+  }
+
+  /** Může se sem (na cestu) postavit Pan Brambora? Zásobu brambor hlídá hra kolem (main). */
+  checkPotato(p: Vec2): PotatoCheck {
+    if (this.finished) return 'finished';
+    const { d, dist } = this.path.project(p);
+    if (dist > 0.75) return 'notPath';
+    if (d > this.path.length - 1.6) return 'mouth';
+    if (this.potatoes.some((o) => Math.abs(o.d - d) < POTATO.spacing)) return 'crowded';
+    return 'ok';
+  }
+
+  /** Postaví Pana Bramboru na cestu (doprostřed cesty v nejbližším místě). */
+  placePotato(p: Vec2): boolean {
+    if (this.checkPotato(p) !== 'ok') return false;
+    const d = Math.max(0.3, this.path.project(p).d);
+    const at = this.path.at(d);
+    const potato: Potato = { id: this.nextId++, d, x: at.x, z: at.z, lives: POTATO.lives };
+    this.potatoes.push(potato);
+    this.events.push({ type: 'potato', potatoId: potato.id });
+    return true;
   }
 
   /** Dá se na tohle místo vůbec sázet (bez ohledu na vodu)? */
@@ -406,7 +445,18 @@ export class Game {
     if (spin && this.updateSpin(a, spin, dt)) return false;
     const squirt = stats.squirt;
     if (squirt && this.updateSquirt(a, squirt, dt)) return false;
+    const before = a.d;
     a.d += stats.speed * (this.level.waveSpeed?.[this.waveIndex] ?? 1) * this.cloudSlow(a) * this.puddleBoost(a) * dt;
+    // Pan Brambora na cestě: fast food se zastaví u jeho štítu a naráží do něj.
+    const wall = this.potatoAhead(before);
+    if (wall && a.d > wall.d - POTATO.blockGap) {
+      a.d = Math.max(before, wall.d - POTATO.blockGap);
+      a.bumpCooldown -= dt;
+      if (a.bumpCooldown <= 0) {
+        a.bumpCooldown = POTATO.bumpInterval;
+        this.bumpPotato(wall, a);
+      }
+    }
     if (a.d >= this.path.length) {
       this.bites++;
       this.events.push({ type: 'bite', bites: this.bites });
@@ -443,6 +493,22 @@ export class Game {
       }
     }
     return false;
+  }
+
+  /** Nejbližší Pan Brambora před fast foodem (na cestě dál než `d`). */
+  private potatoAhead(d: number): Potato | undefined {
+    let best: Potato | undefined;
+    for (const p of this.potatoes) if (p.d > d && (!best || p.d < best.d)) best = p;
+    return best;
+  }
+
+  /** Fast food narazí do štítu: Pan Brambora přijde o srdíčko, bez srdíček se rozpadne. */
+  private bumpPotato(p: Potato, a: Attacker): void {
+    p.lives--;
+    this.events.push({ type: 'bump', potatoId: p.id, attackerId: a.id, x: p.x, z: p.z });
+    if (p.lives > 0) return;
+    this.potatoes = this.potatoes.filter((o) => o !== p);
+    this.events.push({ type: 'crumble', potatoId: p.id, x: p.x, z: p.z });
   }
 
   /** Lízátko: roztočení. Vrací true, dokud se točí (stojí na místě). */

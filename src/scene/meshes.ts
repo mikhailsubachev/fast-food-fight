@@ -53,6 +53,7 @@ export const FRAMES = [
   'brokolice-lepkava', 'brokolice-lepkava2',
   'kecup-krok1', 'kecup-krok2', 'kecup-nastvani', 'kecup-prsk', 'kecup-zasah', 'kecup-utek1', 'kecup-utek2',
   'pusa', 'porkosip', 'hranolka', 'oblak', 'raketa', 'destnik', 'louze', 'hvezda',
+  'brambora-klid', 'brambora-mrk', 'brambora-naraz', 'brambora-pocuchany', 'brambora-rozpad',
 ] as const;
 
 /** Načte všechny obrázky předem, aby postavy při prvním objevení neblikly. */
@@ -291,4 +292,15 @@ const HEAD_TOP_PX: Record<AttackerFrames, number> = { hamburger: 163, hranolky: 
 export function attackerHeadY(type: AttackerType): number {
   const base = attackerFrames(type);
   return (ATTACKER_HEIGHT[base] * (FRAME_H - 12 - HEAD_TOP_PX[base])) / FRAME_H;
+}
+
+/** Pan Brambora: stejně velký jako ostatní zelenina, stojí na cestě. */
+export const POTATO_HEIGHT = 1.56;
+/** Výška temene Pana Brambory nad zemí (obrázek 450 px, temeno na 196 px, chodidla na 438 px). */
+export const POTATO_HEAD_Y = (POTATO_HEIGHT * (438 - 196)) / 450;
+
+export function makePotato(): Puppet {
+  const p = puppet('brambora-klid', POTATO_HEIGHT);
+  blobShadow(p, 0.38);
+  return p;
 }

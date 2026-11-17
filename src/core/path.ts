@@ -71,6 +71,24 @@ export class Path {
     throw new Error('unreachable');
   }
 
+  /** Nejbližší místo na středové čáře cesty: vzdálenost od startu `d` a od bodu `dist`. */
+  project(p: Vec2): { d: number; dist: number } {
+    let best = { d: 0, dist: Infinity };
+    let start = 0;
+    for (let i = 0; i < this.points.length - 1; i++) {
+      const a = this.points[i];
+      const b = this.points[i + 1];
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const len2 = dx * dx + dz * dz;
+      const t = len2 > 0 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / len2)) : 0;
+      const dist = Math.hypot(p.x - (a.x + dx * t), p.z - (a.z + dz * t));
+      if (dist < best.dist) best = { d: start + this.lengths[i] * t, dist };
+      start += this.lengths[i];
+    }
+    return best;
+  }
+
   /** Nejkratší vzdálenost bodu od středové čáry cesty. */
   distanceTo(p: Vec2): number {
     let best = Infinity;

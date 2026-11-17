@@ -649,11 +649,56 @@ def scene_kecup() -> list[El]:
     return els
 
 
+def scene_brambora() -> list[El]:
+    """Pan Brambora stojí na cestě, hamburger naráží do štítu, až se Brambora rozpadne na hranolky."""
+    T = 6.0
+    vx = 410
+    stop_x = 268  # hamburger stojí těsně před štítem
+    bumps = [1.8, 2.4, 3.0, 3.6]
+    crash = 3.7
+    b: dict = {
+        "brambora-naraz": [(1.6, 2.4)],
+        "brambora-pocuchany": [(2.4, crash)],
+        "brambora-rozpad": [(crash, 5.3)],
+    }
+    rest(0, 1.6, "brambora-klid", b)
+    potato = char(b, fixed(vx, PATH_Y), VEG_H, z=4)
+    for e in potato:
+        e.vis = [(a, bb) for a, bb in e.vis if a < 5.3]
+    # hamburger dojde ke štítu, při každém nárazu cukne zpátky, po rozpadu jde dál
+    hpath = [Key(0, -150, PATH_Y), Key(1.6, stop_x, PATH_Y)]
+    for t in bumps:
+        hpath += [Key(t - 0.12, stop_x - 26, PATH_Y, -6), Key(t, stop_x, PATH_Y, 4), Key(t + 0.12, stop_x - 10, PATH_Y, 0)]
+    hpath += [Key(crash + 0.2, stop_x - 10, PATH_Y), Key(T, stop_x - 10 + 200 * (T - crash - 0.2), PATH_Y)]
+    hb: dict = {"hamburger-zasah": [(t - 0.12, t + 0.06) for t in bumps]}
+    walk(0, 1.6, 0.25, "hamburger-krok1", "hamburger-krok2", hb)
+    hb.setdefault("hamburger-krok1", []).extend([(1.6, bumps[0] - 0.12)] + [(a + 0.06, bb - 0.12) for a, bb in zip(bumps, bumps[1:])] + [(bumps[-1] + 0.06, crash + 0.2)])
+    walk(crash + 0.2, T, 0.25, "hamburger-krok1", "hamburger-krok2", hb)
+    ham = char(hb, hpath, FF_H, z=5)
+    for e in ham:
+        e.vis = [(a, min(bb, 5.6)) for a, bb in e.vis if a < 5.6]
+    els = list(potato) + ham
+    # srdíčka Pana Brambory: má jich 10, přichází už se 4, každý náraz vezme jedno
+    els += pips([0] * 6 + bumps, 10, potato[0], 0, crash, VEG_H * 0.98)
+    els += pips([], 5, ham[0], 0, 5.6, FF_H * 0.74)
+    els += [bum(t, vx - 62, PATH_Y - 130) for t in bumps]
+    els.append(bubble(1.65, 2.5, vx + 40, PATH_Y - 300, "Stop!", "left"))
+    return els
+
+
 MRKVOMEC = (
     '<svg viewBox="-30 -20 108 40" style="width:100%;height:100%;display:block">'
     '<path d="M0,-9 L-22,-17 M0,-4 L-26,-8 M0,0 L-28,0 M0,4 L-26,8 M0,9 L-22,17" stroke="#2F9E44" stroke-width="4" stroke-linecap="round"/>'
     f'<path d="M2,-14 L2,14 L74,1 Z" fill="#F08A24" stroke="{INK}" stroke-width="3.5" stroke-linejoin="round"/>'
     f'<path d="M16,-9 L18,9 M32,-6 L34,6 M48,-3 L50,4" stroke="{INK}" stroke-width="2.5" stroke-linecap="round"/></svg>'
+)
+
+
+STIT = (
+    '<svg viewBox="-28 -128 56 256" style="width:100%;height:100%;display:block">'
+    f'<rect x="-18" y="-118" width="36" height="236" rx="18" fill="#C98B57" stroke="{INK}" stroke-width="8"/>'
+    '<rect x="-9" y="-100" width="18" height="200" rx="9" fill="#E8B08A" opacity=".85"/>'
+    '<path d="M-4,-84 Q-6,-20 -4,40" stroke="#FFFFFF" stroke-width="5" fill="none" opacity=".6" stroke-linecap="round"/></svg>'
 )
 
 
@@ -725,6 +770,23 @@ CARDS: list[Card] = [
         ],
         "Odemkne se ve 3. úrovni.", "3. úroveň",
         weapon=("sp:raketa", "Brokolicová raketa", "nahoře se rozevře v deštník", ""),
+    ),
+    Card(
+        "Brambora", "Brambora.dc.html", "Pan Brambora", "obrance", "#FBF3E6",
+        "Jako jediný se postaví přímo na cestu. Fast food přes něj nemůže projít.",
+        ("brambora-naraz", "Bramborový štít", "Fast food do něj naráží a nemůže dál. Každý náraz vezme jedno srdíčko."),
+        [("Životy", 5, 5, "10 srdíček"), ("Zdrží", 4, 5, "dokud má srdíčka")],
+        None, ("Kde ho vzít", "Na začátku máš 2 brambory. Další dostaneš, když ti na konci úrovně zbyde přes 1000 kapek."),
+        6.0, scene_brambora(),
+        [
+            (1.0, "Na cestě", "Pan Brambora stojí přímo na cestě se štítem."),
+            (1.82, "Bum!", "Hamburger narazí do štítu a nemůže projít. Brambora přijde o srdíčko."),
+            (3.0, "Drží", "Každý náraz vezme jedno srdíčko. Ostatní zelenina má čas fast food zasáhnout."),
+            (4.2, "Krach!", "Bez srdíček se rozpadne na malé hranolky a hamburger jde dál."),
+        ],
+        "Hráč má na začátku 2 brambory.", "Nový obránce",
+        weapon=(STIT, "Bramborový štít", "zastaví fast food", "#8A5530"),
+        icon_size=80,
     ),
     Card(
         "Hamburger", "Hamburger.dc.html", "Hamburger", "utocnik", "#FBF1E4",
@@ -1135,6 +1197,7 @@ GAME_TYPE = {
     "Porek": "porek",
     "Cibule": "cibule",
     "Brokolice": "brokolice",
+    "Brambora": "brambora",
     "Hamburger": "hamburger",
     "Hranolky": "hranolky",
     "VelkyHamburger": "velkyHamburger",
@@ -1160,6 +1223,7 @@ def slug(c: Card) -> str:
         "Porek": "porek",
         "Cibule": "cibule",
         "Brokolice": "brokolice",
+        "Brambora": "brambora",
         "Hamburger": "hamburger",
         "Hranolky": "hranolky",
         "VelkyHamburger": "velky-hamburger",
@@ -1175,7 +1239,11 @@ def main() -> None:
     y_att = y_def + BOARD_H + 300
     defenders = [c for c in CARDS if c.side == "obrance"]
     attackers = [c for c in CARDS if c.side == "utocnik"]
-    for i, c in enumerate(CARDS, 17):
+    # Čísla artboardů v design/artboardy (Brambora přibyl později, proto 27).
+    number = {"Mrkev": 17, "Porek": 18, "Cibule": 19, "Brokolice": 20, "Hamburger": 21, "Hranolky": 22,
+              "VelkyHamburger": 23, "Lizatko": 24, "Kecup": 25, "Brambora": 27}
+    for c in CARDS:
+        i = number[c.key]
         fname = f"Predstaveni{c.key}.dc.html"
         (ZDROJ / fname).write_text(dc_html(c))
         (ARTBOARDY / f"{i}-predstaveni-{slug(c)}.html").write_text(plain_html(c))

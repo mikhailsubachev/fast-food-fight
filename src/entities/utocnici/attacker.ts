@@ -21,6 +21,8 @@ export interface Attacker {
   squirtLeft: number;
   /** Klouže po kečupu (jede rychleji). */
   sliding: boolean;
+  /** Stojí u štítu Pana Brambory: za kolik sekund do něj zase narazí. */
+  bumpCooldown: number;
 }
 
 export function createAttacker(id: number, type: AttackerType): Attacker {
@@ -38,5 +40,6 @@ export function createAttacker(id: number, type: AttackerType): Attacker {
     squirtCooldown: stats.squirt?.firstDelay ?? 0,
     squirtLeft: 0,
     sliding: false,
+    bumpCooldown: 0.3,
   };
 }

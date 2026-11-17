@@ -695,3 +695,17 @@ button:active {
   height: 800px;
   transform-origin: center;
 }
+
+/* --- Pan Brambora --- */
+
+.potato-reward {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.potato-reward img {
+  height: 64px;
+}

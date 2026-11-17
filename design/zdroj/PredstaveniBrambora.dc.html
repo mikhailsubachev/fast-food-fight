@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Pan Brambora – představení</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&amp;family=Bangers&amp;family=Nunito:wght@500;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+
+.board{width:1680px;height:1560px;box-sizing:border-box;padding:44px 40px;font-family:Nunito,sans-serif;color:#2B2118;display:flex;flex-direction:column;gap:26px;overflow:hidden}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:32px}
+.head h1{margin:0;font-family:'Baloo 2',sans-serif;font-size:60px;font-weight:800;line-height:.95}
+.kicker{font-size:16px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.head p{margin:0;font-size:18px;font-weight:600;color:#5A4A3A;max-width:700px}
+.screen{position:relative;width:1600px;height:900px;border:4px solid #2B2118;border-radius:24px;overflow:hidden;box-shadow:6px 6px 0 #2B2118;flex:none}
+.screen-bg{position:absolute;inset:0;background-color:#8BB85A;background-image:radial-gradient(circle at 20% 30%,#9CC765 0 12%,transparent 13%),radial-gradient(circle at 70% 70%,#9CC765 0 15%,transparent 16%),radial-gradient(circle at 85% 20%,#A5CF6E 0 9%,transparent 10%)}
+.screen-bg::after{content:'';position:absolute;left:-40px;right:-40px;top:420px;height:110px;background:#D8B47E;border-top:6px solid #8C6A3E;border-bottom:6px solid #8C6A3E;transform:rotate(-4deg)}
+.hud{position:absolute;top:18px;left:22px;right:22px;display:flex;justify-content:space-between}
+.pill{display:flex;align-items:center;gap:8px;height:52px;padding:0 18px;background:#fff;border:3px solid #2B2118;border-radius:26px;font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;color:#3D7FC0}
+.pill svg{width:28px;height:28px}
+.pill-wave{color:#2B2118}
+.pill-round{width:52px;padding:0;justify-content:center;color:#2B2118}
+.dim{position:absolute;inset:0;background:rgba(43,33,24,.5)}
+.card{position:absolute;left:110px;top:92px;width:1380px;height:740px;box-sizing:border-box;padding:46px 46px 40px;background:#FFFBF2;border:5px solid #2B2118;border-radius:38px;box-shadow:10px 10px 0 #2B2118;display:flex;gap:44px}
+.ribbon{position:absolute;left:50%;top:-30px;transform:translateX(-50%) rotate(-2deg);padding:8px 40px;border:4px solid #2B2118;border-radius:18px;box-shadow:4px 4px 0 #2B2118;color:#fff;font-family:'Baloo 2',sans-serif;font-size:34px;font-weight:800;white-space:nowrap}
+.stage{position:relative;flex:none;width:640px;height:640px;border:4px solid #2B2118;border-radius:30px;overflow:hidden;box-sizing:content-box;margin-top:4px}
+.stage-bg{position:absolute;inset:0;width:100%;height:100%}
+.info{flex:1;display:flex;flex-direction:column;gap:11px;min-width:0;padding-top:6px}
+.tag{align-self:flex-start;font-size:15px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border:3px solid;border-radius:999px;padding:4px 14px;background:#fff}
+.name{margin:0;font-family:'Baloo 2',sans-serif;font-size:76px;font-weight:800;line-height:.9}
+.sentence{margin:0;font-size:25px;font-weight:700;line-height:1.3}
+.skill{display:flex;align-items:center;gap:16px;padding:12px 16px;background:#fff;border:3px solid #2B2118;border-radius:20px;font-size:20px;font-weight:600;line-height:1.3}
+.skill b{font-family:'Baloo 2',sans-serif;font-size:25px}
+.skill-ico{flex:none;width:92px;height:92px;border:4px solid;border-radius:50%;background:#FFF6DC;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.skill-ico .sp{flex:none}
+.w-big{display:flex;width:80%;height:80%;align-items:center;justify-content:center}
+.w-big svg{width:100%;height:100%}
+.skill-kicker{font-size:14px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.meters{display:flex;flex-direction:column;gap:6px;margin-top:2px}
+.meter{display:flex;align-items:center;gap:14px}
+.weapon{font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;white-space:nowrap}
+.w-ico{flex:none;width:86px;height:34px;display:flex;align-items:center;justify-content:center}
+.w-ico .sp{width:100%;height:100%}
+.w-none{font-family:'Baloo 2',sans-serif;font-size:28px;font-weight:800;color:#A39A8E}
+.m-label{width:108px;font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800}
+.cells{display:flex;gap:6px}
+.cell{width:30px;height:24px;border:3px solid #2B2118;border-radius:8px;background:#EFE6D4}
+.m-note{font-size:18px;font-weight:700;color:#6B5B4B}
+.cost{display:flex;align-items:center;gap:6px;font-family:'Baloo 2',sans-serif;font-size:30px;font-weight:800;color:#3D7FC0}
+.cost svg,.drop svg{width:30px;height:30px;display:block}
+.extra{margin:2px 0 0;font-size:20px;font-weight:700;line-height:1.3}
+.bottom{margin-top:auto;display:flex;justify-content:space-between;align-items:center}
+.level{font-size:17px;font-weight:800;color:#6B5B4B;letter-spacing:.06em;text-transform:uppercase}
+.btn{cursor:pointer;color:#2B2118;padding:12px 30px;background:#F7C744;border:4px solid #2B2118;border-radius:22px;box-shadow:4px 4px 0 #2B2118;font-family:'Baloo 2',sans-serif;font-size:32px;font-weight:800}
+.fx-reward{display:flex;align-items:center;justify-content:center;gap:4px;height:100%;font-family:'Baloo 2',sans-serif;font-size:36px;font-weight:800;color:#2F7BC6;-webkit-text-stroke:1px #fff}
+.fx-drop svg{width:34px;height:34px;display:block}
+.fx-bubble{position:relative;height:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#fff;border:4px solid #2B2118;border-radius:28px;font-family:'Baloo 2',sans-serif;font-size:32px;font-weight:800}
+.fx-bubble::after{content:'';position:absolute;bottom:-16px;left:30px;width:22px;height:22px;background:#fff;border-right:4px solid #2B2118;border-bottom:4px solid #2B2118;transform:rotate(45deg) skew(10deg,10deg)}
+.heart{width:100%;height:100%;display:block}
+.lifebar{width:100%;height:100%;box-sizing:border-box;background:rgba(255,255,255,.9);border:3px solid #2B2118;border-radius:14px}
+.steps{display:flex;gap:24px}
+.step{flex:1;display:flex;flex-direction:column;gap:12px}
+.mini{position:relative;width:382px;height:300px;border:3px solid #2B2118;border-radius:18px;overflow:hidden;background:#9CC765}
+.mini-in{position:absolute;left:0;top:-66px;width:640px;height:640px;transform:scale(.597);transform-origin:0 0}
+.step-text{display:flex;gap:12px;font-size:17px;font-weight:600;line-height:1.35}
+.step-text b{font-family:'Baloo 2',sans-serif;font-size:19px}
+.step-text i{color:#6B5B4B;font-style:normal;font-weight:700;font-size:15px}
+.num{flex:none;width:36px;height:36px;border-radius:50%;border:3px solid #2B2118;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',sans-serif;font-size:19px;font-weight:800}
+.foot{font-size:16px;font-weight:700;color:#5A4A3A;line-height:1.4;margin:0}
+
+.sp{width:100%;height:100%;background:center/contain no-repeat}
+.sp-brambora-klid{background-image:url(/_blob/002bafe9c5fdaea4c800ec7efe69eeef)}
+.sp-brambora-naraz{background-image:url(/_blob/880ee68ce5cc3341c72e74366a016e18)}
+.sp-brambora-pocuchany{background-image:url(/_blob/50bf6abb0b7b1201ee84151d8074af59)}
+.sp-brambora-rozpad{background-image:url(/_blob/2005026d2c6dfcacf207096ed5f1039b)}
+.sp-hamburger-krok1{background-image:url(/_blob/9f28ca20b7f76d0e9e00f0adb4a7a475)}
+.sp-hamburger-krok2{background-image:url(/_blob/aba049c78ab178bbac486ad14376d4e8)}
+.sp-hamburger-zasah{background-image:url(/_blob/79d99de06ab57d7a3ea750e601cab0d7)}
+@keyframes aBrambora-0{
+0.000%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+26.657%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+26.667%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+39.990%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+40.000%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-1{
+0.000%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+39.990%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+40.000%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-2{
+0.000%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+61.657%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+61.667%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+88.323%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+88.333%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-3{
+0.000%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+26.657%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+26.667%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-4{
+0.000%{transform:translate(-262.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+26.667%{transform:translate(155.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+27.990%{transform:translate(129.3px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+28.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:1.00}
+30.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:1.00}
+30.990%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:1.00}
+31.000%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:0.00}
+32.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+37.990%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+38.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:1.00}
+40.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:1.00}
+40.990%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:1.00}
+41.000%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:0.00}
+42.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+47.990%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+48.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:1.00}
+50.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:1.00}
+50.990%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:1.00}
+51.000%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:0.00}
+52.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+57.990%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+58.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:1.00}
+60.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:1.00}
+60.990%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:1.00}
+61.000%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:0.00}
+62.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+65.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(565.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-5{
+0.000%{transform:translate(-262.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+4.157%{transform:translate(-197.8px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+4.167%{transform:translate(-197.6px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+8.323%{transform:translate(-132.5px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+8.333%{transform:translate(-132.3px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+12.490%{transform:translate(-67.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+12.500%{transform:translate(-67.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+16.657%{transform:translate(-1.8px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+16.667%{transform:translate(-1.7px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+20.823%{transform:translate(63.5px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+20.833%{transform:translate(63.6px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+24.990%{transform:translate(128.8px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+25.000%{transform:translate(129.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+26.667%{transform:translate(155.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+27.990%{transform:translate(129.3px,251.5px) rotate(-6.0deg) scale(1.000);opacity:1.00}
+28.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+30.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:0.00}
+30.990%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:0.00}
+31.000%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:1.00}
+32.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+37.990%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:1.00}
+38.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+40.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:0.00}
+40.990%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:0.00}
+41.000%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:1.00}
+42.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+47.990%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:1.00}
+48.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+50.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:0.00}
+50.990%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:0.00}
+51.000%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:1.00}
+52.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+57.990%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:1.00}
+58.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+60.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:0.00}
+60.990%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:0.00}
+61.000%{transform:translate(150.1px,251.5px) rotate(2.0deg) scale(1.000);opacity:1.00}
+62.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+65.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+69.157%{transform:translate(195.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+69.167%{transform:translate(195.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+73.323%{transform:translate(245.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+73.333%{transform:translate(245.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+77.490%{transform:translate(295.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+77.500%{transform:translate(295.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+81.657%{transform:translate(345.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+81.667%{transform:translate(345.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+85.823%{transform:translate(395.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+85.833%{transform:translate(395.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+89.990%{transform:translate(445.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+90.000%{transform:translate(445.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.323%{transform:translate(485.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.333%{transform:translate(485.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(565.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-6{
+0.000%{transform:translate(-262.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+4.157%{transform:translate(-197.8px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+4.167%{transform:translate(-197.6px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+8.323%{transform:translate(-132.5px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+8.333%{transform:translate(-132.3px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+12.490%{transform:translate(-67.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+12.500%{transform:translate(-67.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+16.657%{transform:translate(-1.8px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+16.667%{transform:translate(-1.7px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+20.823%{transform:translate(63.5px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+20.833%{transform:translate(63.6px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+24.990%{transform:translate(128.8px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+25.000%{transform:translate(129.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+26.667%{transform:translate(155.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+28.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+30.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:0.00}
+32.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+38.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+40.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:0.00}
+42.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+48.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+50.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:0.00}
+52.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+58.000%{transform:translate(129.1px,251.5px) rotate(-6.0deg) scale(1.000);opacity:0.00}
+60.000%{transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:0.00}
+62.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+65.000%{transform:translate(145.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+69.157%{transform:translate(195.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+69.167%{transform:translate(195.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+73.323%{transform:translate(245.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+73.333%{transform:translate(245.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+77.490%{transform:translate(295.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+77.500%{transform:translate(295.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+81.657%{transform:translate(345.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+81.667%{transform:translate(345.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+85.823%{transform:translate(395.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+85.833%{transform:translate(395.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.990%{transform:translate(445.0px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+90.000%{transform:translate(445.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(565.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-7{
+0.000%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:0.00}
+29.990%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:0.00}
+30.000%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:1.00}
+32.990%{transform:translate(306.0px,368.0px) rotate(24.9deg) scale(1.148);opacity:1.00}
+33.000%{transform:translate(306.0px,368.0px) rotate(25.0deg) scale(1.150);opacity:0.00}
+100.000%{transform:translate(306.0px,368.0px) rotate(25.0deg) scale(1.150);opacity:0.00}
+}
+@keyframes aBrambora-8{
+0.000%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:0.00}
+39.990%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:0.00}
+40.000%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:1.00}
+42.990%{transform:translate(306.0px,368.0px) rotate(24.9deg) scale(1.148);opacity:1.00}
+43.000%{transform:translate(306.0px,368.0px) rotate(25.0deg) scale(1.150);opacity:0.00}
+100.000%{transform:translate(306.0px,368.0px) rotate(25.0deg) scale(1.150);opacity:0.00}
+}
+@keyframes aBrambora-9{
+0.000%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:0.00}
+49.990%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:0.00}
+50.000%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:1.00}
+52.990%{transform:translate(306.0px,368.0px) rotate(24.9deg) scale(1.148);opacity:1.00}
+53.000%{transform:translate(306.0px,368.0px) rotate(25.0deg) scale(1.150);opacity:0.00}
+100.000%{transform:translate(306.0px,368.0px) rotate(25.0deg) scale(1.150);opacity:0.00}
+}
+@keyframes aBrambora-10{
+0.000%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:0.00}
+59.990%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:0.00}
+60.000%{transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:1.00}
+62.990%{transform:translate(306.0px,368.0px) rotate(24.9deg) scale(1.148);opacity:1.00}
+63.000%{transform:translate(306.0px,368.0px) rotate(25.0deg) scale(1.150);opacity:0.00}
+100.000%{transform:translate(306.0px,368.0px) rotate(25.0deg) scale(1.150);opacity:0.00}
+}
+@keyframes aBrambora-11{
+0.000%{transform:translate(264.0px,257.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(264.0px,257.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(264.0px,257.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(264.0px,257.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-12{
+0.000%{transform:translate(-226.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+26.667%{transform:translate(192.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+28.000%{transform:translate(166.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+30.000%{transform:translate(192.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+32.000%{transform:translate(182.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+38.000%{transform:translate(166.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+40.000%{transform:translate(192.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+42.000%{transform:translate(182.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+48.000%{transform:translate(166.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+50.000%{transform:translate(192.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+52.000%{transform:translate(182.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+58.000%{transform:translate(166.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+60.000%{transform:translate(192.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+62.000%{transform:translate(182.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+65.000%{transform:translate(182.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.323%{transform:translate(521.9px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.333%{transform:translate(522.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(602.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-13{
+0.000%{transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+59.990%{transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+60.000%{transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-14{
+0.000%{transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+49.990%{transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+50.000%{transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-15{
+0.000%{transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+39.990%{transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+40.000%{transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-16{
+0.000%{transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+29.990%{transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+30.000%{transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-17{
+0.000%{transform:translate(384.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(384.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-18{
+0.000%{transform:translate(412.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(412.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-19{
+0.000%{transform:translate(440.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(440.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-20{
+0.000%{transform:translate(468.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(468.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-21{
+0.000%{transform:translate(496.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(496.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-22{
+0.000%{transform:translate(524.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(524.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-23{
+0.000%{transform:translate(-218.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+26.667%{transform:translate(200.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+28.000%{transform:translate(174.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+30.000%{transform:translate(200.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+32.000%{transform:translate(190.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+38.000%{transform:translate(174.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+40.000%{transform:translate(200.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+42.000%{transform:translate(190.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+48.000%{transform:translate(174.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+50.000%{transform:translate(200.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+52.000%{transform:translate(190.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+58.000%{transform:translate(174.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+60.000%{transform:translate(200.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+62.000%{transform:translate(190.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+65.000%{transform:translate(190.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.323%{transform:translate(529.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.333%{transform:translate(530.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(610.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-24{
+0.000%{transform:translate(-190.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+26.667%{transform:translate(228.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+28.000%{transform:translate(202.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+30.000%{transform:translate(228.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+32.000%{transform:translate(218.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+38.000%{transform:translate(202.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+40.000%{transform:translate(228.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+42.000%{transform:translate(218.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+48.000%{transform:translate(202.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+50.000%{transform:translate(228.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+52.000%{transform:translate(218.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+58.000%{transform:translate(202.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+60.000%{transform:translate(228.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+62.000%{transform:translate(218.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+65.000%{transform:translate(218.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.323%{transform:translate(557.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.333%{transform:translate(558.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(638.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-25{
+0.000%{transform:translate(-162.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+26.667%{transform:translate(256.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+28.000%{transform:translate(230.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+30.000%{transform:translate(256.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+32.000%{transform:translate(246.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+38.000%{transform:translate(230.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+40.000%{transform:translate(256.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+42.000%{transform:translate(246.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+48.000%{transform:translate(230.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+50.000%{transform:translate(256.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+52.000%{transform:translate(246.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+58.000%{transform:translate(230.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+60.000%{transform:translate(256.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+62.000%{transform:translate(246.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+65.000%{transform:translate(246.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.323%{transform:translate(585.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.333%{transform:translate(586.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(666.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-26{
+0.000%{transform:translate(-134.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+26.667%{transform:translate(284.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+28.000%{transform:translate(258.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+30.000%{transform:translate(284.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+32.000%{transform:translate(274.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+38.000%{transform:translate(258.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+40.000%{transform:translate(284.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+42.000%{transform:translate(274.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+48.000%{transform:translate(258.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+50.000%{transform:translate(284.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+52.000%{transform:translate(274.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+58.000%{transform:translate(258.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+60.000%{transform:translate(284.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+62.000%{transform:translate(274.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+65.000%{transform:translate(274.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.323%{transform:translate(613.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.333%{transform:translate(614.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(694.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-27{
+0.000%{transform:translate(-106.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+26.667%{transform:translate(312.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+28.000%{transform:translate(286.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+30.000%{transform:translate(312.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+32.000%{transform:translate(302.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+38.000%{transform:translate(286.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+40.000%{transform:translate(312.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+42.000%{transform:translate(302.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+48.000%{transform:translate(286.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+50.000%{transform:translate(312.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+52.000%{transform:translate(302.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+58.000%{transform:translate(286.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+60.000%{transform:translate(312.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+62.000%{transform:translate(302.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+65.000%{transform:translate(302.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.323%{transform:translate(641.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+93.333%{transform:translate(642.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(722.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-28{
+0.000%{transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+59.990%{transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+60.000%{transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-29{
+0.000%{transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+49.990%{transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+50.000%{transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-30{
+0.000%{transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+39.990%{transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+40.000%{transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-31{
+0.000%{transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+29.990%{transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+30.000%{transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-32{
+0.000%{transform:translate(384.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(384.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(384.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(384.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-33{
+0.000%{transform:translate(412.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(412.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(412.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(412.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-34{
+0.000%{transform:translate(440.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(440.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(440.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(440.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-35{
+0.000%{transform:translate(468.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(468.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(468.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(468.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-36{
+0.000%{transform:translate(496.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(496.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(496.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(496.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-37{
+0.000%{transform:translate(524.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.657%{transform:translate(524.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+61.667%{transform:translate(524.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(524.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aBrambora-38{
+0.000%{transform:translate(355.0px,186.0px) rotate(0.0deg) scale(0.700);opacity:0.00}
+27.500%{transform:translate(355.0px,186.0px) rotate(0.0deg) scale(0.700);opacity:0.00}
+29.167%{transform:translate(355.0px,179.3px) rotate(0.0deg) scale(0.900);opacity:1.00}
+30.000%{transform:translate(355.0px,176.0px) rotate(0.0deg) scale(1.000);opacity:1.00}
+40.000%{transform:translate(355.0px,176.0px) rotate(0.0deg) scale(1.000);opacity:1.00}
+41.667%{transform:translate(355.0px,176.0px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(355.0px,176.0px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+</style>
+</helmet>
+<div class="board" style="background:{{paper}}">
+<div class="head">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="kicker" style="color:#4E9A3A">Fast Food Fight · představení · obránce</span>
+<h1>Pan Brambora – představení</h1>
+</div>
+<p>Karta se ukáže, když Pan Brambora přijde do hry poprvé, a hra se zatím zastaví. V okénku běží animace dokola (6 s, na artboardu začíná krokem 2), tlačítko kartu zavře. Hráč má na začátku 2 brambory.</p>
+</div>
+
+<div class="screen">
+  <div class="screen-bg"></div>
+  <div class="hud"><span class="pill"><svg viewBox="0 0 24 24"><path d="M12 2 C12 2 4.5 11 4.5 15.5 A7.5 7.5 0 0 0 19.5 15.5 C19.5 11 12 2 12 2 Z" fill="#3D9BE0" stroke="#2B2118" stroke-width="1.8"/><path d="M8.5 15 Q8.5 11.5 10.5 9" stroke="#CDEBFF" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg><b>180</b></span><span class="pill pill-wave">Vlna 1</span><span class="pill pill-round">II</span></div>
+  <div class="dim"></div>
+  <div class="card">
+    <div class="ribbon" style="background:#4E9A3A">Nová zelenina!</div>
+    <div class="stage">
+<svg class="stage-bg" viewBox="0 0 640 640" preserveAspectRatio="none"><rect width="640" height="640" fill="#9CC765"/><path d="M-10,472 C160,458 300,484 450,468 S620,478 660,470 L660,584 C500,596 330,576 180,590 S20,580 -10,586 Z" fill="#D8B47E" stroke="#8C6A3E" stroke-width="5"/><path d="M-10,530 C200,518 420,542 660,528" stroke="#E6C795" stroke-width="10" fill="none" stroke-dasharray="2 26" stroke-linecap="round"/><path d="M60,90 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180,60 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M330,120 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M520,80 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M600,240 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M560,620 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M300,610 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40,600 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M450,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="180" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="120" cy="180" r="2" fill="#F7C744"/><circle cx="590" cy="150" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="590" cy="150" r="2" fill="#F7C744"/><circle cx="250" cy="620" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="250" cy="620" r="2" fill="#F7C744"/><circle cx="470" cy="600" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="470" cy="600" r="2" fill="#F7C744"/></svg>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;animation:aBrambora-0 6.0s linear -1.82s infinite;transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-brambora-naraz"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;animation:aBrambora-1 6.0s linear -1.82s infinite;opacity:0"><div class="sp sp-brambora-pocuchany"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;animation:aBrambora-2 6.0s linear -1.82s infinite;opacity:0"><div class="sp sp-brambora-rozpad"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;animation:aBrambora-3 6.0s linear -1.82s infinite;opacity:0"><div class="sp sp-brambora-klid"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;animation:aBrambora-4 6.0s linear -1.82s infinite;transform:translate(153.4px,251.5px) rotate(3.3deg) scale(1.000);opacity:1.00"><div class="sp sp-hamburger-zasah"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;animation:aBrambora-5 6.0s linear -1.82s infinite;opacity:0"><div class="sp sp-hamburger-krok1"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;animation:aBrambora-6 6.0s linear -1.82s infinite;opacity:0"><div class="sp sp-hamburger-krok2"></div></div>
+<div style="position:absolute;left:0;top:0;width:84.0px;height:84.0px;transform-origin:42.0px 42.0px;animation:aBrambora-7 6.0s linear -1.82s infinite;transform:translate(306.0px,368.0px) rotate(2.8deg) scale(0.661);opacity:1.00"><svg viewBox="0 0 100 100"><polygon points="50.0,4.0 58.4,29.7 82.5,17.5 70.3,41.6 96.0,50.0 70.3,58.4 82.5,82.5 58.4,70.3 50.0,96.0 41.6,70.3 17.5,82.5 29.7,58.4 4.0,50.0 29.7,41.6 17.5,17.5 41.6,29.7" fill="#FFE14D" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:84.0px;height:84.0px;transform-origin:42.0px 42.0px;animation:aBrambora-8 6.0s linear -1.82s infinite;opacity:0"><svg viewBox="0 0 100 100"><polygon points="50.0,4.0 58.4,29.7 82.5,17.5 70.3,41.6 96.0,50.0 70.3,58.4 82.5,82.5 58.4,70.3 50.0,96.0 41.6,70.3 17.5,82.5 29.7,58.4 4.0,50.0 29.7,41.6 17.5,17.5 41.6,29.7" fill="#FFE14D" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:84.0px;height:84.0px;transform-origin:42.0px 42.0px;animation:aBrambora-9 6.0s linear -1.82s infinite;opacity:0"><svg viewBox="0 0 100 100"><polygon points="50.0,4.0 58.4,29.7 82.5,17.5 70.3,41.6 96.0,50.0 70.3,58.4 82.5,82.5 58.4,70.3 50.0,96.0 41.6,70.3 17.5,82.5 29.7,58.4 4.0,50.0 29.7,41.6 17.5,17.5 41.6,29.7" fill="#FFE14D" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:84.0px;height:84.0px;transform-origin:42.0px 42.0px;animation:aBrambora-10 6.0s linear -1.82s infinite;opacity:0"><svg viewBox="0 0 100 100"><polygon points="50.0,4.0 58.4,29.7 82.5,17.5 70.3,41.6 96.0,50.0 70.3,58.4 82.5,82.5 58.4,70.3 50.0,96.0 41.6,70.3 17.5,82.5 29.7,58.4 4.0,50.0 29.7,41.6 17.5,17.5 41.6,29.7" fill="#FFE14D" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:292.0px;height:36.0px;transform-origin:146.0px 18.0px;animation:aBrambora-11 6.0s linear -1.82s infinite;transform:translate(264.0px,257.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:152.0px;height:36.0px;transform-origin:76.0px 18.0px;animation:aBrambora-12 6.0s linear -1.82s infinite;transform:translate(190.3px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-13 6.0s linear -1.82s infinite;transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-14 6.0s linear -1.82s infinite;transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-15 6.0s linear -1.82s infinite;transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-16 6.0s linear -1.82s infinite;opacity:0"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-17 6.0s linear -1.82s infinite;opacity:0"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-18 6.0s linear -1.82s infinite;opacity:0"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-19 6.0s linear -1.82s infinite;opacity:0"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-20 6.0s linear -1.82s infinite;opacity:0"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-21 6.0s linear -1.82s infinite;opacity:0"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-22 6.0s linear -1.82s infinite;opacity:0"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-23 6.0s linear -1.82s infinite;transform:translate(198.3px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-24 6.0s linear -1.82s infinite;transform:translate(226.3px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-25 6.0s linear -1.82s infinite;transform:translate(254.3px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-26 6.0s linear -1.82s infinite;transform:translate(282.3px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-27 6.0s linear -1.82s infinite;transform:translate(310.3px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-28 6.0s linear -1.82s infinite;opacity:0"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-29 6.0s linear -1.82s infinite;opacity:0"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-30 6.0s linear -1.82s infinite;opacity:0"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-31 6.0s linear -1.82s infinite;transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-32 6.0s linear -1.82s infinite;transform:translate(384.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-33 6.0s linear -1.82s infinite;transform:translate(412.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-34 6.0s linear -1.82s infinite;transform:translate(440.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-35 6.0s linear -1.82s infinite;transform:translate(468.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-36 6.0s linear -1.82s infinite;transform:translate(496.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aBrambora-37 6.0s linear -1.82s infinite;transform:translate(524.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:190.0px;height:64.0px;transform-origin:95.0px 64.0px;animation:aBrambora-38 6.0s linear -1.82s infinite;transform:translate(355.0px,176.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="fx-bubble fx-tail-left">Stop!</div></div>
+    </div>
+    <div class="info">
+      <span class="tag" style="color:#4E9A3A;border-color:#4E9A3A">Zelenina · obránce</span>
+      <h2 class="name">Pan Brambora</h2>
+      <p class="sentence">Jako jediný se postaví přímo na cestu. Fast food přes něj nemůže projít.</p>
+      <div class="skill">
+        <span class="skill-ico" style="border-color:#4E9A3A"><span class="w-big"><svg viewBox="-28 -128 56 256" style="width:100%;height:100%;display:block"><rect x="-18" y="-118" width="36" height="236" rx="18" fill="#C98B57" stroke="#2B2118" stroke-width="8"/><rect x="-9" y="-100" width="18" height="200" rx="9" fill="#E8B08A" opacity=".85"/><path d="M-4,-84 Q-6,-20 -4,40" stroke="#FFFFFF" stroke-width="5" fill="none" opacity=".6" stroke-linecap="round"/></svg></span></span>
+        <span><span class="skill-kicker" style="color:#4E9A3A">Zbraň</span><br><b>Bramborový štít</b><br>Fast food do něj naráží a nemůže dál. Každý náraz vezme jedno srdíčko.</span>
+      </div>
+      <div class="meters"><div class="meter"><span class="m-label">Životy</span><span class="cells"><span class="cell on" style="background:#4E9A3A"></span><span class="cell on" style="background:#4E9A3A"></span><span class="cell on" style="background:#4E9A3A"></span><span class="cell on" style="background:#4E9A3A"></span><span class="cell on" style="background:#4E9A3A"></span></span><span class="m-note">10 srdíček</span></div><div class="meter"><span class="m-label">Zdrží</span><span class="cells"><span class="cell on" style="background:#4E9A3A"></span><span class="cell on" style="background:#4E9A3A"></span><span class="cell on" style="background:#4E9A3A"></span><span class="cell on" style="background:#4E9A3A"></span><span class="cell" style=""></span></span><span class="m-note">dokud má srdíčka</span></div></div>
+      <p class="extra"><b style="color:#4E9A3A">Kde ho vzít:</b> Na začátku máš 2 brambory. Další dostaneš, když ti na konci úrovně zbyde přes 1000 kapek.</p>
+      <div class="bottom"><span class="level">Nový obránce</span><button type="button" class="btn">Jdeme na to! ▶</button></div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+<div class="step">
+  <div class="mini"><div class="mini-in"><svg class="stage-bg" viewBox="0 0 640 640" preserveAspectRatio="none"><rect width="640" height="640" fill="#9CC765"/><path d="M-10,472 C160,458 300,484 450,468 S620,478 660,470 L660,584 C500,596 330,576 180,590 S20,580 -10,586 Z" fill="#D8B47E" stroke="#8C6A3E" stroke-width="5"/><path d="M-10,530 C200,518 420,542 660,528" stroke="#E6C795" stroke-width="10" fill="none" stroke-dasharray="2 26" stroke-linecap="round"/><path d="M60,90 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180,60 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M330,120 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M520,80 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M600,240 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M560,620 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M300,610 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40,600 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M450,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="180" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="120" cy="180" r="2" fill="#F7C744"/><circle cx="590" cy="150" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="590" cy="150" r="2" fill="#F7C744"/><circle cx="250" cy="620" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="250" cy="620" r="2" fill="#F7C744"/><circle cx="470" cy="600" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="470" cy="600" r="2" fill="#F7C744"/></svg>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-brambora-klid"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;transform:translate(-1.7px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-hamburger-krok1"></div></div>
+<div style="position:absolute;left:0;top:0;width:292.0px;height:36.0px;transform-origin:146.0px 18.0px;transform:translate(264.0px,257.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:152.0px;height:36.0px;transform-origin:76.0px 18.0px;transform:translate(35.2px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(43.2px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(71.2px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(99.2px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(127.2px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(155.2px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(384.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(412.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(440.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(468.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(496.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(524.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div></div></div>
+  <div class="step-text"><span class="num" style="background:#4E9A3A">1</span><span><b>Na cestě</b> · Pan Brambora stojí přímo na cestě se štítem.<br><i>1.00 s</i></span></div>
+</div>
+<div class="step">
+  <div class="mini"><div class="mini-in"><svg class="stage-bg" viewBox="0 0 640 640" preserveAspectRatio="none"><rect width="640" height="640" fill="#9CC765"/><path d="M-10,472 C160,458 300,484 450,468 S620,478 660,470 L660,584 C500,596 330,576 180,590 S20,580 -10,586 Z" fill="#D8B47E" stroke="#8C6A3E" stroke-width="5"/><path d="M-10,530 C200,518 420,542 660,528" stroke="#E6C795" stroke-width="10" fill="none" stroke-dasharray="2 26" stroke-linecap="round"/><path d="M60,90 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180,60 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M330,120 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M520,80 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M600,240 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M560,620 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M300,610 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40,600 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M450,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="180" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="120" cy="180" r="2" fill="#F7C744"/><circle cx="590" cy="150" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="590" cy="150" r="2" fill="#F7C744"/><circle cx="250" cy="620" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="250" cy="620" r="2" fill="#F7C744"/><circle cx="470" cy="600" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="470" cy="600" r="2" fill="#F7C744"/></svg>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-brambora-naraz"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;transform:translate(153.4px,251.5px) rotate(3.3deg) scale(1.000);opacity:1.00"><div class="sp sp-hamburger-zasah"></div></div>
+<div style="position:absolute;left:0;top:0;width:84.0px;height:84.0px;transform-origin:42.0px 42.0px;transform:translate(306.0px,368.0px) rotate(2.8deg) scale(0.661);opacity:1.00"><svg viewBox="0 0 100 100"><polygon points="50.0,4.0 58.4,29.7 82.5,17.5 70.3,41.6 96.0,50.0 70.3,58.4 82.5,82.5 58.4,70.3 50.0,96.0 41.6,70.3 17.5,82.5 29.7,58.4 4.0,50.0 29.7,41.6 17.5,17.5 41.6,29.7" fill="#FFE14D" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:292.0px;height:36.0px;transform-origin:146.0px 18.0px;transform:translate(264.0px,257.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:152.0px;height:36.0px;transform-origin:76.0px 18.0px;transform:translate(190.3px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(198.3px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(226.3px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(254.3px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(282.3px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(310.3px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(384.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(412.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(440.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(468.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(496.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(524.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:190.0px;height:64.0px;transform-origin:95.0px 64.0px;transform:translate(355.0px,176.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="fx-bubble fx-tail-left">Stop!</div></div></div></div>
+  <div class="step-text"><span class="num" style="background:#4E9A3A">2</span><span><b>Bum!</b> · Hamburger narazí do štítu a nemůže projít. Brambora přijde o srdíčko.<br><i>1.82 s</i></span></div>
+</div>
+<div class="step">
+  <div class="mini"><div class="mini-in"><svg class="stage-bg" viewBox="0 0 640 640" preserveAspectRatio="none"><rect width="640" height="640" fill="#9CC765"/><path d="M-10,472 C160,458 300,484 450,468 S620,478 660,470 L660,584 C500,596 330,576 180,590 S20,580 -10,586 Z" fill="#D8B47E" stroke="#8C6A3E" stroke-width="5"/><path d="M-10,530 C200,518 420,542 660,528" stroke="#E6C795" stroke-width="10" fill="none" stroke-dasharray="2 26" stroke-linecap="round"/><path d="M60,90 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180,60 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M330,120 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M520,80 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M600,240 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M560,620 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M300,610 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40,600 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M450,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="180" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="120" cy="180" r="2" fill="#F7C744"/><circle cx="590" cy="150" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="590" cy="150" r="2" fill="#F7C744"/><circle cx="250" cy="620" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="250" cy="620" r="2" fill="#F7C744"/><circle cx="470" cy="600" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="470" cy="600" r="2" fill="#F7C744"/></svg>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-brambora-pocuchany"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;transform:translate(155.1px,251.5px) rotate(4.0deg) scale(1.000);opacity:1.00"><div class="sp sp-hamburger-zasah"></div></div>
+<div style="position:absolute;left:0;top:0;width:84.0px;height:84.0px;transform-origin:42.0px 42.0px;transform:translate(306.0px,368.0px) rotate(0.0deg) scale(0.600);opacity:1.00"><svg viewBox="0 0 100 100"><polygon points="50.0,4.0 58.4,29.7 82.5,17.5 70.3,41.6 96.0,50.0 70.3,58.4 82.5,82.5 58.4,70.3 50.0,96.0 41.6,70.3 17.5,82.5 29.7,58.4 4.0,50.0 29.7,41.6 17.5,17.5 41.6,29.7" fill="#FFE14D" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:292.0px;height:36.0px;transform-origin:146.0px 18.0px;transform:translate(264.0px,257.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:152.0px;height:36.0px;transform-origin:76.0px 18.0px;transform:translate(192.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(272.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(200.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(228.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(256.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(284.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(312.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(300.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(328.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(356.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(384.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(412.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(440.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(468.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(496.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(524.0px,263.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#FFFFFF" stroke="#A39A8E" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="3 2.4"/></svg></div></div></div>
+  <div class="step-text"><span class="num" style="background:#4E9A3A">3</span><span><b>Drží</b> · Každý náraz vezme jedno srdíčko. Ostatní zelenina má čas fast food zasáhnout.<br><i>3.00 s</i></span></div>
+</div>
+<div class="step">
+  <div class="mini"><div class="mini-in"><svg class="stage-bg" viewBox="0 0 640 640" preserveAspectRatio="none"><rect width="640" height="640" fill="#9CC765"/><path d="M-10,472 C160,458 300,484 450,468 S620,478 660,470 L660,584 C500,596 330,576 180,590 S20,580 -10,586 Z" fill="#D8B47E" stroke="#8C6A3E" stroke-width="5"/><path d="M-10,530 C200,518 420,542 660,528" stroke="#E6C795" stroke-width="10" fill="none" stroke-dasharray="2 26" stroke-linecap="round"/><path d="M60,90 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180,60 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M330,120 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M520,80 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M600,240 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M560,620 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M300,610 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40,600 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M450,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="180" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="120" cy="180" r="2" fill="#F7C744"/><circle cx="590" cy="150" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="590" cy="150" r="2" fill="#F7C744"/><circle cx="250" cy="620" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="250" cy="620" r="2" fill="#F7C744"/><circle cx="470" cy="600" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="470" cy="600" r="2" fill="#F7C744"/></svg>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(308.0px,279.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-brambora-rozpad"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;transform:translate(205.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-hamburger-krok2"></div></div>
+<div style="position:absolute;left:0;top:0;width:152.0px;height:36.0px;transform-origin:76.0px 18.0px;transform:translate(242.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(250.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(278.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(306.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(334.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(362.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div></div></div>
+  <div class="step-text"><span class="num" style="background:#4E9A3A">4</span><span><b>Krach!</b> · Bez srdíček se rozpadne na malé hranolky a hamburger jde dál.<br><i>4.20 s</i></span></div>
+</div>
+</div>
+<p class="foot">Ve hře karta vyjede zdola (0,35 s) a stuha spadne shora. Ukazatele jsou z čísel ve hře (src/data/units.ts), obrázky postav z listu postavy (Brambora).</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"paper": {"editor": "color", "default": "#FBF3E6"}, "$preview": {"width": 1680, "height": 1560}}'>
+class Component extends DCLogic {
+renderVals() {
+return { paper: this.props.paper ?? '#FBF3E6' };
+}
+}
+</script>
+</body>
+</html>

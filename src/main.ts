@@ -2,6 +2,7 @@ import './ui/styles.css';
 import { Game, type GameEvent } from './core/game';
 import { loadProgress, recordWin, saveProgress } from './core/save';
 import { LEVELS } from './data/levels';
+import { POTATO } from './data/units';
 import { T } from './data/texts.cs';
 import { Stage } from './scene/stage';
 import { View } from './scene/view';
@@ -40,6 +41,12 @@ const hud = new Hud(app, {
   onNow: () => game.startNow(),
 });
 const menus = new Menus(app, game, stage, view);
+menus.potatoStock = () => progress.potatoes;
+menus.onPotato = (p) => {
+  if (progress.potatoes <= 0 || !game.placePotato(p)) return;
+  progress = { ...progress, potatoes: progress.potatoes - 1 };
+  saveProgress(progress);
+};
 // Horní lišta už existuje: kamera změří její výšku a mapu umístí pod ni.
 stage.resize();
 const screens = new Screens(app);
@@ -64,7 +71,9 @@ function newcomers(wave: number): string[] {
   const veg = wave === 0 ? [...level.startDefenders] : level.unlocks.filter((u) => u.wave === wave).map((u) => u.type);
   const before = new Set(level.waves.slice(0, wave).flat().map((s) => s.type));
   const food = [...new Set(level.waves[wave]?.map((s) => s.type) ?? [])].filter((t) => !before.has(t));
-  return [...veg, ...food].filter((t) => !progress.seenIntros.includes(t));
+  // Pan Brambora se představí na začátku první úrovně, kterou hráč s bramborami hraje.
+  const potato = wave === 0 && progress.potatoes > 0 ? ['brambora'] : [];
+  return [...veg, ...potato, ...food].filter((t) => !progress.seenIntros.includes(t));
 }
 
 /** V pauze před vlnou ukáže karty postav, které v ní přijdou poprvé. */
@@ -141,6 +150,9 @@ function handle(events: GameEvent[]): void {
       case 'won':
         menus.close();
         progress = recordWin(progress, level.id, e.stars);
+        // Přes 1000 kapek na konci úrovně: nový Pan Brambora (nejvýš 1 za úroveň).
+        const newPotato = game.water > POTATO.rewardWater;
+        if (newPotato) progress = { ...progress, potatoes: progress.potatoes + 1 };
         saveProgress(progress);
         endTimer = window.setTimeout(() => {
           const buttons = nextLevel
@@ -156,6 +168,15 @@ function handle(events: GameEvent[]): void {
           const unlocked = document.createElement('p');
           unlocked.textContent = nextLevel ? `🔓 ${T.levelTitle(nextLevel.id, nextLevel.name)}` : `🔓 ${T.nextLevelSoon}`;
           document.querySelector('.card h1')!.after(stars, unlocked);
+          if (newPotato) {
+            const reward = document.createElement('p');
+            reward.className = 'potato-reward';
+            const img = document.createElement('img');
+            img.src = `${import.meta.env.BASE_URL}assets/postavy/brambora-radost.svg`;
+            img.alt = '';
+            reward.append(img, T.potatoReward);
+            unlocked.after(reward);
+          }
         }, 1500);
         break;
       case 'lost':
@@ -187,6 +208,11 @@ stage.renderer.domElement.addEventListener('pointerdown', (ev) => {
     return;
   }
   const place = game.checkPlace(p);
+  // Ťuknutí na cestu: Pan Brambora, pokud nějakého hráč má.
+  if (place === 'path' && progress.potatoes > 0 && game.checkPotato(p) === 'ok') {
+    menus.openPotato(p);
+    return;
+  }
   if (place === 'ok') menus.openSpot(game.slotAt(p)!);
   else if (place !== 'outside') menus.showCross(p);
 });
