@@ -4,11 +4,13 @@ export interface Progress {
   unlockedLevel: number;
   stars: Record<string, number>;
   sound: boolean;
+  /** Postavy, jejichž kartu představení už hráč viděl (ukáže se jen poprvé). */
+  seenIntros: string[];
 }
 
 const KEY = 'fast-food-fight:postup';
 
-const DEFAULT: Progress = { unlockedLevel: 1, stars: {}, sound: true };
+const DEFAULT: Progress = { unlockedLevel: 1, stars: {}, sound: true, seenIntros: [] };
 
 export function loadProgress(): Progress {
   try {
@@ -17,7 +19,7 @@ export function loadProgress(): Progress {
   } catch {
     // bez uloženého postupu se hraje od začátku
   }
-  return { ...DEFAULT, stars: {} };
+  return { ...DEFAULT, stars: {}, seenIntros: [] };
 }
 
 export function saveProgress(p: Progress): void {

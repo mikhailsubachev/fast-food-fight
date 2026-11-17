@@ -6,6 +6,7 @@ import { T } from './data/texts.cs';
 import { Stage } from './scene/stage';
 import { View } from './scene/view';
 import { Hud } from './ui/hud';
+import { IntroCards } from './ui/intro';
 import { Menus } from './ui/menus';
 import { enterFullscreen, fullscreenSupported, isTouchDevice, runsAsApp } from './ui/fullscreen';
 import { Screens } from './ui/screens';
@@ -42,6 +43,42 @@ const menus = new Menus(app, game, stage, view);
 // Horní lišta už existuje: kamera změří její výšku a mapu umístí pod ni.
 stage.resize();
 const screens = new Screens(app);
+
+// Představení nových postav (jen v úrovních, které to mají zapnuté, a každá postava jen poprvé).
+const intros = new IntroCards(
+  app,
+  () => undefined,
+  (type) => {
+    if (progress.seenIntros.includes(type)) return;
+    progress = { ...progress, seenIntros: [...progress.seenIntros, type] };
+    saveProgress(progress);
+  },
+);
+/** Pro kterou vlnu už se karty řešily. */
+let introWave = -1;
+const levelStart = performance.now();
+
+/** Postavy, které přijdou poprvé ve vlně `wave`: nová zelenina a nový fast food. */
+function newcomers(wave: number): string[] {
+  if (!level.intros) return [];
+  const veg = wave === 0 ? [...level.startDefenders] : level.unlocks.filter((u) => u.wave === wave).map((u) => u.type);
+  const before = new Set(level.waves.slice(0, wave).flat().map((s) => s.type));
+  const food = [...new Set(level.waves[wave]?.map((s) => s.type) ?? [])].filter((t) => !before.has(t));
+  return [...veg, ...food].filter((t) => !progress.seenIntros.includes(t));
+}
+
+/** V pauze před vlnou ukáže karty postav, které v ní přijdou poprvé. */
+function checkIntros(): void {
+  if (game.phase !== 'countdown' || game.waveIndex === introWave || paused) return;
+  // Na začátku úrovně nechat nejdřív chvilku vidět nápis s názvem úrovně.
+  if (game.waveIndex === 0 && performance.now() - levelStart < 1200) return;
+  introWave = game.waveIndex;
+  const list = newcomers(game.waveIndex);
+  if (!list.length) return;
+  menus.close();
+  intros.show(list);
+}
+intros.preload(level.waves.map((_, i) => newcomers(i)).flat());
 
 function pause(): void {
   if (paused || game.finished) return;
@@ -83,6 +120,7 @@ function restart(): void {
   menus.close();
   screens.hide();
   paused = false;
+  introWave = -1;
 }
 
 function handle(events: GameEvent[]): void {
@@ -134,7 +172,7 @@ function handle(events: GameEvent[]): void {
 
 // Jedno ťuknutí / kliknutí na všechno; nic se netáhne a nic nezávisí na najetí myší.
 stage.renderer.domElement.addEventListener('pointerdown', (ev) => {
-  if (paused || game.finished) return;
+  if (paused || intros.isOpen || game.finished) return;
   const p = stage.groundAt(ev.clientX, ev.clientY);
   if (!p) return;
   // Ťuknutí na zeleninu (velkorysý okruh kvůli dětským prstům) → vylepšení.
@@ -173,7 +211,8 @@ let last = performance.now();
 function frame(now: number): void {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  if (!paused && !portraitPhone.matches) {
+  checkIntros();
+  if (!paused && !intros.isOpen && !portraitPhone.matches) {
     game.update(dt);
     handle(game.drainEvents());
     view.update(game, dt, now / 1000);

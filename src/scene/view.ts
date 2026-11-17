@@ -13,11 +13,14 @@ import {
   makeAttacker,
   makeCloud,
   makeDefender,
+  makeHitStar,
+  makeLifeBar,
   makeMouth,
   makeProjectile,
   makePuddlePiece,
   makeUmbrella,
   preloadFrames,
+  type LifeBar,
   type Puppet,
 } from './meshes';
 import type { Stage } from './stage';
@@ -101,6 +104,8 @@ export class View {
   private readonly dynamic = new THREE.Group();
   private readonly defenders = new Map<number, Anim>();
   private readonly attackers = new Map<number, Anim>();
+  /** Srdíčka zbývajících životů nad každým fast foodem. */
+  private readonly lifeBars = new Map<number, LifeBar>();
   private readonly projectiles = new Map<number, THREE.Sprite>();
   private readonly clouds = new Map<number, THREE.Mesh>();
   private readonly puddles = new Map<number, THREE.Group>();
@@ -176,6 +181,8 @@ export class View {
     this.dynamic.clear();
     this.defenders.clear();
     this.attackers.clear();
+    for (const life of this.lifeBars.values()) life.dispose();
+    this.lifeBars.clear();
     this.projectiles.clear();
     this.clouds.clear();
     this.puddles.clear();
@@ -205,7 +212,9 @@ export class View {
           const delay = e.melee ? LUNGE_PEAK : 0;
           const a = this.attackers.get(e.attackerId);
           if (a) a.hitT = -delay;
-          this.later(delay, () => this.burst(e.x, 0.6, e.z, 0xd8312b, 5));
+          // Zásah je vidět jako žlutá hvězdička na fast foodu (jako v návrhu karet postav).
+          const y = a ? a.puppet.height * a.puppet.root.scale.y * 0.5 : 0.8;
+          this.later(delay, () => this.hitStar(e.x, y, e.z));
           break;
         }
         case 'flee': {
@@ -437,7 +446,18 @@ export class View {
         this.dynamic.add(puppet.root);
         anim = newAnim(puppet);
         this.attackers.set(a.id, anim);
+        const life = makeLifeBar(ATTACKERS[a.type].hits);
+        // Štítek nad hlavou; u velkého hamburgeru je loutka zvětšená, štítek ale stejně velký.
+        const k = 1 / puppet.root.scale.x;
+        life.sprite.scale.multiplyScalar(k);
+        life.sprite.position.set(0, puppet.height * 0.94, 0);
+        puppet.root.add(life.sprite);
+        this.lifeBars.set(a.id, life);
       }
+      const life = this.lifeBars.get(a.id)!;
+      life.set(a.hitsLeft);
+      // Utíkající fast food už životy nepotřebuje.
+      life.sprite.visible = !a.fleeing;
       anim.hitT += dt;
       anim.throwT += dt;
       anim.spinT += dt;
@@ -482,6 +502,12 @@ export class View {
       (sprite.material as THREE.SpriteMaterial).rotation = tilt;
     }
     this.removeMissing(this.attackers, alive);
+    for (const [id, life] of this.lifeBars) {
+      if (!alive.has(id)) {
+        life.dispose();
+        this.lifeBars.delete(id);
+      }
+    }
   }
 
   /** Vodorovný směr pohybu na obrazovce (kladný = doprava). */
@@ -615,6 +641,20 @@ export class View {
     this.addEffect(s, 0.6, (e, k) => {
       e.obj.scale.set(base * (0.6 + 0.4 * Math.min(1, k * 3)), base * (0.6 + 0.4 * Math.min(1, k * 3)), 1);
       e.obj.position.y = 0.9 - k * 0.3;
+      mat.opacity = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4;
+      if (k >= 1) mat.dispose();
+    });
+  }
+
+  /** Hvězdička zásahu: rychle se zvětší, pootočí a zmizí. */
+  private hitStar(x: number, y: number, z: number): void {
+    const star = makeHitStar();
+    star.position.set(x, y, z);
+    const mat = star.material as THREE.SpriteMaterial;
+    this.addEffect(star, 0.28, (_e, k) => {
+      const size = 0.38 + 0.42 * Math.sin(Math.min(1, k * 1.6) * (Math.PI / 2));
+      star.scale.set(size, size, 1);
+      mat.rotation = k * 0.5;
       mat.opacity = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4;
     });
   }

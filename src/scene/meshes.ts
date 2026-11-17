@@ -52,7 +52,7 @@ export const FRAMES = [
   'brokolice2-klid', 'brokolice2-mrk', 'brokolice2-mir', 'brokolice2-hod', 'brokolice2-radost',
   'brokolice-lepkava', 'brokolice-lepkava2',
   'kecup-krok1', 'kecup-krok2', 'kecup-nastvani', 'kecup-prsk', 'kecup-zasah', 'kecup-utek1', 'kecup-utek2',
-  'pusa', 'porkosip', 'hranolka', 'oblak', 'raketa', 'destnik', 'louze',
+  'pusa', 'porkosip', 'hranolka', 'oblak', 'raketa', 'destnik', 'louze', 'hvezda',
 ] as const;
 
 /** Načte všechny obrázky předem, aby postavy při prvním objevení neblikly. */
@@ -193,4 +193,93 @@ export function makePuddlePiece(): THREE.Mesh {
   m.rotation.x = -Math.PI / 2;
   m.renderOrder = 2;
   return m;
+}
+
+/** Hvězdička zásahu: komiksové „bum“ na fast foodu, když ho zelenina trefí (jako v návrhu karet). */
+export function makeHitStar(): THREE.Sprite {
+  const mat = new THREE.SpriteMaterial({ map: texture('hvezda'), transparent: true, depthTest: false, depthWrite: false });
+  const s = new THREE.Sprite(mat);
+  s.renderOrder = 10;
+  return s;
+}
+
+/** Srdce v rámečku 24 × 24 (stejný tvar jako v návrhu karet). */
+const HEART = new Path2D('M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z');
+const INK = '#2B2118';
+const LIFE_PX = 48; // jedno srdce v obrázku
+const LIFE_GAP = 8;
+const LIFE_PAD = 12;
+/** Kolik pixelů obrázku připadá na jedno políčko ve světě (srdce je pak 0,2 políčka). */
+const LIFE_SCALE = 240;
+
+export interface LifeBar {
+  sprite: THREE.Sprite;
+  /** Kolik srdíček ještě zbývá. */
+  set(left: number): void;
+  dispose(): void;
+}
+
+/**
+ * Ukazatel zbývajících životů nad fast foodem: bílý štítek s řadou srdíček. Plná srdce jsou
+ * červená, ztracená jen přerušovaný obrys; s každým zásahem zhasne jedno zprava.
+ */
+export function makeLifeBar(max: number): LifeBar {
+  const canvas = document.createElement('canvas');
+  const w = max * LIFE_PX + (max - 1) * LIFE_GAP + 2 * LIFE_PAD;
+  const h = LIFE_PX + 2 * LIFE_PAD;
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.center.set(0.5, 0);
+  sprite.scale.set(w / LIFE_SCALE, h / LIFE_SCALE, 1);
+  sprite.renderOrder = 9;
+  let shown = -1;
+
+  function draw(left: number): void {
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.roundRect(3, 3, w - 6, h - 6, 18);
+    ctx.fill();
+    ctx.stroke();
+    for (let i = 0; i < max; i++) {
+      ctx.save();
+      ctx.translate(LIFE_PAD + i * (LIFE_PX + LIFE_GAP), LIFE_PAD);
+      ctx.scale(LIFE_PX / 24, LIFE_PX / 24);
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 2.4;
+      if (i < left) {
+        ctx.fillStyle = '#E2463A';
+        ctx.strokeStyle = INK;
+        ctx.setLineDash([]);
+      } else {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#A39A8E';
+        ctx.setLineDash([3, 2.4]);
+      }
+      ctx.fill(HEART);
+      ctx.stroke(HEART);
+      ctx.restore();
+    }
+    tex.needsUpdate = true;
+  }
+
+  return {
+    sprite,
+    set(left: number) {
+      if (left === shown) return;
+      shown = left;
+      draw(left);
+    },
+    dispose() {
+      tex.dispose();
+      mat.dispose();
+    },
+  };
 }

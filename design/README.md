@@ -6,7 +6,7 @@ Artboardy z plátna „Fast Food Fight – Pan Mrkev“ (Claude Design), stav k 
   - `1-mrkev.html`, `2-porek.html`, `3-hamburger.html`, `4-hranolky.html` – listy postav (předloha, postava ve hře, díly loutky, stavy a animace)
   - `5-uroven-1.html` – herní obrazovka 1. úrovně (1920 × 1080)
   - `6-misto-na-zeleninu.html` – jak ubývá místa na sázení v dalších úrovních
-  - `17-predstaveni-mrkev.html` až `25-predstaveni-kecup.html` – představení postav: karta, která se ve hře ukáže, když postava přijde poprvé, s animací ve smyčce a rozkresem animace do 4 kroků (obránci: mrkev, pórek, cibule, brokolice; útočníci: hamburger, hranolky, velký hamburger, lízátko, kečup). Na plátně jsou na stránce „Postavy“ pod listy postav (`zdroj/Predstaveni*.dc.html`); vygeneroval je `generator/gen_predstaveni.py` z obrázků postav ve hře.
+  - `17-predstaveni-mrkev.html` až `25-predstaveni-kecup.html` – představení postav: karta, která se ve hře ukáže, když postava přijde poprvé, s animací ve smyčce a rozkresem animace do 4 kroků (obránci: mrkev, pórek, cibule, brokolice; útočníci: hamburger, hranolky, velký hamburger, lízátko, kečup). Na plátně jsou na stránce „Postavy“ pod listy postav (`zdroj/Predstaveni*.dc.html`); vygeneroval je `generator/gen_predstaveni.py` z obrázků postav ve hře. Stejný skript zapisuje i karty pro hru do `public/assets/predstaveni/<typ>.html`; hra je v 1. úrovni ukáže v pauze před vlnou, ve které postava přijde poprvé (`src/ui/intro.ts`).
 - `zdroj/` – původní soubory artboardů (`.dc.html`) a rozložení plátna (`canvas.json`) pro případné nahrání zpět do plátna
 - `generator/` – Python skripty, které vygenerovaly listy postav a první verzi úrovně (kresba postav v SVG, projekce kamery 55°, tvar cesty)
 

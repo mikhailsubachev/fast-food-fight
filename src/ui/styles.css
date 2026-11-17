@@ -671,3 +671,27 @@ button:active {
     padding-bottom: 6px;
   }
 }
+
+/* --- představení nové postavy (karta z generátoru návrhů) --- */
+
+.intro {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(43, 33, 24, 0.5);
+  overflow: hidden;
+}
+
+.intro.show {
+  display: flex;
+}
+
+.intro-card {
+  flex: none;
+  width: 1400px;
+  height: 800px;
+  transform-origin: center;
+}

@@ -68,6 +68,11 @@ export interface LevelData {
   startDefenders: DefenderType[];
   /** Zelenina se odemkne před vlnou s tímto indexem (0 = první vlna). */
   unlocks: { wave: number; type: DefenderType }[];
+  /**
+   * Představit nové postavy kartou s animací (src/ui/intro.ts): před vlnou, ve které postava
+   * přijde poprvé (nebo se zelenina odemkne), se hra zastaví a ukáže se její karta.
+   */
+  intros?: boolean;
   waves: Spawn[][];
   /** Násobek rychlosti chůze fast foodu v jednotlivých vlnách (pozdější vlny jsou rychlejší). */
   waveSpeed?: number[];
@@ -162,6 +167,7 @@ export const LEVEL1: LevelData = {
   mouth: MOUTH,
   startWater: 120,
   startDefenders: ['mrkev'],
+  intros: true,
   unlocks: [{ wave: 1, type: 'porek' }],
   waveSpeed: [1, 1, 1.3, 1.5],
   waves: [

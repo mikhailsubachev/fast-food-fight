@@ -821,12 +821,17 @@ SPRITE_NAMES = sorted(
 BLOBS_PATH = ZDROJ / "platno-obrazky.json"
 
 
-def sprite_css(names: set[str], canvas: bool) -> str:
-    """Obrázky postav: na plátně odkazy na nahrané soubory, v samostatných stránkách vložené."""
+def sprite_css(names: set[str], canvas: bool, game: bool = False) -> str:
+    """
+    Obrázky postav: na plátně odkazy na nahrané soubory, ve hře odkazy na assets/postavy
+    (relativně k adrese hry), v samostatných stránkách vložené.
+    """
     out = [".sp{width:100%;height:100%;background:center/contain no-repeat}"]
     blobs = json.loads(BLOBS_PATH.read_text()) if canvas else {}
     for n in sorted(names):
-        if canvas:
+        if game:
+            url = f"assets/postavy/{n}.svg"
+        elif canvas:
             if n not in blobs:
                 raise SystemExit(f"obrázek {n} není nahraný na plátno (doplň {BLOBS_PATH.name})")
             url = blobs[n]
@@ -916,7 +921,7 @@ def weapon_icon(c: Card) -> str:
     return f'<span class="sp sp-{name}" style="width:{c.icon_size}px;height:{c.icon_size}px"></span>'
 
 
-def card_html(c: Card) -> str:
+def card_html(c: Card, screen: bool = True) -> str:
     color = GREEN if c.side == "obrance" else RED
     ribbon = "Nová zelenina!" if c.side == "obrance" else "Pozor, nový fast food!"
     tag = "Zelenina · obránce" if c.side == "obrance" else "Fast food · útočník"
@@ -924,12 +929,7 @@ def card_html(c: Card) -> str:
     cost = ""
     if c.cost is not None:
         cost = f'<div class="meter"><span class="m-label">Cena</span><span class="cost"><span class="drop">{DROP}</span>{c.cost}</span><span class="m-note">kapek vody</span></div>'
-    skill_img = c.skill[0]
-    return f"""
-<div class="screen">
-  <div class="screen-bg"></div>
-  <div class="hud"><span class="pill">{DROP}<b>180</b></span><span class="pill pill-wave">Vlna 1</span><span class="pill pill-round">II</span></div>
-  <div class="dim"></div>
+    card = f"""
   <div class="card">
     <div class="ribbon" style="background:{color}">{ribbon}</div>
     <div class="stage">
@@ -947,7 +947,14 @@ def card_html(c: Card) -> str:
       <p class="extra"><b style="color:{color}">{c.extra[0]}:</b> {c.extra[1]}</p>
       <div class="bottom"><span class="level">{c.level}</span><button type="button" class="btn">Jdeme na to! ▶</button></div>
     </div>
-  </div>
+  </div>"""
+    if not screen:
+        return card
+    return f"""
+<div class="screen">
+  <div class="screen-bg"></div>
+  <div class="hud"><span class="pill">{DROP}<b>180</b></span><span class="pill pill-wave">Vlna 1</span><span class="pill pill-round">II</span></div>
+  <div class="dim"></div>{card}
 </div>"""
 
 
@@ -1056,11 +1063,11 @@ FONTS = (
 )
 
 
-def styles(c: Card, canvas: bool) -> str:
+def styles(c: Card, canvas: bool, game: bool = False) -> str:
     names = {c.skill[0]} | {e.html.split("sp-")[1].split('"')[0] for e in c.scene if 'class="sp sp-' in e.html}
     if c.weapon and c.weapon[0].startswith("sp:"):
         names.add(c.weapon[0][3:])
-    css = "body{margin:0}\n" + BASE_CSS + "\n" + sprite_css(names, canvas) + "\n" + scene_css(c, "a" + c.key)
+    css = "body{margin:0}\n" + BASE_CSS + "\n" + sprite_css(names, canvas, game) + "\n" + scene_css(c, "a" + c.key)
     # šablona plátna používá {{…}}: v CSS se nesmí objevit dvě složené závorky za sebou
     while "}}" in css or "{{" in css:
         css = css.replace("}}", "} }").replace("{{", "{ {")
@@ -1121,6 +1128,32 @@ def plain_html(c: Card) -> str:
 """
 
 
+# Karta ve hře: jen karta (bez herní obrazovky a rozkresu), vložená do stínového DOM.
+GAME_DIR = ROOT / "public" / "assets" / "predstaveni"
+GAME_TYPE = {
+    "Mrkev": "mrkev",
+    "Porek": "porek",
+    "Cibule": "cibule",
+    "Brokolice": "brokolice",
+    "Hamburger": "hamburger",
+    "Hranolky": "hranolky",
+    "VelkyHamburger": "velkyHamburger",
+    "Lizatko": "lizatko",
+    "Kecup": "kecup",
+}
+GAME_CSS = f"""
+:host{{all:initial;display:block}}
+.card{{position:relative;left:auto;top:auto;margin:36px 10px 0;font-family:Nunito,sans-serif;color:{INK};text-align:left}}
+.btn:hover{{filter:brightness(1.05)}}
+.btn:active{{transform:translate(2px,2px);box-shadow:2px 2px 0 {INK}}}
+"""
+
+
+def game_fragment(c: Card) -> str:
+    """Karta pro hru (public/assets/predstaveni/<typ>.html): styl a karta 1380 × 740 px."""
+    return f"<style>\n{styles(c, False, True)}\n{GAME_CSS}</style>\n{card_html(c, screen=False)}\n"
+
+
 def slug(c: Card) -> str:
     return {
         "Mrkev": "mrkev",
@@ -1146,6 +1179,8 @@ def main() -> None:
         fname = f"Predstaveni{c.key}.dc.html"
         (ZDROJ / fname).write_text(dc_html(c))
         (ARTBOARDY / f"{i}-predstaveni-{slug(c)}.html").write_text(plain_html(c))
+        GAME_DIR.mkdir(parents=True, exist_ok=True)
+        (GAME_DIR / f"{GAME_TYPE[c.key]}.html").write_text(game_fragment(c))
         row = defenders if c.side == "obrance" else attackers
         canvas["boards"][fname] = {
             "h": BOARD_H,
