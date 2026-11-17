@@ -21,6 +21,7 @@ export const T = {
   locked: 'Zatím zamčeno',
   potato: 'Pan Brambora',
   potatoCount: (n: number) => `×${n}`,
+  potatoesLeft: (n: number) => `Páni Bramborové v zásobě: ${n}`,
   potatoReward: 'Zbylo ti přes 1000 kapek: máš nového Pana Bramboru!',
   upgrade: 'Vylepšit',
   maxLevel: 'Nejlepší',

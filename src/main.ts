@@ -40,6 +40,7 @@ const hud = new Hud(app, {
   onPause: () => pause(),
   onNow: () => game.startNow(),
 });
+hud.setPotatoes(progress.potatoes);
 const menus = new Menus(app, game, stage, view);
 menus.potatoStock = () => progress.potatoes;
 menus.onPotato = (p) => {
@@ -244,6 +245,7 @@ function frame(now: number): void {
     view.update(game, dt, now / 1000);
   }
   hud.update(game);
+  hud.setPotatoes(progress.potatoes);
   menus.refresh();
   stage.render();
   requestAnimationFrame(frame);

@@ -26,6 +26,8 @@ export class Hud {
   private readonly countdown: HTMLElement;
   private readonly countdownText: HTMLElement;
   private readonly banner: HTMLElement;
+  private readonly potatoPill: HTMLElement;
+  private readonly potatoValue: HTMLElement;
   private bannerTimer = 0;
   /** Voda, která už patří hráči, ale kapka ještě letí do počítadla. */
   private pendingWater = 0;
@@ -70,11 +72,30 @@ export class Hud {
       onFullscreenChange(() => fs.classList.toggle('on', isFullscreen()));
       right.append(fs);
     }
+    // Zásoba Panů Bramborů (i když je 0), aby hráč věděl, kolik jich ještě může postavit.
+    this.potatoPill = el('div', 'pill potatoes');
+    const potatoImg = document.createElement('img');
+    potatoImg.className = 'ico-potato';
+    potatoImg.src = `${import.meta.env.BASE_URL}assets/postavy/brambora-klid.svg`;
+    potatoImg.alt = '';
+    this.potatoValue = el('span', 'value', '');
+    this.potatoPill.append(potatoImg, this.potatoValue);
+    right.prepend(this.potatoPill);
     right.append(pause);
     bar.append(this.waterPill, mid, right);
 
     this.banner = el('div', 'banner');
     parent.append(bar, this.banner);
+  }
+
+  /** Kolik Panů Bramborů má hráč v zásobě. */
+  setPotatoes(n: number): void {
+    if (this.potatoValue.textContent === String(n)) return;
+    this.potatoValue.textContent = String(n);
+    this.potatoPill.classList.toggle('empty', n <= 0);
+    this.potatoPill.setAttribute('aria-label', T.potatoesLeft(n));
+    this.potatoPill.title = T.potatoesLeft(n);
+    replayAnimation(this.potatoPill, 'bump');
   }
 
   update(game: Game): void {

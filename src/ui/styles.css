@@ -709,3 +709,44 @@ button:active {
 .potato-reward img {
   height: 64px;
 }
+
+/* Zásoba Panů Bramborů vpravo nahoře (vidět je i nula). */
+.potatoes {
+  gap: 2px;
+  padding: 0 14px 0 6px;
+  color: #8a5530;
+}
+
+.potatoes .ico-potato {
+  display: block;
+  /* obrázek má kolem postavičky hodně prázdna: větší a přesahuje pilulku */
+  height: 64px;
+  margin: -9px -10px -9px -12px;
+}
+
+.potatoes.empty {
+  color: #a39a8e;
+}
+
+.potatoes.empty .ico-potato {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.potatoes.bump {
+  animation: bump 0.35s ease-out;
+}
+
+/* Telefon naležato (úzký): ukazatel brambor menší, aby se lišta vešla. */
+@media (max-width: 760px) {
+  .potatoes {
+    padding: 0 10px 0 2px;
+  }
+  .potatoes .ico-potato {
+    height: 52px;
+    margin: -4px -8px -4px -10px;
+  }
+  .hud-mid {
+    gap: 8px;
+  }
+}
