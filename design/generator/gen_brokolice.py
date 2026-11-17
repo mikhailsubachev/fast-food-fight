@@ -187,7 +187,7 @@ a{{color:#2E7D32}}a:hover{{color:#1B5E20}}
 <div style="flex:1;border-radius:12px;overflow:hidden;background:#EFE6DA">
 <img src="/_blob/BLOBID" alt="Dětská kresba: brokolice s velkou zelenou korunkou, rukama a nohama" style="width:100%;height:100%;object-fit:contain;display:block">
 </div>
-<span style="font-size:15px;color:#5A4A3A;font-weight:600">kresby/brokolice.png · popis v „Pan Brokolice.md“</span>
+<span style="font-size:15px;color:#5A4A3A;font-weight:600">kresby/obranci/brokolice.png · popis v „Pan Brokolice.md“</span>
 </div>
 <div style="{card};flex:1;position:relative;overflow:hidden;background:#8BB85A">
 {stage}

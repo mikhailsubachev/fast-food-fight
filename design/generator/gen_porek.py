@@ -192,7 +192,7 @@ a{{color:#2F7A2A}}a:hover{{color:#1E5A1C}}
 <div style="flex:1;border-radius:12px;overflow:hidden;background:#EEE">
 <img src="/_blob/4c7370532aa413c6ae56e3f6ae93bcf1" alt="Dětská kresba: pórek s rukama a nohama" style="width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block">
 </div>
-<span style="font-size:15px;color:#5A4A3A;font-weight:600">kresby/porek.png · luk a pórkošíp dokreslené</span>
+<span style="font-size:15px;color:#5A4A3A;font-weight:600">kresby/obranci/porek.png · luk a pórkošíp dokreslené</span>
 </div>
 <div style="{card};flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:{{{{stage}}}};overflow:hidden">
 {stage_bg}

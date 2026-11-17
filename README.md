@@ -32,6 +32,8 @@ Zem všech úrovní (trávník s ozdobami, cesta, kaluž, školní věci, zbytky
 docs/                  plány a požadavky
 design/                návrhy grafiky z plátna (listy postav, obrazovka 1. úrovně)
 kresby/                originální fotky dětských kreseb (vstup pro grafiku)
+  obranci/              zelenina: mrkev, pórek, cibule, brokolice, brambora
+  utocnici/             fast food: hamburger, hranolky, lízátko, kečup, dort
 src/
   core/                herní smyčka, stav hry, voda, životy pusy, ukládání postupu
   scene/               Three.js: renderer, pevná kamera, záhon, cesta, překážky, papírové loutky

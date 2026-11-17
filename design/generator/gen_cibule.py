@@ -63,12 +63,29 @@ def onion(face_="smile", pose="rest", tint=None, shine=False, spikes=False, stra
     elif pose=="up": a=arm(72,252,34,196)+arm(228,250,266,194)
     elif pose=="clench": a=arm(70,270,34,292)+arm(230,270,266,292)
     return back+legs()+sprouts(straight)+body(tint,shine,spikes)+face(face_)+a+front
-def cloud(cx,cy,s=1.0,op=.78):
-    cs=[(-60,10,40),(-24,-16,46),(26,-18,44),(62,8,38),(-34,26,36),(10,30,40),(46,30,30)]
-    a="".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#B5DD7A" stroke="{INK}" stroke-width="7"/>' for x,y,r in cs)
-    b="".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#B5DD7A"/>' for x,y,r in cs)
-    hl='<path d="M-40,-4 q10,-12 22,-4 M14,-26 q12,-10 24,0" stroke="#DDF2B5" stroke-width="6" fill="none" stroke-linecap="round"/>'
-    return f'<g transform="translate({cx},{cy}) scale({s})" opacity="{op}">{a}{b}{hl}</g>'
+def cloud(cx,cy,s=1.0,op=.85,front=False):
+    """Stink fog: a billowing wave of puffs that rolls up and out from the ground around (cx,cy) and curls over at the ends.
+    front=True draws only the lower front puffs (to lay over a figure standing inside the fog)."""
+    import math as _m
+    puffs=[]
+    for i in range(11):
+        t=i/10; a=_m.radians(200-220*t)
+        x=_m.cos(a)*128; y=-58-_m.sin(a)*112
+        r=26+18*_m.sin(t*_m.pi)+(4 if i%2 else 0)
+        puffs.append((x,y,r))
+    if front: puffs=[p for p in puffs if p[1]>-70]
+    rim="".join(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{r:.0f}" fill="#B5DD7A" stroke="{INK}" stroke-width="6"/>' for x,y,r in puffs)
+    body="".join(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{r:.0f}" fill="#B5DD7A"/>' for x,y,r in puffs)
+    hi="".join(f'<circle cx="{x-r*0.28:.0f}" cy="{y-r*0.3:.0f}" r="{r*0.45:.0f}" fill="#DDF2B5"/>' for x,y,r in puffs[1:-1:2])
+    curls=("" if front else
+           f'<path d="M-150,-10 q-22,-30 4,-46 q24,-10 30,12 q4,18 -14,20" stroke="#6E9B2E" stroke-width="7" fill="none" stroke-linecap="round"/>'
+           f'<path d="M150,-10 q22,-30 -4,-46 q-24,-10 -30,12 q-4,18 14,20" stroke="#6E9B2E" stroke-width="7" fill="none" stroke-linecap="round"/>')
+    wisps=("" if front else "".join(
+           f'<path d="M{x},{y} q-14,-18 0,-34 q14,-16 0,-32" stroke="#8BC34A" stroke-width="6" fill="none" stroke-linecap="round" opacity=".8"/>'
+           for x,y in [(-70,-176),(6,-196),(78,-178)]))
+    swirl=("" if front else
+           '<path d="M-96,-96 q20,-26 48,-12 M50,-110 q26,-14 46,8" stroke="#DDF2B5" stroke-width="7" fill="none" stroke-linecap="round"/>')
+    return f'<g transform="translate({cx},{cy}) scale({s})" opacity="{op}">{rim}{body}{hi}{curls}{swirl}{wisps}</g>'
 def fly(x,y): return f'<g transform="translate({x},{y})"><ellipse cx="-5" cy="-6" rx="6" ry="4" fill="#FFFFFF" fill-opacity=".85" stroke="{INK}" stroke-width="1.6"/><ellipse cx="5" cy="-6" rx="6" ry="4" fill="#FFFFFF" fill-opacity=".85" stroke="{INK}" stroke-width="1.6"/><circle r="5" fill="{INK}"/></g>'
 def ground(): return gen.tile()+'<ellipse cx="150" cy="390" rx="62" ry="12" fill="#3A2210" opacity=".18"/>'
 def snail_icon(x,y,s=1.0):
@@ -100,8 +117,8 @@ grow=wrap(grow_inner, vb="0 -30 300 320", label="Pan Cibule vyrůstá")
 idle=wrap(ground()+'<g transform="rotate(-2 150 380)">'+onion("smile",front=squiggle(232,300,40,-10)+squiggle(40,320,36,15))+'</g>', label="Pan Cibule v klidu")
 shake=f'<path d="M22,250 l-12,4 M22,270 l-14,0 M22,290 l-12,-4 M278,250 l12,4 M278,270 l14,0 M278,290 l12,-4" stroke="{INK}" stroke-width="4" stroke-linecap="round"/>'
 bristle=wrap(ground()+onion("bristle","clench",spikes=True,straight=True,front=shake), vb="-10 0 320 430", label="Pan Cibule se naježí")
-burst=(cloud(150,330,1.55,.82)+stink_lines(8,4,1.15)+fly(52,150)+fly(262,170)+gf.txt(176,104,"PŠŠŠ!","#8BC34A",38,8))
-puffc=wrap(ground()+onion("puff","up",back="")+burst, vb="-20 0 340 430", label="Oblak smradu")
+burst=(cloud(150,400,1.12,.9,front=True)+stink_lines(6,4,1.25)+fly(52,150)+fly(262,170)+gf.txt(176,104,"PŠŠŠ!","#8BC34A",38,8))
+puffc=wrap(ground()+onion("puff","up",back=cloud(150,400,1.12,.9))+burst, vb="-30 -20 360 450", label="Oblak smradu")
 fry=f'<g transform="translate(176,282) rotate(-30)"><rect x="-6" y="-34" width="12" height="54" rx="3" fill="#FFD25A" stroke="{INK}" stroke-width="3.5"/></g>'
 frozen=wrap(ground()+onion("frozen",tint="ice",front=fry+gen.ice_bits), label="Pan Cibule ztuhl")
 joy=wrap(ground().replace('rx="62"','rx="42"')+'<g transform="translate(0,-24)">'+onion("joy","up",front=star(40,150,16)+star(268,124,13)+star(36,280,10)+star(272,290,14))+'</g>', vb="0 -10 300 440", label="Pan Cibule se raduje")
@@ -115,17 +132,17 @@ parts=[("Nať","9 stébel, při naježení se postaví",wrap(sprouts(),vb="60 18
        ("Ruka","2×, jedna mává",wrap(arm(230,258,262,206),vb="222 194 52 72",label="Ruka")),
        ("Nohy","s kořínky",wrap(legs(),vb="102 356 100 42",label="Nohy")),
        ("Slupky","naježení: odstávají",wrap(body(spikes=True),vb="20 110 260 300",label="Naježené slupky")),
-       ("Oblak smradu","zelený mrak + vlnky",wrap(cloud(0,0,1.0,1.0)+squiggle(-70,-56,40,-10)+squiggle(40,-60,40,12),vb="-112 -90 224 160",label="Oblak smradu"))]
+       ("Mlha smradu","vlna, valí se nahoru",wrap(cloud(0,0,1.0,1.0),vb="-190 -240 380 270",label="Vlna smradlavé mlhy"))]
 poses=[("Vyrůstání","4 s, nejdřív vykoukne nať",grow),("Klid","pohupuje se, kolem trochu voní",idle),
-       ("Naježení","1× za 6 s: slupky odstávají, třese se",bristle),("Oblak smradu","„Pšššš!“ zelený mrak kolem cibule",puffc),
+       ("Naježení","1× za 6 s: slupky odstávají, třese se",bristle),("Vlna mlhy","„Pšššš!“ z cibule se vyvalí vlna zelené mlhy",puffc),
        ("Ztuhnutí","po zásahu hranolkou 2 s modrý",frozen),("Radost","výskok, když fast food uteče",joy),
        ("Úroveň 2","větší oblak, zpomalení déle",lvl2)]
 
 # ability cards: fast food in the cloud
-fx_burger=wrap(gf.ground()+cloud(150,300,1.45,.55)+gf.g(burger_sneeze,"rotate(-8 150 388)")
+fx_burger=wrap(gf.ground()+cloud(150,404,1.1,.8)+gf.g(burger_sneeze,"rotate(-8 150 388)")+cloud(150,404,1.1,.85,front=True)
                +gf.txt(176,96,"HAPČÍ!","#8BC34A",40,10)+snail_icon(70,120,1.3)+f'<text x="70" y="170" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="26" fill="{INK}">× ½</text>'
                +squiggle(220,240,40,-14)+squiggle(40,280,36,10), vb="0 30 300 400", label="Hamburger kýchá ve smradu")
-fx_fries=wrap(gf.ground()+cloud(150,310,1.45,.55)+gf.g(fries_choke,"translate(0,-6)")
+fx_fries=wrap(gf.ground()+cloud(150,404,1.1,.8)+gf.g(fries_choke,"translate(0,-6)")+cloud(150,404,1.1,.85,front=True)
               +gf.txt(166,104,"KCH KCH!","#8BC34A",34,8)+snail_icon(64,128,1.3)+f'<text x="64" y="178" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="26" fill="{INK}">× ½</text>'
               +squiggle(232,236,40,-14)+squiggle(36,300,36,10), vb="0 30 300 400", label="Hranolky se dusí ve smradu")
 
@@ -149,7 +166,7 @@ def stage_svg():
             s.append(hx(cx,cy))
     return "".join(s)
 
-stage_over=(cloud(400,350,2.6,.42)
+stage_over=(cloud(400,430,1.9,.62)
             +'<ellipse cx="400" cy="300" rx="230" ry="150" fill="none" stroke="#6E9B2E" stroke-width="4" stroke-dasharray="14 10"/>'
             +"".join(squiggle(x,y,46,rot) for x,y,rot in [(220,250,-10),(560,230,12),(300,440,6),(520,430,-8),(250,350,14),(560,340,-12)]))
 
@@ -183,7 +200,7 @@ a{{color:#5C7F1F}}a:hover{{color:#3F5A12}}
 <div style="display:flex;flex-direction:column;gap:6px">
 <span style="font-size:16px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#5C7F1F">Fast Food Fight · obránce · nový</span>
 <h1 style="margin:0;font-family:'Baloo 2',sans-serif;font-size:76px;font-weight:800;line-height:.95">Pan Cibule</h1>
-<p style="margin:0;font-size:19px;font-weight:600;color:#5A4A3A;max-width:660px">Jednou za čas se naježí a vypustí oblak smradu. Fast food v oblaku kýchá, dusí se a na chvíli zpomalí. Sám nikoho nezasáhne, ale mrkve a pórky pak mají víc času.</p>
+<p style="margin:0;font-size:19px;font-weight:600;color:#5A4A3A;max-width:660px">Jednou za čas se naježí a vypustí vlnu smradlavé mlhy. Fast food v oblaku kýchá, dusí se a na chvíli zpomalí. Sám nikoho nezasáhne, ale mrkve a pórky pak mají víc času.</p>
 </div>
 <div style="display:flex;gap:16px">
 {chips}
@@ -195,7 +212,7 @@ a{{color:#5C7F1F}}a:hover{{color:#3F5A12}}
 <div style="flex:1;border-radius:12px;overflow:hidden;background:#EFE6DA">
 <img src="/_blob/dfd40d40fc4d1201dea6028b44dafdbc" alt="Dětská kresba: cibule s natí, rukama, nohama a zelenými vlnkami smradu kolem" style="width:100%;height:100%;object-fit:contain;display:block">
 </div>
-<span style="font-size:15px;color:#5A4A3A;font-weight:600">kresby/pan-cibule.png · popis v „Pan cibule.md“</span>
+<span style="font-size:15px;color:#5A4A3A;font-weight:600">kresby/obranci/pan-cibule.png · popis v „Pan cibule.md“</span>
 </div>
 <div style="{card};flex:1;position:relative;overflow:hidden;background:#8BB85A">
 {stage}
@@ -221,18 +238,18 @@ a{{color:#5C7F1F}}a:hover{{color:#3F5A12}}
 <div style="display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));gap:18px">
 '''
     for i,(t,ds,s) in enumerate(poses):
-        bg="#E7F4FB" if t=="Ztuhnutí" else ("#FFF4D6" if t=="Úroveň 2" else ("#EEF7DC" if t in ("Naježení","Oblak smradu") else "#FFFFFF"))
+        bg="#E7F4FB" if t=="Ztuhnutí" else ("#FFF4D6" if t=="Úroveň 2" else ("#EEF7DC" if t in ("Naježení","Vlna mlhy") else "#FFFFFF"))
         h+=f'''<div style="{card};background:{bg};padding:14px 12px 16px;display:flex;flex-direction:column;gap:6px">
 <div style="height:250px;display:flex;align-items:center;justify-content:center">{psvg(s)}</div>
 <span style="font-family:'Baloo 2',sans-serif;font-size:19px;font-weight:800;line-height:1.1">{i+1}. {t}</span>
 <span style="font-size:13.5px;font-weight:600;color:#5A4A3A;line-height:1.3">{ds}</span>
 </div>
 '''
-    steps=[("Naježí se","každých 6 s, jen když je fast food v dosahu"),("Pšššš!","kolem cibule se nafoukne zelený oblak, asi 2 políčka"),("Kýchání","fast food v oblaku kýchá a dusí se, jde 2× pomaleji"),("Vyvětrá se","po 3 s oblak zmizí a fast food zase zrychlí")]
+    steps=[("Naježí se","každých 6 s, jen když je fast food v dosahu"),("Pšššš!","z cibule se do stran a nahoru vyvalí vlna zelené mlhy, asi 2 políčka"),("Kýchání","fast food v oblaku kýchá a dusí se, jde 2× pomaleji"),("Vyvětrá se","po 3 s oblak zmizí a fast food zase zrychlí")]
     h+=f'''</div>
 </div>
 <div style="display:flex;flex-direction:column;gap:14px">
-<span style="font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800">Schopnost: oblak smradu</span>
+<span style="font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800">Schopnost: vlna smradlavé mlhy</span>
 <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:20px">
 <div style="{card};background:#EEF7DC;padding:14px;display:flex;flex-direction:column;gap:6px">
 <div style="height:250px;display:flex;align-items:center;justify-content:center">{psvg(fx_burger,250)}</div>

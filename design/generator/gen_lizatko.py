@@ -162,7 +162,7 @@ a{{color:#B4232D}}a:hover{{color:#8A1A22}}
 <div style="flex:1;border-radius:12px;overflow:hidden;background:#EFE6DA">
 <img src="/_blob/49cc33675ba0235d83ef42b01ef7c31d" alt="Dvě dětské kresby lízátka: v klidu a s malými lízátky v rukou" style="width:100%;height:100%;object-fit:contain;display:block">
 </div>
-<span style="font-size:15px;color:#5A4A3A;font-weight:600">kresby/lizatko-zaklad.png a lizatko-utok.png · popis v „Lízátko.md“</span>
+<span style="font-size:15px;color:#5A4A3A;font-weight:600">kresby/utocnici/lizatko-zaklad.png a lizatko-utok.png · popis v „Lízátko.md“</span>
 </div>
 <div style="{card};flex:1;position:relative;overflow:hidden;background:#8BB85A">
 {stage}

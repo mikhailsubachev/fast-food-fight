@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Lízátko – představení</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&amp;family=Bangers&amp;family=Nunito:wght@500;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+
+.board{width:1680px;height:1560px;box-sizing:border-box;padding:44px 40px;font-family:Nunito,sans-serif;color:#2B2118;display:flex;flex-direction:column;gap:26px;overflow:hidden}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:32px}
+.head h1{margin:0;font-family:'Baloo 2',sans-serif;font-size:60px;font-weight:800;line-height:.95}
+.kicker{font-size:16px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.head p{margin:0;font-size:18px;font-weight:600;color:#5A4A3A;max-width:700px}
+.screen{position:relative;width:1600px;height:900px;border:4px solid #2B2118;border-radius:24px;overflow:hidden;box-shadow:6px 6px 0 #2B2118;flex:none}
+.screen-bg{position:absolute;inset:0;background-color:#8BB85A;background-image:radial-gradient(circle at 20% 30%,#9CC765 0 12%,transparent 13%),radial-gradient(circle at 70% 70%,#9CC765 0 15%,transparent 16%),radial-gradient(circle at 85% 20%,#A5CF6E 0 9%,transparent 10%)}
+.screen-bg::after{content:'';position:absolute;left:-40px;right:-40px;top:420px;height:110px;background:#D8B47E;border-top:6px solid #8C6A3E;border-bottom:6px solid #8C6A3E;transform:rotate(-4deg)}
+.hud{position:absolute;top:18px;left:22px;right:22px;display:flex;justify-content:space-between}
+.pill{display:flex;align-items:center;gap:8px;height:52px;padding:0 18px;background:#fff;border:3px solid #2B2118;border-radius:26px;font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;color:#3D7FC0}
+.pill svg{width:28px;height:28px}
+.pill-wave{color:#2B2118}
+.pill-round{width:52px;padding:0;justify-content:center;color:#2B2118}
+.dim{position:absolute;inset:0;background:rgba(43,33,24,.5)}
+.card{position:absolute;left:110px;top:92px;width:1380px;height:740px;box-sizing:border-box;padding:46px 46px 40px;background:#FFFBF2;border:5px solid #2B2118;border-radius:38px;box-shadow:10px 10px 0 #2B2118;display:flex;gap:44px}
+.ribbon{position:absolute;left:50%;top:-30px;transform:translateX(-50%) rotate(-2deg);padding:8px 40px;border:4px solid #2B2118;border-radius:18px;box-shadow:4px 4px 0 #2B2118;color:#fff;font-family:'Baloo 2',sans-serif;font-size:34px;font-weight:800;white-space:nowrap}
+.stage{position:relative;flex:none;width:640px;height:640px;border:4px solid #2B2118;border-radius:30px;overflow:hidden;box-sizing:content-box;margin-top:4px}
+.stage-bg{position:absolute;inset:0;width:100%;height:100%}
+.info{flex:1;display:flex;flex-direction:column;gap:11px;min-width:0;padding-top:6px}
+.tag{align-self:flex-start;font-size:15px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border:3px solid;border-radius:999px;padding:4px 14px;background:#fff}
+.name{margin:0;font-family:'Baloo 2',sans-serif;font-size:76px;font-weight:800;line-height:.9}
+.sentence{margin:0;font-size:25px;font-weight:700;line-height:1.3}
+.skill{display:flex;align-items:center;gap:16px;padding:12px 16px;background:#fff;border:3px solid #2B2118;border-radius:20px;font-size:20px;font-weight:600;line-height:1.3}
+.skill b{font-family:'Baloo 2',sans-serif;font-size:25px}
+.skill-ico{flex:none;width:92px;height:92px;border:4px solid;border-radius:50%;background:#FFF6DC;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.skill-ico .sp{flex:none}
+.w-big{display:flex;width:80%;height:80%;align-items:center;justify-content:center}
+.w-big svg{width:100%;height:100%}
+.skill-kicker{font-size:14px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.meters{display:flex;flex-direction:column;gap:6px;margin-top:2px}
+.meter{display:flex;align-items:center;gap:14px}
+.weapon{font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;white-space:nowrap}
+.w-ico{flex:none;width:86px;height:34px;display:flex;align-items:center;justify-content:center}
+.w-ico .sp{width:100%;height:100%}
+.w-none{font-family:'Baloo 2',sans-serif;font-size:28px;font-weight:800;color:#A39A8E}
+.m-label{width:108px;font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800}
+.cells{display:flex;gap:6px}
+.cell{width:30px;height:24px;border:3px solid #2B2118;border-radius:8px;background:#EFE6D4}
+.m-note{font-size:18px;font-weight:700;color:#6B5B4B}
+.cost{display:flex;align-items:center;gap:6px;font-family:'Baloo 2',sans-serif;font-size:30px;font-weight:800;color:#3D7FC0}
+.cost svg,.drop svg{width:30px;height:30px;display:block}
+.extra{margin:2px 0 0;font-size:20px;font-weight:700;line-height:1.3}
+.bottom{margin-top:auto;display:flex;justify-content:space-between;align-items:center}
+.level{font-size:17px;font-weight:800;color:#6B5B4B;letter-spacing:.06em;text-transform:uppercase}
+.btn{cursor:pointer;color:#2B2118;padding:12px 30px;background:#F7C744;border:4px solid #2B2118;border-radius:22px;box-shadow:4px 4px 0 #2B2118;font-family:'Baloo 2',sans-serif;font-size:32px;font-weight:800}
+.fx-reward{display:flex;align-items:center;justify-content:center;gap:4px;height:100%;font-family:'Baloo 2',sans-serif;font-size:36px;font-weight:800;color:#2F7BC6;-webkit-text-stroke:1px #fff}
+.fx-drop svg{width:34px;height:34px;display:block}
+.fx-bubble{position:relative;height:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#fff;border:4px solid #2B2118;border-radius:28px;font-family:'Baloo 2',sans-serif;font-size:32px;font-weight:800}
+.fx-bubble::after{content:'';position:absolute;bottom:-16px;left:30px;width:22px;height:22px;background:#fff;border-right:4px solid #2B2118;border-bottom:4px solid #2B2118;transform:rotate(45deg) skew(10deg,10deg)}
+.heart{width:100%;height:100%;display:block}
+.lifebar{width:100%;height:100%;box-sizing:border-box;background:rgba(255,255,255,.9);border:3px solid #2B2118;border-radius:14px}
+.steps{display:flex;gap:24px}
+.step{flex:1;display:flex;flex-direction:column;gap:12px}
+.mini{position:relative;width:382px;height:300px;border:3px solid #2B2118;border-radius:18px;overflow:hidden;background:#9CC765}
+.mini-in{position:absolute;left:0;top:-66px;width:640px;height:640px;transform:scale(.597);transform-origin:0 0}
+.step-text{display:flex;gap:12px;font-size:17px;font-weight:600;line-height:1.35}
+.step-text b{font-family:'Baloo 2',sans-serif;font-size:19px}
+.step-text i{color:#6B5B4B;font-style:normal;font-weight:700;font-size:15px}
+.num{flex:none;width:36px;height:36px;border-radius:50%;border:3px solid #2B2118;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',sans-serif;font-size:19px;font-weight:800}
+.foot{font-size:16px;font-weight:700;color:#5A4A3A;line-height:1.4;margin:0}
+
+.sp{width:100%;height:100%;background:center/contain no-repeat}
+.sp-lizatko-krok1{background-image:url(/_blob/bfee04779ffb2674bae026b51890e4be)}
+.sp-lizatko-krok2{background-image:url(/_blob/85803b67cd4b3d07bee2e379df5f96e3)}
+.sp-lizatko-naprah{background-image:url(/_blob/73683052fe28dec613cf44fd1ee54c9e)}
+.sp-lizatko-toci{background-image:url(/_blob/7f65838633c5736d7312f793bbd4adfe)}
+.sp-mrkev-klid{background-image:url(/_blob/6fcdcce0dc225552be6b557378c46d77)}
+.sp-mrkev-lepkava{background-image:url(/_blob/67e51306d6ffd1a8ce13f5dbe8b2cacd)}
+.sp-mrkev-lepkava2{background-image:url(/_blob/789bc038039687c6060b904fb1d25b99)}
+.sp-porek-klid{background-image:url(/_blob/01f3922c410390f63e605a1be3277af6)}
+.sp-porek-lepkavy{background-image:url(/_blob/a0ac48a6158a461294e0ba99af7ccbed)}
+.sp-porek-lepkavy2{background-image:url(/_blob/0d13aa99656bcd8eebcdfdf6937e686d)}
+@keyframes aLizatko-0{
+0.000%{transform:translate(95.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00}
+100.000%{transform:translate(95.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00}
+}
+@keyframes aLizatko-1{
+0.000%{transform:translate(365.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00}
+100.000%{transform:translate(365.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00}
+}
+@keyframes aLizatko-2{
+0.000%{transform:translate(144.0px,240.0px) rotate(0.0deg) scale(0.300);opacity:0.00}
+44.565%{transform:translate(144.0px,240.0px) rotate(0.0deg) scale(0.300);opacity:0.00}
+47.174%{transform:translate(144.0px,240.0px) rotate(27.0deg) scale(0.525);opacity:1.00}
+53.261%{transform:translate(144.0px,240.0px) rotate(90.0deg) scale(1.050);opacity:1.00}
+53.913%{transform:translate(144.0px,240.0px) rotate(90.0deg) scale(1.050);opacity:1.00}
+56.522%{transform:translate(144.0px,240.0px) rotate(90.0deg) scale(1.050);opacity:0.00}
+100.000%{transform:translate(144.0px,240.0px) rotate(90.0deg) scale(1.050);opacity:0.00}
+}
+@keyframes aLizatko-3{
+0.000%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+51.074%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+51.087%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+72.813%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+72.826%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-4{
+0.000%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+72.813%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+72.826%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+90.204%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+90.217%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-5{
+0.000%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+51.074%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+51.087%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+90.204%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+90.217%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+99.987%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+100.000%{transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-6{
+0.000%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+51.074%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+51.087%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+72.813%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+72.826%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-7{
+0.000%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+72.813%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+72.826%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+90.204%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+90.217%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-8{
+0.000%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+51.074%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+51.087%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+90.204%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+90.217%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+99.987%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00}
+100.000%{transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-9{
+0.000%{transform:translate(-262.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+41.291%{transform:translate(230.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+41.304%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+44.552%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+44.565%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+63.043%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(605.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-10{
+0.000%{transform:translate(-262.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+41.304%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+44.552%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+44.565%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+63.030%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+63.043%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(605.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-11{
+0.000%{transform:translate(-262.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+5.422%{transform:translate(-198.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+5.435%{transform:translate(-197.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+10.857%{transform:translate(-133.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+10.870%{transform:translate(-132.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+16.291%{transform:translate(-68.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+16.304%{transform:translate(-67.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+21.726%{transform:translate(-3.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+21.739%{transform:translate(-2.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+27.161%{transform:translate(61.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+27.174%{transform:translate(62.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+32.596%{transform:translate(126.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+32.609%{transform:translate(127.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+38.030%{transform:translate(191.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+38.043%{transform:translate(192.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+41.304%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+63.030%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+63.043%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+68.465%{transform:translate(285.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+68.478%{transform:translate(286.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+73.900%{transform:translate(340.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+73.913%{transform:translate(341.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+79.335%{transform:translate(395.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+79.348%{transform:translate(396.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+84.770%{transform:translate(450.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+84.783%{transform:translate(451.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.117%{transform:translate(494.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.130%{transform:translate(495.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(605.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-12{
+0.000%{transform:translate(-262.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+5.422%{transform:translate(-198.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+5.435%{transform:translate(-197.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+10.857%{transform:translate(-133.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+10.870%{transform:translate(-132.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+16.291%{transform:translate(-68.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+16.304%{transform:translate(-67.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+21.726%{transform:translate(-3.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+21.739%{transform:translate(-2.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+27.161%{transform:translate(61.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+27.174%{transform:translate(62.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+32.596%{transform:translate(126.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+32.609%{transform:translate(127.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+38.030%{transform:translate(191.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+38.043%{transform:translate(192.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+41.291%{transform:translate(230.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+41.304%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+63.043%{transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+68.465%{transform:translate(285.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+68.478%{transform:translate(286.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+73.900%{transform:translate(340.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+73.913%{transform:translate(341.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+79.335%{transform:translate(395.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+79.348%{transform:translate(396.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+84.770%{transform:translate(450.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00}
+84.783%{transform:translate(451.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(605.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-13{
+0.000%{transform:translate(-240.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+41.304%{transform:translate(254.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+63.043%{transform:translate(254.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.117%{transform:translate(517.9px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.130%{transform:translate(518.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(628.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-14{
+0.000%{transform:translate(-232.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+41.304%{transform:translate(262.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+63.043%{transform:translate(262.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.117%{transform:translate(525.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.130%{transform:translate(526.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(636.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-15{
+0.000%{transform:translate(-204.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+41.304%{transform:translate(290.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+63.043%{transform:translate(290.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.117%{transform:translate(553.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.130%{transform:translate(554.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(664.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-16{
+0.000%{transform:translate(-176.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+41.304%{transform:translate(318.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+63.043%{transform:translate(318.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.117%{transform:translate(581.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.130%{transform:translate(582.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(692.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-17{
+0.000%{transform:translate(-148.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+41.304%{transform:translate(346.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+63.043%{transform:translate(346.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.117%{transform:translate(609.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.130%{transform:translate(610.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(720.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-18{
+0.000%{transform:translate(-120.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+41.304%{transform:translate(374.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+63.043%{transform:translate(374.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.117%{transform:translate(637.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.130%{transform:translate(638.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(748.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-19{
+0.000%{transform:translate(-92.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+41.304%{transform:translate(402.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+63.043%{transform:translate(402.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.117%{transform:translate(665.9px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00}
+89.130%{transform:translate(666.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(776.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+@keyframes aLizatko-20{
+0.000%{transform:translate(450.0px,141.0px) rotate(0.0deg) scale(0.700);opacity:0.00}
+53.261%{transform:translate(450.0px,141.0px) rotate(0.0deg) scale(0.700);opacity:0.00}
+55.435%{transform:translate(450.0px,134.3px) rotate(0.0deg) scale(0.900);opacity:1.00}
+56.522%{transform:translate(450.0px,131.0px) rotate(0.0deg) scale(1.000);opacity:1.00}
+72.826%{transform:translate(450.0px,131.0px) rotate(0.0deg) scale(1.000);opacity:1.00}
+75.000%{transform:translate(450.0px,131.0px) rotate(0.0deg) scale(1.000);opacity:0.00}
+100.000%{transform:translate(450.0px,131.0px) rotate(0.0deg) scale(1.000);opacity:0.00}
+}
+</style>
+</helmet>
+<div class="board" style="background:{{paper}}">
+<div class="head">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="kicker" style="color:#C8402F">Fast Food Fight · představení · útočník</span>
+<h1>Lízátko – představení</h1>
+</div>
+<p>Karta se ukáže, když Lízátko přijde do hry poprvé, a hra se zatím zastaví. V okénku běží animace dokola (4.6 s, na artboardu začíná krokem 2), tlačítko kartu zavře. Přijde ve 2. úrovni.</p>
+</div>
+
+<div class="screen">
+  <div class="screen-bg"></div>
+  <div class="hud"><span class="pill"><svg viewBox="0 0 24 24"><path d="M12 2 C12 2 4.5 11 4.5 15.5 A7.5 7.5 0 0 0 19.5 15.5 C19.5 11 12 2 12 2 Z" fill="#3D9BE0" stroke="#2B2118" stroke-width="1.8"/><path d="M8.5 15 Q8.5 11.5 10.5 9" stroke="#CDEBFF" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg><b>180</b></span><span class="pill pill-wave">Vlna 1</span><span class="pill pill-round">II</span></div>
+  <div class="dim"></div>
+  <div class="card">
+    <div class="ribbon" style="background:#C8402F">Pozor, nový fast food!</div>
+    <div class="stage">
+<svg class="stage-bg" viewBox="0 0 640 640" preserveAspectRatio="none"><rect width="640" height="640" fill="#9CC765"/><path d="M-10,472 C160,458 300,484 450,468 S620,478 660,470 L660,584 C500,596 330,576 180,590 S20,580 -10,586 Z" fill="#D8B47E" stroke="#8C6A3E" stroke-width="5"/><path d="M-10,530 C200,518 420,542 660,528" stroke="#E6C795" stroke-width="10" fill="none" stroke-dasharray="2 26" stroke-linecap="round"/><path d="M60,90 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180,60 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M330,120 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M520,80 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M600,240 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M560,620 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M300,610 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40,600 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M450,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="180" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="120" cy="180" r="2" fill="#F7C744"/><circle cx="590" cy="150" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="590" cy="150" r="2" fill="#F7C744"/><circle cx="250" cy="620" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="250" cy="620" r="2" fill="#F7C744"/><circle cx="470" cy="600" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="470" cy="600" r="2" fill="#F7C744"/></svg>
+<div style="position:absolute;left:0;top:0;width:210.0px;height:104.0px;transform-origin:105.0px 52.0px;animation:aLizatko-0 4.6s linear -2.20s infinite;transform:translate(95.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg viewBox="0 0 210 104"><polygon points="52.5,2 157.5,2 208,52.0 157.5,102 52.5,102 2,52.0" fill="#B9DC86" stroke="#7FA84A" stroke-width="3"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:210.0px;height:104.0px;transform-origin:105.0px 52.0px;animation:aLizatko-1 4.6s linear -2.20s infinite;transform:translate(365.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg viewBox="0 0 210 104"><polygon points="52.5,2 157.5,2 208,52.0 157.5,102 52.5,102 2,52.0" fill="#B9DC86" stroke="#7FA84A" stroke-width="3"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:400.0px;height:360.0px;transform-origin:200.0px 180.0px;animation:aLizatko-2 4.6s linear -2.20s infinite;transform:translate(144.0px,240.0px) rotate(33.8deg) scale(0.581);opacity:1.00"><svg viewBox="0 0 400 360"><ellipse cx="200" cy="180" rx="190" ry="171" fill="#FF7FB0" fill-opacity=".18" stroke="#E8558E" stroke-width="10" stroke-dasharray="4 18" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;animation:aLizatko-3 4.6s linear -2.20s infinite;opacity:0"><div class="sp sp-mrkev-lepkava"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;animation:aLizatko-4 4.6s linear -2.20s infinite;opacity:0"><div class="sp sp-mrkev-lepkava2"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;animation:aLizatko-5 4.6s linear -2.20s infinite;transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-mrkev-klid"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;animation:aLizatko-6 4.6s linear -2.20s infinite;opacity:0"><div class="sp sp-porek-lepkavy"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;animation:aLizatko-7 4.6s linear -2.20s infinite;opacity:0"><div class="sp sp-porek-lepkavy2"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;animation:aLizatko-8 4.6s linear -2.20s infinite;transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-porek-klid"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;animation:aLizatko-9 4.6s linear -2.20s infinite;opacity:0"><div class="sp sp-lizatko-naprah"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;animation:aLizatko-10 4.6s linear -2.20s infinite;transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-lizatko-toci"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;animation:aLizatko-11 4.6s linear -2.20s infinite;opacity:0"><div class="sp sp-lizatko-krok1"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;animation:aLizatko-12 4.6s linear -2.20s infinite;opacity:0"><div class="sp sp-lizatko-krok2"></div></div>
+<div style="position:absolute;left:0;top:0;width:180.0px;height:36.0px;transform-origin:90.0px 18.0px;animation:aLizatko-13 4.6s linear -2.20s infinite;transform:translate(254.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aLizatko-14 4.6s linear -2.20s infinite;transform:translate(262.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aLizatko-15 4.6s linear -2.20s infinite;transform:translate(290.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aLizatko-16 4.6s linear -2.20s infinite;transform:translate(318.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aLizatko-17 4.6s linear -2.20s infinite;transform:translate(346.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aLizatko-18 4.6s linear -2.20s infinite;transform:translate(374.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;animation:aLizatko-19 4.6s linear -2.20s infinite;transform:translate(402.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:190.0px;height:64.0px;transform-origin:95.0px 64.0px;animation:aLizatko-20 4.6s linear -2.20s infinite;opacity:0"><div class="fx-bubble fx-tail-left">Lepí!</div></div>
+    </div>
+    <div class="info">
+      <span class="tag" style="color:#C8402F;border-color:#C8402F">Fast food · útočník</span>
+      <h2 class="name">Lízátko</h2>
+      <p class="sentence">Jednou za čas se roztočí a oblepí sladkou šťávou zeleninu kolem sebe.</p>
+      <div class="skill">
+        <span class="skill-ico" style="border-color:#C8402F"><span class="w-big"><svg viewBox="0 0 86 40" style="width:100%;height:100%;display:block"><path d="M14,8 Q40,2 70,10 Q78,14 72,20 Q66,24 66,30 Q66,37 61,37 Q56,37 57,29 Q58,22 48,22 Q40,22 40,30 Q40,34 36,34 Q32,34 33,27 Q34,20 22,20 Q8,20 8,14 Q8,9 14,8 Z" fill="#F07AA8" stroke="#2B2118" stroke-width="3" stroke-linejoin="round"/><path d="M20,12 Q34,9 46,11" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round"/></svg></span></span>
+        <span><span class="skill-kicker" style="color:#C8402F">Zbraň</span><br><b>Lepkavá šťáva</b><br>Roztočí se a oblepí zeleninu kolem. Ta nebojuje, dokud šťáva nesteče.</span>
+      </div>
+      <div class="meters"><div class="meter"><span class="m-label">Životy</span><span class="cells"><span class="cell on" style="background:#C8402F"></span><span class="cell on" style="background:#C8402F"></span><span class="cell on" style="background:#C8402F"></span><span class="cell on" style="background:#C8402F"></span><span class="cell on" style="background:#C8402F"></span><span class="cell on" style="background:#C8402F"></span><span class="cell" style=""></span><span class="cell" style=""></span></span><span class="m-note">6 zásahů</span></div><div class="meter"><span class="m-label">Rychlost</span><span class="cells"><span class="cell on" style="background:#C8402F"></span><span class="cell on" style="background:#C8402F"></span><span class="cell on" style="background:#C8402F"></span><span class="cell" style=""></span><span class="cell" style=""></span></span><span class="m-note">1 políčko za sekundu</span></div></div>
+      <p class="extra"><b style="color:#C8402F">Tip:</b> Pórek a brokolice ho trefí z dálky, kam se lízátko nedotočí.</p>
+      <div class="bottom"><span class="level">2. úroveň</span><button type="button" class="btn">Jdeme na to! ▶</button></div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+<div class="step">
+  <div class="mini"><div class="mini-in"><svg class="stage-bg" viewBox="0 0 640 640" preserveAspectRatio="none"><rect width="640" height="640" fill="#9CC765"/><path d="M-10,472 C160,458 300,484 450,468 S620,478 660,470 L660,584 C500,596 330,576 180,590 S20,580 -10,586 Z" fill="#D8B47E" stroke="#8C6A3E" stroke-width="5"/><path d="M-10,530 C200,518 420,542 660,528" stroke="#E6C795" stroke-width="10" fill="none" stroke-dasharray="2 26" stroke-linecap="round"/><path d="M60,90 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180,60 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M330,120 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M520,80 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M600,240 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M560,620 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M300,610 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40,600 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M450,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="180" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="120" cy="180" r="2" fill="#F7C744"/><circle cx="590" cy="150" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="590" cy="150" r="2" fill="#F7C744"/><circle cx="250" cy="620" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="250" cy="620" r="2" fill="#F7C744"/><circle cx="470" cy="600" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="470" cy="600" r="2" fill="#F7C744"/></svg>
+<div style="position:absolute;left:0;top:0;width:210.0px;height:104.0px;transform-origin:105.0px 52.0px;transform:translate(95.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg viewBox="0 0 210 104"><polygon points="52.5,2 157.5,2 208,52.0 157.5,102 52.5,102 2,52.0" fill="#B9DC86" stroke="#7FA84A" stroke-width="3"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:210.0px;height:104.0px;transform-origin:105.0px 52.0px;transform:translate(365.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg viewBox="0 0 210 104"><polygon points="52.5,2 157.5,2 208,52.0 157.5,102 52.5,102 2,52.0" fill="#B9DC86" stroke="#7FA84A" stroke-width="3"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-mrkev-klid"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-porek-klid"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;transform:translate(-2.9px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-lizatko-krok1"></div></div>
+<div style="position:absolute;left:0;top:0;width:180.0px;height:36.0px;transform-origin:90.0px 18.0px;transform:translate(20.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(28.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(56.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(84.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(112.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(140.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(168.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div></div></div>
+  <div class="step-text"><span class="num" style="background:#C8402F">1</span><span><b>Jde po cestě</b> · Lízátko se blíží k zelenině, nad hlavou 6 srdíček.<br><i>1.00 s</i></span></div>
+</div>
+<div class="step">
+  <div class="mini"><div class="mini-in"><svg class="stage-bg" viewBox="0 0 640 640" preserveAspectRatio="none"><rect width="640" height="640" fill="#9CC765"/><path d="M-10,472 C160,458 300,484 450,468 S620,478 660,470 L660,584 C500,596 330,576 180,590 S20,580 -10,586 Z" fill="#D8B47E" stroke="#8C6A3E" stroke-width="5"/><path d="M-10,530 C200,518 420,542 660,528" stroke="#E6C795" stroke-width="10" fill="none" stroke-dasharray="2 26" stroke-linecap="round"/><path d="M60,90 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180,60 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M330,120 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M520,80 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M600,240 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M560,620 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M300,610 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40,600 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M450,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="180" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="120" cy="180" r="2" fill="#F7C744"/><circle cx="590" cy="150" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="590" cy="150" r="2" fill="#F7C744"/><circle cx="250" cy="620" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="250" cy="620" r="2" fill="#F7C744"/><circle cx="470" cy="600" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="470" cy="600" r="2" fill="#F7C744"/></svg>
+<div style="position:absolute;left:0;top:0;width:210.0px;height:104.0px;transform-origin:105.0px 52.0px;transform:translate(95.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg viewBox="0 0 210 104"><polygon points="52.5,2 157.5,2 208,52.0 157.5,102 52.5,102 2,52.0" fill="#B9DC86" stroke="#7FA84A" stroke-width="3"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:210.0px;height:104.0px;transform-origin:105.0px 52.0px;transform:translate(365.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg viewBox="0 0 210 104"><polygon points="52.5,2 157.5,2 208,52.0 157.5,102 52.5,102 2,52.0" fill="#B9DC86" stroke="#7FA84A" stroke-width="3"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:400.0px;height:360.0px;transform-origin:200.0px 180.0px;transform:translate(144.0px,240.0px) rotate(33.8deg) scale(0.581);opacity:1.00"><svg viewBox="0 0 400 360"><ellipse cx="200" cy="180" rx="190" ry="171" fill="#FF7FB0" fill-opacity=".18" stroke="#E8558E" stroke-width="10" stroke-dasharray="4 18" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-mrkev-klid"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-porek-klid"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-lizatko-toci"></div></div>
+<div style="position:absolute;left:0;top:0;width:180.0px;height:36.0px;transform-origin:90.0px 18.0px;transform:translate(254.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(262.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(290.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(318.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(346.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(374.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(402.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div></div></div>
+  <div class="step-text"><span class="num" style="background:#C8402F">2</span><span><b>Roztočí se</b> · Zastaví se a točí se dokola.<br><i>2.20 s</i></span></div>
+</div>
+<div class="step">
+  <div class="mini"><div class="mini-in"><svg class="stage-bg" viewBox="0 0 640 640" preserveAspectRatio="none"><rect width="640" height="640" fill="#9CC765"/><path d="M-10,472 C160,458 300,484 450,468 S620,478 660,470 L660,584 C500,596 330,576 180,590 S20,580 -10,586 Z" fill="#D8B47E" stroke="#8C6A3E" stroke-width="5"/><path d="M-10,530 C200,518 420,542 660,528" stroke="#E6C795" stroke-width="10" fill="none" stroke-dasharray="2 26" stroke-linecap="round"/><path d="M60,90 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180,60 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M330,120 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M520,80 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M600,240 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M560,620 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M300,610 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40,600 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M450,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="180" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="120" cy="180" r="2" fill="#F7C744"/><circle cx="590" cy="150" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="590" cy="150" r="2" fill="#F7C744"/><circle cx="250" cy="620" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="250" cy="620" r="2" fill="#F7C744"/><circle cx="470" cy="600" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="470" cy="600" r="2" fill="#F7C744"/></svg>
+<div style="position:absolute;left:0;top:0;width:210.0px;height:104.0px;transform-origin:105.0px 52.0px;transform:translate(95.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg viewBox="0 0 210 104"><polygon points="52.5,2 157.5,2 208,52.0 157.5,102 52.5,102 2,52.0" fill="#B9DC86" stroke="#7FA84A" stroke-width="3"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:210.0px;height:104.0px;transform-origin:105.0px 52.0px;transform:translate(365.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg viewBox="0 0 210 104"><polygon points="52.5,2 157.5,2 208,52.0 157.5,102 52.5,102 2,52.0" fill="#B9DC86" stroke="#7FA84A" stroke-width="3"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-mrkev-lepkava"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-porek-lepkavy"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;transform:translate(231.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-lizatko-krok1"></div></div>
+<div style="position:absolute;left:0;top:0;width:180.0px;height:36.0px;transform-origin:90.0px 18.0px;transform:translate(254.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(262.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(290.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(318.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(346.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(374.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(402.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:190.0px;height:64.0px;transform-origin:95.0px 64.0px;transform:translate(450.0px,131.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="fx-bubble fx-tail-left">Lepí!</div></div></div></div>
+  <div class="step-text"><span class="num" style="background:#C8402F">3</span><span><b>Lepí!</b> · Pan Mrkev i Pórek jsou oblepení a nebojují.<br><i>2.90 s</i></span></div>
+</div>
+<div class="step">
+  <div class="mini"><div class="mini-in"><svg class="stage-bg" viewBox="0 0 640 640" preserveAspectRatio="none"><rect width="640" height="640" fill="#9CC765"/><path d="M-10,472 C160,458 300,484 450,468 S620,478 660,470 L660,584 C500,596 330,576 180,590 S20,580 -10,586 Z" fill="#D8B47E" stroke="#8C6A3E" stroke-width="5"/><path d="M-10,530 C200,518 420,542 660,528" stroke="#E6C795" stroke-width="10" fill="none" stroke-dasharray="2 26" stroke-linecap="round"/><path d="M60,90 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180,60 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M330,120 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M520,80 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M600,240 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M560,620 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M300,610 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40,600 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M450,300 q4,-12 8,0 q4,-14 8,0" stroke="#6E9A3E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="180" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="120" cy="180" r="2" fill="#F7C744"/><circle cx="590" cy="150" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="590" cy="150" r="2" fill="#F7C744"/><circle cx="250" cy="620" r="6" fill="#FFFFFF" stroke="#2B2118" stroke-width="2"/><circle cx="250" cy="620" r="2" fill="#F7C744"/><circle cx="470" cy="600" r="6" fill="#F6A6C8" stroke="#2B2118" stroke-width="2"/><circle cx="470" cy="600" r="2" fill="#F7C744"/></svg>
+<div style="position:absolute;left:0;top:0;width:210.0px;height:104.0px;transform-origin:105.0px 52.0px;transform:translate(95.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg viewBox="0 0 210 104"><polygon points="52.5,2 157.5,2 208,52.0 157.5,102 52.5,102 2,52.0" fill="#B9DC86" stroke="#7FA84A" stroke-width="3"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:210.0px;height:104.0px;transform-origin:105.0px 52.0px;transform:translate(365.0px,342.0px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg viewBox="0 0 210 104"><polygon points="52.5,2 157.5,2 208,52.0 157.5,102 52.5,102 2,52.0" fill="#B9DC86" stroke="#7FA84A" stroke-width="3"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(98.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-mrkev-lepkava2"></div></div>
+<div style="position:absolute;left:0;top:0;width:198.0px;height:270.0px;transform-origin:102.0px 260.6px;transform:translate(368.0px,139.4px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-porek-lepkavy2"></div></div>
+<div style="position:absolute;left:0;top:0;width:219.3px;height:299.0px;transform-origin:112.9px 288.5px;transform:translate(407.1px,251.5px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="sp sp-lizatko-krok2"></div></div>
+<div style="position:absolute;left:0;top:0;width:180.0px;height:36.0px;transform-origin:90.0px 18.0px;transform:translate(430.0px,300.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><div class="lifebar"></div></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(438.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(466.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(494.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(522.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(550.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+<div style="position:absolute;left:0;top:0;width:24.0px;height:24.0px;transform-origin:12.0px 12.0px;transform:translate(578.0px,306.7px) rotate(0.0deg) scale(1.000);opacity:1.00"><svg class="heart" viewBox="0 0 24 24"><path d="M12 21 C12 21 2 14.6 2 8.2 A5 5 0 0 1 12 5.6 A5 5 0 0 1 22 8.2 C22 14.6 12 21 12 21 Z" fill="#E2463A" stroke="#2B2118" stroke-width="2.4" stroke-linejoin="round"/><path d="M6.6 8.6 Q7 6.9 8.9 6.6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div></div></div>
+  <div class="step-text"><span class="num" style="background:#C8402F">4</span><span><b>Šťáva stéká</b> · Až šťáva steče, zelenina zase bojuje.<br><i>3.70 s</i></span></div>
+</div>
+</div>
+<p class="foot">Ve hře karta vyjede zdola (0,35 s) a stuha spadne shora. Ukazatele jsou z čísel ve hře (src/data/units.ts), obrázky postav z listu postavy (Lizatko).</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"paper": {"editor": "color", "default": "#FFF3F1"}, "$preview": {"width": 1680, "height": 1560}}'>
+class Component extends DCLogic {
+renderVals() {
+return { paper: this.props.paper ?? '#FFF3F1' };
+}
+}
+</script>
+</body>
+</html>

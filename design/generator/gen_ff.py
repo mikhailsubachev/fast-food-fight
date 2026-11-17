@@ -95,7 +95,7 @@ def hb_sheet():
     return dict(file="Hamburger.dc.html",title="Hamburger",kicker="Fast Food Fight · útočník · 1. úroveň",accent="#9A5416",
         desc="Úplně základní útočník. Na nikoho neútočí, jen ťapká po cestě k puse. Po 4 zásazích se otočí, uteče a nechá kapku vody.",
         chips=[("Zásahů do útěku","4"),("Rychlost","~1 políčko/s"),("Útok","žádný"),("Voda", drop()+"15")],
-        img="/_blob/542a4b7ffafb2973f26697e63f3bcc6c",alt="Dětská kresba: naštvaný hamburger se zdviženýma rukama",src="kresby/hamburger.png",
+        img="/_blob/542a4b7ffafb2973f26697e63f3bcc6c",alt="Dětská kresba: naštvaný hamburger se zdviženýma rukama",src="kresby/utocnici/hamburger.png",
         hero=hero,parts=parts,poses=poses,paper="#FBF1E4",stage_extra="")
 
 # ================= HRANOLKY =================
@@ -171,7 +171,7 @@ def hr_sheet():
     return dict(file="Hranolky.dc.html",title="Hranolky",kicker="Fast Food Fight · útočník · od 3. vlny",accent="#C0352C",
         desc="Útočník se schopností: hází hranolkou po nejbližším vyrostlém obránci a ten na chvilku ztuhne. Po 5 zásazích uteče a nechá kapku vody.",
         chips=[("Zásahů do útěku","5"),("Rychlost","~1,3 políčka/s"),("Hod","1× za 5 s"),("Voda", drop()+"20")],
-        img="/_blob/ad67a1a011c8fbd672b015af4898c1d7",alt="Dětská kresba: naštvaná krabička hranolek s velkou hranolkou v ruce",src="kresby/hranolky.png",
+        img="/_blob/ad67a1a011c8fbd672b015af4898c1d7",alt="Dětská kresba: naštvaná krabička hranolek s velkou hranolkou v ruce",src="kresby/utocnici/hranolky.png",
         hero=hero,parts=parts,poses=poses,paper="#FFF1EC",
         stage_extra='<ellipse cx="400" cy="455" rx="260" ry="62" fill="#E2453A" fill-opacity=".07" stroke="#E2453A" stroke-width="3" stroke-dasharray="12 9"/>')
 

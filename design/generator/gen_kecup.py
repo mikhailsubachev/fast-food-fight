@@ -143,7 +143,7 @@ a{{color:#B4232D}}a:hover{{color:#8A1A22}}
 <div style="flex:1;border-radius:12px;overflow:hidden;background:#EFE6DA">
 <img src="/_blob/{blob}" alt="Dětská kresba: červená lahev kečupu s šedým víčkem, ze kterého stříká kečup" style="width:100%;height:100%;object-fit:contain;display:block">
 </div>
-<span style="font-size:15px;color:#5A4A3A;font-weight:600">kresby/Kecup.png · popis v „Kečup.md“</span>
+<span style="font-size:15px;color:#5A4A3A;font-weight:600">kresby/utocnici/Kecup.png · popis v „Kečup.md“</span>
 </div>
 <div style="{card};flex:1;position:relative;overflow:hidden;background:#8BB85A">
 {stage}
